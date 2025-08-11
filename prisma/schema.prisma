@@ -5,11 +5,101 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+    provider = "prisma-client-js"
+    // output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+    SUPERADMIN // everything
+    ADMIN //manage all data, user dibawahnya
+    OPERATOR // permission based
+    USER // permission based
+}
+
+enum Permission {
+    READ
+    CREATE
+    EDIT
+    DELETE
+}
+
+enum Module {
+    ARTICLE
+    USER
+}
+
+model User {
+    id          String           @id @default(uuid())
+    role        UserRole
+    name        String           @db.VarChar(100)
+    email       String           @unique @db.VarChar(255)
+    avatar      String?          @db.VarChar(255)
+    avatar_md   String?          @db.VarChar(255)
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+    password    Password?
+    auths       Auth[]
+    active      Boolean          @default(true)
+    deleted     Boolean          @default(false)
+    permissions UserPermission[]
+    ErrorLog    ErrorLog[]
+
+    @@index([email])
+    @@map("user")
+}
+
+model Password {
+    id        String   @id @default(uuid())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String   @unique
+    password  String   @db.VarChar(255)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("password")
+}
+
+model UserPermission {
+    id         String     @id @default(uuid())
+    userId     String
+    module     Module
+    permission Permission
+    user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, module, permission])
+    @@map("user_permission")
+}
+
+model Auth {
+    id           String   @id @default(uuid())
+    User         User     @relation(fields: [userId], references: [id])
+    userId       String
+    access_token String   @db.VarChar(300)
+    expiredAt    DateTime @default(now())
+    path         String   @db.VarChar(100)
+    method       String   @db.VarChar(100)
+    createdAt    DateTime @default(now())
+
+    @@map("auth")
+}
+
+model ErrorLog {
+    id          Int      @id @default(autoincrement())
+    message     String
+    stack       String?
+    path        String?
+    method      String?
+    statusCode  Int?
+    user        User?    @relation(fields: [userId], references: [id])
+    userId      String?
+    requestData Json?    @db.JsonB
+    headers     Json?    @db.JsonB
+    createdAt   DateTime @default(now())
+
+    @@map("error-log")
 }
