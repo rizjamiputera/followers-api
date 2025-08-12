@@ -144,7 +144,8 @@ model Article {
     createdAt   DateTime                @default(now())
     updatedAt   DateTime                @updatedAt
     deleted     Boolean                 @default(false)
-    readStat    ArticleReadStat?
+    readStat    ArticleReadStat         @relation(fields: [readStatId], references: [id], onDelete: Restrict)
+    readStatId  String                  @unique
     visitors    Visit[]
 
     @@index([status, publishedAt])
@@ -259,8 +260,7 @@ model Comment {
 // ARTICLE STATS
 model ArticleReadStat {
     id         String    @id @default(uuid())
-    article    Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId  String    @unique
+    article    Article?
     readCount  Int       @default(0)
     lastReadAt DateTime?
 

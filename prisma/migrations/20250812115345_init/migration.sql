@@ -95,6 +95,7 @@ CREATE TABLE "followers_dev"."article" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deleted" BOOLEAN NOT NULL DEFAULT false,
+    "readStatId" TEXT NOT NULL,
 
     CONSTRAINT "article_pkey" PRIMARY KEY ("id")
 );
@@ -187,7 +188,6 @@ CREATE TABLE "followers_dev"."comment" (
 -- CreateTable
 CREATE TABLE "followers_dev"."article_read_stat" (
     "id" TEXT NOT NULL,
-    "articleId" TEXT NOT NULL,
     "readCount" INTEGER NOT NULL DEFAULT 0,
     "lastReadAt" TIMESTAMP(3),
 
@@ -237,6 +237,9 @@ CREATE UNIQUE INDEX "article_slug_key" ON "followers_dev"."article"("slug");
 CREATE UNIQUE INDEX "article_contentId_key" ON "followers_dev"."article"("contentId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "article_readStatId_key" ON "followers_dev"."article"("readStatId");
+
+-- CreateIndex
 CREATE INDEX "article_status_publishedAt_idx" ON "followers_dev"."article"("status", "publishedAt");
 
 -- CreateIndex
@@ -261,9 +264,6 @@ CREATE UNIQUE INDEX "article_reaction_articleId_userId_key" ON "followers_dev"."
 CREATE INDEX "comment_articleId_idx" ON "followers_dev"."comment"("articleId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "article_read_stat_articleId_key" ON "followers_dev"."article_read_stat"("articleId");
-
--- CreateIndex
 CREATE INDEX "visit_articleId_visitedAt_idx" ON "followers_dev"."visit"("articleId", "visitedAt");
 
 -- CreateIndex
@@ -286,6 +286,9 @@ ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_contentId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_readStatId_fkey" FOREIGN KEY ("readStatId") REFERENCES "followers_dev"."article_read_stat"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article_content_version" ADD CONSTRAINT "article_content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -316,9 +319,6 @@ ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_userId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "followers_dev"."comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "followers_dev"."article_read_stat" ADD CONSTRAINT "article_read_stat_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
