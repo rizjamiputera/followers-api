@@ -2,7 +2,7 @@
     "name": "followers-api",
     "version": "0.0.1",
     "description": "",
-    "author": "",
+    "author": "Uda Putera <rizjamiputera@gmail.com>",
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
