@@ -185,6 +185,17 @@ CREATE TABLE "followers_dev"."comment" (
 );
 
 -- CreateTable
+CREATE TABLE "followers_dev"."comment_reaction" (
+    "id" TEXT NOT NULL,
+    "commentId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" TEXT NOT NULL DEFAULT 'loved',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "comment_reaction_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "followers_dev"."article_read_stat" (
     "id" TEXT NOT NULL,
     "readCount" INTEGER NOT NULL DEFAULT 0,
@@ -263,6 +274,9 @@ CREATE UNIQUE INDEX "article_reaction_articleId_userId_key" ON "followers_dev"."
 CREATE INDEX "comment_articleId_idx" ON "followers_dev"."comment"("articleId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "comment_reaction_commentId_userId_key" ON "followers_dev"."comment_reaction"("commentId", "userId");
+
+-- CreateIndex
 CREATE INDEX "visit_articleId_visitedAt_idx" ON "followers_dev"."visit"("articleId", "visitedAt");
 
 -- CreateIndex
@@ -318,6 +332,12 @@ ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_userId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "followers_dev"."comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."comment_reaction" ADD CONSTRAINT "comment_reaction_commentId_fkey" FOREIGN KEY ("commentId") REFERENCES "followers_dev"."comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."comment_reaction" ADD CONSTRAINT "comment_reaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
