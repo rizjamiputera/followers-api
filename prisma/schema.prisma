@@ -63,7 +63,7 @@ model User {
 
 model Password {
     id        String   @id @default(uuid())
-    user      User     @relation(fields: [userId], references: [id])
+    user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
     userId    String   @unique
     password  String   @db.VarChar(255)
     createdAt DateTime @default(now())
@@ -85,7 +85,7 @@ model UserPermission {
 
 model Auth {
     id           String   @id @default(uuid())
-    User         User     @relation(fields: [userId], references: [id])
+    User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId       String
     access_token String   @db.VarChar(300)
     expiredAt    DateTime @default(now())
@@ -103,7 +103,7 @@ model ErrorLog {
     path        String?
     method      String?
     statusCode  Int?
-    user        User?    @relation(fields: [userId], references: [id])
+    user        User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
     userId      String?
     requestData Json?    @db.JsonB
     headers     Json?    @db.JsonB
@@ -120,39 +120,61 @@ enum ArticleStatus {
     PUBLISHED
 }
 
-enum ReactionType {
-    LIKE
-    DISLIKE
-}
-
 model Article {
-    id            String            @id @default(uuid())
-    title         String            @db.VarChar(255)
-    slug          String            @unique @db.VarChar(255)
-    excerpt       String?           @db.VarChar(500)
-    content       String            @db.Text // markdown or HTML
-    featuredImage String?           @db.VarChar(255)
-    isFeatured    Boolean           @default(false)
-    status        ArticleStatus     @default(DRAFT)
-    scheduledAt   DateTime? // when scheduled to be published
-    publishedAt   DateTime? // actual publish time
-    approvedAt    DateTime?
-    approvalNote  String?           @db.Text
-    author        User              @relation("author_articles", fields: [authorId], references: [id])
-    approvedBy    User?             @relation("article_approver", fields: [approvedById], references: [id])
-    approvedById  String?
-    authorId      String
-    tags          ArticleTag[]
-    comments      Comment[]
-    reactions     ArticleReaction[]
-    createdAt     DateTime          @default(now())
-    updatedAt     DateTime          @updatedAt
-    deleted       Boolean           @default(false)
-    readStat      ArticleReadStat?
-    visitors      Visit[]
+    id           String                  @id @default(uuid())
+    slug         String                  @unique @db.VarChar(255)
+    content      ArticleContent          @relation(fields: [contentId], references: [id], onDelete: Cascade)
+    contentId    String                  @unique
+    versions     ArticleContentVersion[]
+    isFeatured   Boolean                 @default(false)
+    status       ArticleStatus           @default(DRAFT)
+    scheduledAt  DateTime? // when scheduled to be published
+    publishedAt  DateTime? // actual publish time
+    approvedAt   DateTime?
+    approvalNote String?                 @db.Text
+    author       User                    @relation("author_articles", fields: [authorId], references: [id], onDelete: Restrict)
+    approvedBy   User?                   @relation("article_approver", fields: [approvedById], references: [id], onDelete: Restrict)
+    approvedById String?
+    authorId     String
+    tags         ArticleTag[]
+    comments     Comment[]
+    reactions    ArticleReaction[]
+    createdAt    DateTime                @default(now())
+    updatedAt    DateTime                @updatedAt
+    deleted      Boolean                 @default(false)
+    readStat     ArticleReadStat?
+    visitors     Visit[]
 
     @@index([status, publishedAt])
     @@map("article")
+}
+
+model ArticleContent {
+    id            String   @id @default(uuid())
+    title         String   @db.VarChar(255)
+    excerpt       String?  @db.VarChar(500)
+    content       String   @db.Text
+    featuredImage String?  @db.VarChar(255)
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    article       Article?
+    articleId     String   @unique
+
+    @@map("article_content")
+}
+
+model ArticleContentVersion {
+    id            String   @id @default(uuid())
+    title         String   @db.VarChar(255)
+    excerpt       String?  @db.VarChar(500)
+    content       String   @db.Text
+    featuredImage String?  @db.VarChar(255)
+    createdAt     DateTime @default(now())
+    article       Article  @relation(fields: [articleId], references: [id])
+    articleId     String
+
+    @@index([articleId])
+    @@map("article_content_version")
 }
 
 model Tag {
@@ -178,23 +200,32 @@ model ArticleTag {
 }
 
 model ArticleReaction {
-    id        String       @id @default(uuid())
-    article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    id        String   @id @default(uuid())
+    article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
     articleId String
-    user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId    String
-    type      ReactionType
-    createdAt DateTime     @default(now())
+    // Instead of enum LIKE/DISLIKE, make it string for future emojis
+    // Example: "like", "dislike", "love", "clap"
+    type      String
+    createdAt DateTime @default(now())
 
     @@unique([articleId, userId]) // one reaction per user per article
     @@map("article_reaction")
+}
+
+enum ReactionType {
+    like
+    dislike
+    love
+    clap
 }
 
 model Comment {
     id        String    @id @default(uuid())
     article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
     articleId String
-    user      User      @relation(fields: [userId], references: [id])
+    user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
     userId    String
     parent    Comment?  @relation("comment_replies", fields: [parentId], references: [id], onDelete: Cascade)
     parentId  String?
@@ -222,9 +253,11 @@ model ArticleReadStat {
 
 model Visit {
     id        String   @id @default(uuid())
-    article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    // onDelete SetNull: article can be deleted, but visits keep to keep analytics
+    article   Article? @relation(fields: [articleId], references: [id], onDelete: SetNull)
     articleId String?
-    visitor   Visitor? @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+    // onDelete SetNull: visitor can be deleted, but visits keep record
+    visitor   Visitor? @relation(fields: [visitorId], references: [id], onDelete: SetNull)
     visitorId String?
     ipAddress String?  @db.VarChar(45)
     userAgent String?  @db.VarChar(500)
@@ -241,8 +274,9 @@ model Visitor {
     firstVisitAt DateTime @default(now())
     lastVisitAt  DateTime @default(now())
     visits       Visit[]
+    // onDelete SetNull: if user deleted, visitor stays for analytics, but link removed
     userId       String?
-    user         User?    @relation(fields: [userId], references: [id])
+    user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
     @@unique([fingerprint])
     @@map("visitor")
