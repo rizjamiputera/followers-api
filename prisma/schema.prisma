@@ -153,7 +153,7 @@ model ArticleContent {
     id            String   @id @default(uuid())
     title         String   @db.VarChar(255)
     excerpt       String?  @db.VarChar(500)
-    content       String   @db.Text
+    content       Json     @db.JsonB // structured content
     featuredImage String?  @db.VarChar(255)
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
@@ -167,7 +167,7 @@ model ArticleContentVersion {
     id            String   @id @default(uuid())
     title         String   @db.VarChar(255)
     excerpt       String?  @db.VarChar(500)
-    content       String   @db.Text
+    content       Json     @db.JsonB // structured content
     featuredImage String?  @db.VarChar(255)
     createdAt     DateTime @default(now())
     article       Article  @relation(fields: [articleId], references: [id])
