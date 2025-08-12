@@ -22,6 +22,31 @@ export async function ArticleSeed(prisma: PrismaClient) {
         return;
     }
 
+    // Create tags first
+    const tagNames = [
+        'Technology', 'Programming', 'JavaScript', 'TypeScript', 'React', 'Node.js',
+        'Database', 'API', 'Frontend', 'Backend', 'DevOps', 'Cloud',
+        'Machine Learning', 'AI', 'Data Science', 'Analytics',
+        'Mobile', 'iOS', 'Android', 'Web Development',
+        'Security', 'Performance', 'Testing', 'Debugging',
+        'Open Source', 'Tutorial', 'Best Practices', 'Architecture',
+        'Design Patterns', 'Microservices', 'Docker', 'Kubernetes'
+    ];
+
+    const tagPromises = tagNames.map(name => 
+        prisma.tag.upsert({
+            where: { slug: faker.helpers.slugify(name).toLowerCase() },
+            update: {},
+            create: {
+                name,
+                slug: faker.helpers.slugify(name).toLowerCase()
+            }
+        })
+    );
+
+    const tags = await Promise.all(tagPromises);
+    console.log(`Created/found ${tags.length} tags`);
+
     const articlePromises = [];
 
     // Create articles for each operator
@@ -107,6 +132,23 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 }
 
                 await Promise.all(approvalPromises);
+
+                // Add random tags to the article (2-5 tags per article)
+                const selectedTags = faker.helpers.arrayElements(tags, { min: 2, max: 5 });
+                const tagPromises = selectedTags.map(tag => 
+                    prisma.articleTag.create({
+                        data: {
+                            article: {
+                                connect: { id: article.id }
+                            },
+                            tag: {
+                                connect: { id: tag.id }
+                            }
+                        }
+                    })
+                );
+
+                await Promise.all(tagPromises);
                 return article;
             })();
 
