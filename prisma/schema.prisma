@@ -37,24 +37,25 @@ enum Module {
 }
 
 model User {
-    id                String            @id @default(uuid())
-    name              String            @db.VarChar(100)
-    email             String            @unique @db.VarChar(255)
-    avatar            String?           @db.VarChar(255)
-    avatar_md         String?           @db.VarChar(255)
-    role              UserRole
-    password          Password?
-    auths             Auth[]
-    active            Boolean           @default(true)
-    createdAt         DateTime          @default(now())
-    updatedAt         DateTime          @updatedAt
-    deleted           Boolean           @default(false)
-    permissions       UserPermission[]
-    ErrorLog          ErrorLog[]
-    articles          Article[]         @relation("author_articles")
-    articles_approved Article[]         @relation("article_approver")
-    articles_reaction ArticleReaction[]
-    articles_comments Comment[]
+    id               String            @id @default(uuid())
+    name             String            @db.VarChar(100)
+    email            String            @unique @db.VarChar(255)
+    avatar           String?           @db.VarChar(255)
+    avatar_md        String?           @db.VarChar(255)
+    role             UserRole
+    password         Password?
+    auths            Auth[]
+    active           Boolean           @default(true)
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    deleted          Boolean           @default(false)
+    permissions      UserPermission[]
+    ErrorLog         ErrorLog[]
+    articles         Article[]         @relation("author_articles")
+    articlesApproved Article[]         @relation("article_approver")
+    articlesReaction ArticleReaction[]
+    articlesComments Comment[]
+    visits           Visitor[]
 
     @@index([email])
     @@map("user")
@@ -147,6 +148,8 @@ model Article {
     createdAt     DateTime          @default(now())
     updatedAt     DateTime          @updatedAt
     deleted       Boolean           @default(false)
+    readStat      ArticleReadStat?
+    visitors      Visit[]
 
     @@index([status, publishedAt])
     @@map("article")
@@ -204,4 +207,43 @@ model Comment {
 
     @@index([articleId])
     @@map("comment")
+}
+
+// ARTICLE STATS
+model ArticleReadStat {
+    id         String    @id @default(uuid())
+    article    Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId  String    @unique
+    readCount  Int       @default(0)
+    lastReadAt DateTime?
+
+    @@map("article_read_stat")
+}
+
+model Visit {
+    id        String   @id @default(uuid())
+    article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId String?
+    visitor   Visitor? @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+    visitorId String?
+    ipAddress String?  @db.VarChar(45)
+    userAgent String?  @db.VarChar(500)
+    referrer  String?  @db.VarChar(500)
+    visitedAt DateTime @default(now())
+
+    @@index([articleId, visitedAt])
+    @@map("visit")
+}
+
+model Visitor {
+    id           String   @id @default(uuid())
+    fingerprint  String?  @db.VarChar(255)
+    firstVisitAt DateTime @default(now())
+    lastVisitAt  DateTime @default(now())
+    visits       Visit[]
+    userId       String?
+    user         User?    @relation(fields: [userId], references: [id])
+
+    @@unique([fingerprint])
+    @@map("visitor")
 }
