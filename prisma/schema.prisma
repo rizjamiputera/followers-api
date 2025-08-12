@@ -133,7 +133,6 @@ model Article {
     versions    ArticleContentVersion[]
     isFeatured  Boolean                 @default(false)
     status      ArticleStatus           @default(DRAFT)
-    scheduledAt DateTime? // when scheduled to be published
     publishedAt DateTime? // actual publish time
     author      User                    @relation("author_articles", fields: [authorId], references: [id], onDelete: Restrict)
     authorId    String

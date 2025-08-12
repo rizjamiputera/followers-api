@@ -89,7 +89,6 @@ CREATE TABLE "followers_dev"."article" (
     "contentId" TEXT NOT NULL,
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "status" "followers_dev"."ArticleStatus" NOT NULL DEFAULT 'DRAFT',
-    "scheduledAt" TIMESTAMP(3),
     "publishedAt" TIMESTAMP(3),
     "authorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
