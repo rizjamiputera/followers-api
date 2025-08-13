@@ -6,7 +6,6 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { AppService } from 'src/app.service';
 import { UserFilterQueryDto } from './dto/user-filter.dto';
-import { getValidIncludes } from 'src/app/doc/app.doc';
 
 // Define reusable includes
 const VALID_INCLUDES = ['permissions'];
@@ -15,7 +14,7 @@ const VALID_INCLUDES = ['permissions'];
 export class UserService {
     constructor(
         private prisma: PrismaService,
-        private appService: AppService,
+        private app: AppService,
     ) { }
 
     create(data: Prisma.UserCreateInput) {
@@ -32,7 +31,7 @@ export class UserService {
 
         const { role, active } = filter;
 
-        const include = getValidIncludes(VALID_INCLUDES, includes, false);
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
 
         const skip = (page - 1) * limit;
         const take = limit > 0 ? limit : undefined;
@@ -84,8 +83,8 @@ export class UserService {
         });
 
         if (currentData.avatar != update.avatar) {
-            this.appService.removeFile(currentData.avatar);
-            this.appService.removeFile(currentData.avatar_md);
+            this.app.removeFile(currentData.avatar);
+            this.app.removeFile(currentData.avatar_md);
         }
 
         return update;
@@ -116,7 +115,7 @@ export class UserService {
     }
 
     async findUnique(id: string, includes: string[] = []): Promise<User> {
-        const include = getValidIncludes(VALID_INCLUDES, includes, false);
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
 
         const user = await this.prisma.user.findUnique({
             where: { id },
@@ -135,7 +134,7 @@ export class UserService {
         requester_role: Role,
         includes: string[] = [],
     ): Promise<User | null> {
-        const include = getValidIncludes(VALID_INCLUDES, includes, false);
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
 
         return this.prisma.user.findFirst({
             where: {

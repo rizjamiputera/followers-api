@@ -11,6 +11,7 @@ import { RolesGuard } from './auth/guards/roles/role.guards';
 import { PermissionsGuard } from './auth/guards/permissions/permission.guard';
 import { ErrorLoggerFilter } from './error-log/error-logger.filter';
 import { AuthModule } from './auth/auth.module';
+import { ArticleModule } from './article/article.module';
 
 @Module({
     imports: [
@@ -24,7 +25,7 @@ import { AuthModule } from './auth/auth.module';
             ],
         }),
         ConfigModule.forRoot(), // to load .env file
-        AuthModule,
+        AuthModule, ArticleModule,
     ],
     controllers: [AppController],
     providers: [

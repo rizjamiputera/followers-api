@@ -1,8 +1,8 @@
 // src/error-log/error-log.service.ts
 import { Injectable } from '@nestjs/common';
 import { ErrorLog, Prisma } from '@prisma/client';
+import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
-import { getValidIncludes } from 'src/app/doc/app.doc';
 import { PaginationIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Paginate } from 'src/app/interface/app.interface';
 import { PrismaService } from 'src/prisma.service';
@@ -12,7 +12,10 @@ const VALID_INCLUDES = ['user'];
 
 @Injectable()
 export class ErrorLogService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private app: AppService,
+    ) { }
 
     async logError(errorData: {
         message: string;
@@ -33,7 +36,7 @@ export class ErrorLogService {
         pagination: PaginationIncludeQueryDto,
     ): Promise<Paginate<ErrorLog[]>> {
         const { page, limit, sortBy, order, includes, search } = pagination;
-        const include = getValidIncludes(VALID_INCLUDES, includes);
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         /**
          * Case-insensitive search
@@ -86,7 +89,7 @@ export class ErrorLogService {
     }
 
     async getErrorById(id: number, includes: string[] = []) {
-        const include = getValidIncludes(VALID_INCLUDES, includes);
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         return this.prisma.errorLog.findUniqueOrThrow({
             where: { id },

@@ -49,20 +49,3 @@ export const IncludeQuery = (relation: string) =>
         type: String,
         description: `Includes relation in return data, separated by coma (,) Available relation = ${relation}`,
     });
-
-export const getValidIncludes = (
-    validIncludes: string[],
-    includes: string[],
-    check_deleted = true,
-): Record<string, any> => {
-    return validIncludes.reduce((acc, relation) => {
-        if (includes.includes(relation)) {
-            if (check_deleted) {
-                acc[relation] = { where: { deleted: false } }; // Ensure deleted: false
-            } else {
-                acc[relation] = true;
-            }
-        }
-        return acc;
-    }, {});
-};

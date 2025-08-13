@@ -108,5 +108,74 @@ export class AppService {
             this.removeFile(`./public${path_to_save}/${suffix}_md.${ext}`);
         }
     }
+
+    getValidIncludes(
+        validIncludes: string[],
+        includes: string[],
+        check_deleted = true,
+    ): Record<string, any> {
+        const result = {};
+
+        // Models that have 'deleted' field
+        const modelsWithDeleted = [
+            'user', 'users',
+            'comments', 'replies', 'parent',
+            'article', 'articles',
+        ];
+
+        // Helper to check if a relation should have deleted filter
+        const shouldApplyDeletedFilter = (relationName: string): boolean => {
+            return check_deleted && modelsWithDeleted.some(model =>
+                relationName.toLowerCase().includes(model)
+            );
+        };
+
+        // Filter valid includes that are requested
+        const requestedIncludes = validIncludes.filter(relation =>
+            includes.includes(relation)
+        );
+
+        requestedIncludes.forEach(relation => {
+            const parts = relation.split('.');
+            let current = result;
+
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                const isLast = i === parts.length - 1;
+
+                if (!current[part]) {
+                    if (isLast) {
+                        // Last part - set the actual value
+                        if (shouldApplyDeletedFilter(part)) {
+                            current[part] = { where: { deleted: false } };
+                        } else {
+                            current[part] = true;
+                        }
+                    } else {
+                        // Not last part - create nested structure
+                        current[part] = { include: {} };
+                    }
+                } else if (!isLast) {
+                    // If the part already exists but we need to go deeper
+                    // Convert boolean/object to nested structure if needed
+                    if (current[part] === true ||
+                        (current[part] && !current[part].include)) {
+                        const includeObj: any = { include: {} };
+                        if (shouldApplyDeletedFilter(part)) {
+                            includeObj.where = { deleted: false };
+                        }
+                        current[part] = includeObj;
+                    }
+                }
+
+                // Move to next level
+                if (!isLast) {
+                    current = current[part].include;
+                }
+            }
+        });
+
+        return result;
+    };
 }
 
