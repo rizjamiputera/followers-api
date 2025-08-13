@@ -22,8 +22,7 @@ export class ArticleController {
     create(
         @Request() req: any,
         @Body() createArticleDto: CreateArticleDto) {
-        const createdById = req.user.id;
-        return this.articleService.create(createdById, createArticleDto);
+        return this.articleService.create(req.user.id, createArticleDto);
     }
 
     @ApiBearerAuth()
@@ -64,8 +63,7 @@ export class ArticleController {
         @Param('id') id: string,
         @Body() updateArticleDto: UpdateArticleDto
     ) {
-        const userId = req.user.id;
-        return this.articleService.update(userId, id, updateArticleDto);
+        return this.articleService.update(req.user.id, id, updateArticleDto);
     }
 
     @ApiBearerAuth()

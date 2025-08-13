@@ -1,1 +1,48 @@
-export class CreateArticleDto {}
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ArticleStatus } from '@prisma/client';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+export class CreateArticleDto {
+    @ApiProperty({ description: 'Article title' })
+    @IsNotEmpty()
+    @IsString()
+    title: string;
+
+    @ApiPropertyOptional({ description: 'Article excerpt' })
+    @IsOptional()
+    @IsString()
+    excerpt?: string;
+
+    @ApiProperty({ description: 'Article main image' })
+    @IsNotEmpty()
+    @IsString()
+    image: string;
+
+    @ApiProperty({ description: 'Article small image' })
+    @IsNotEmpty()
+    @IsString()
+    image_sm: string;
+
+    @ApiProperty({ description: 'Article slug' })
+    @IsNotEmpty()
+    @IsString()
+    slug: string;
+
+    @ApiProperty({ description: 'Article content body (JSON)' })
+    @IsNotEmpty()
+    contentBody: any;
+
+    @ApiPropertyOptional({ description: 'Is featured article' })
+    @IsOptional()
+    @IsBoolean()
+    isFeatured?: boolean;
+
+    @ApiPropertyOptional({ 
+        description: 'Article status',
+        enum: ArticleStatus,
+        enumName: 'ArticleStatus'
+    })
+    @IsOptional()
+    @IsEnum(ArticleStatus)
+    status?: ArticleStatus;
+}
