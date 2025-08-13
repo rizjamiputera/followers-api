@@ -7,9 +7,4 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     name: string;
-
-    @ApiProperty({ description: 'Warehouse ID' })
-    @IsOptional()
-    @IsString()
-    warehouseId: string;
 }

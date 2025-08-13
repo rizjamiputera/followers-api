@@ -9,7 +9,7 @@ import { UserFilterQueryDto } from './dto/user-filter.dto';
 import { getValidIncludes } from 'src/app/doc/app.doc';
 
 // Define reusable includes
-const VALID_INCLUDES = ['permissions', 'warehouse'];
+const VALID_INCLUDES = ['permissions'];
 
 @Injectable()
 export class UsersService {
@@ -30,7 +30,7 @@ export class UsersService {
     ): Promise<Paginate<User[]>> {
         const { page, limit, sortBy, order, deleted } = pagination;
 
-        const { warehouseId, role, active } = filter;
+        const { role, active } = filter;
 
         const include = getValidIncludes(VALID_INCLUDES, includes, false);
 
