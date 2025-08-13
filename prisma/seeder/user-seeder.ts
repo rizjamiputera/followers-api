@@ -29,7 +29,7 @@ export async function UserSeed(prisma: PrismaClient) {
         promises.push(prisma.user.create({
             data: {
                 name: faker.person.fullName(),
-                email: faker.internet.email(),
+                email: `user${i}@gmail.com`,
                 role: 'USER',
                 avatar: faker.image.avatar(),
                 password: {
@@ -48,7 +48,7 @@ export async function UserSeed(prisma: PrismaClient) {
             promises.push(prisma.user.create({
                 data: {
                     name: faker.person.fullName(),
-                    email: faker.internet.email(),
+                    email: `${role}${i}@gmail.com`,
                     role,
                     avatar: faker.image.avatar(),
                     password: {
