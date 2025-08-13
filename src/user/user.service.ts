@@ -12,7 +12,7 @@ import { getValidIncludes } from 'src/app/doc/app.doc';
 const VALID_INCLUDES = ['permissions'];
 
 @Injectable()
-export class UsersService {
+export class UserService {
     constructor(
         private prisma: PrismaService,
         private appService: AppService,

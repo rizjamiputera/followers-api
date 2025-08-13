@@ -18,25 +18,9 @@ import {
     MaxFileSizeValidator,
     FileTypeValidator,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
-// import { User } from './users.interface';
+// import { User } from './user.interface';
 import { Paginate } from 'src/app/interface/app.interface';
-import {
-    ActivateUserDoc,
-    AddUserPermissionDoc,
-    ChangeUserPasswordDoc,
-    CreateAdminDoc,
-    CreateOperatorDoc,
-    CreateSuperadminDoc,
-    DeactivateUserDoc,
-    DeleteUserDoc,
-    GetAllUserDoc,
-    GetUserDoc,
-    RemoveUserPermissionDoc,
-    UpdateUserDoc,
-    UploadAvatarDoc,
-} from './users.doc';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Module, Permission, Prisma, Role, User } from '@prisma/client';
 import { UserFilterQueryDto } from './dto/user-filter.dto';
@@ -53,15 +37,17 @@ import { PermissionsRequired } from 'src/auth/guards/permissions/permission.deco
 import { CreateUserPermissionDto } from './dto/user-create-permission.dto';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { CreateUserOperatorDto } from './dto/user-create-operator.dto';
+import { UserService } from './user.service';
+import { ActivateUserDoc, AddUserPermissionDoc, ChangeUserPasswordDoc, CreateAdminDoc, CreateOperatorDoc, CreateSuperadminDoc, DeactivateUserDoc, DeleteUserDoc, GetAllUserDoc, GetUserDoc, RemoveUserPermissionDoc, UpdateUserDoc, UploadAvatarDoc } from './user.doc';
 
 @ApiBearerAuth()
 @Controller({
-    path: 'users',
+    path: 'user',
     version: '1',
 })
-export class UsersController {
+export class UserController {
     constructor(
-        private readonly usersService: UsersService,
+        private readonly userService: UserService,
         private readonly authService: AuthService,
         private readonly appService: AppService,
     ) { }
@@ -86,7 +72,7 @@ export class UsersController {
             },
         };
 
-        return this.usersService.create(dataUser);
+        return this.userService.create(dataUser);
     }
 
     @CreateAdminDoc()
@@ -108,7 +94,7 @@ export class UsersController {
             },
         };
 
-        return this.usersService.create(dataUser);
+        return this.userService.create(dataUser);
     }
 
     @CreateOperatorDoc()
@@ -131,7 +117,7 @@ export class UsersController {
             },
         };
 
-        return this.usersService.create(dataUser);
+        return this.userService.create(dataUser);
     }
 
     @GetAllUserDoc()
@@ -145,7 +131,7 @@ export class UsersController {
         pagination: PaginationDeletedIncludeQueryDto,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ): Promise<Paginate<User[]>> {
-        return this.usersService.findAll(
+        return this.userService.findAll(
             pagination,
             filters,
             req.user.role,
@@ -161,7 +147,7 @@ export class UsersController {
         @Param('id') id: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        return this.usersService.findOne(id, req.user.role, query.includes);
+        return this.userService.findOne(id, req.user.role, query.includes);
     }
 
     @ChangeUserPasswordDoc()
@@ -173,7 +159,7 @@ export class UsersController {
         @Param('id') id: string,
         @Body(new ValidationPipe()) data: ChangeUserPasswordDto,
     ) {
-        const user = await this.usersService.findOne(id, req.user.role);
+        const user = await this.userService.findOne(id, req.user.role);
         if (!user) {
             throw new NotFoundException('User tidak ditemukan');
         }
@@ -185,7 +171,7 @@ export class UsersController {
 
         const password = await bcrypt.hash(data.password, 10);
 
-        return this.usersService.change_password(id, password);
+        return this.userService.change_password(id, password);
     }
 
     @UploadAvatarDoc()
@@ -208,7 +194,7 @@ export class UsersController {
         )
         avatar: Express.Multer.File,
     ) {
-        const user = await this.usersService.findOne(id, req.user.role);
+        const user = await this.userService.findOne(id, req.user.role);
         if (!user) {
             throw new NotFoundException('User tidak ditemukan');
         }
@@ -223,7 +209,7 @@ export class UsersController {
             avatar_md: medium,
         };
 
-        return this.usersService.update(
+        return this.userService.update(
             req.user.id,
             req.user.role,
             id,
@@ -241,12 +227,12 @@ export class UsersController {
     ) {
         const userId = req.user.id;
 
-        const currentData = await this.usersService.findOne(
+        const currentData = await this.userService.findOne(
             id,
             req.user.role,
         );
 
-        return this.usersService.update(
+        return this.userService.update(
             userId,
             req.user.role,
             id,
@@ -265,7 +251,7 @@ export class UsersController {
             active: true,
         };
 
-        return this.usersService.update(
+        return this.userService.update(
             userId,
             req.user.role,
             id,
@@ -284,7 +270,7 @@ export class UsersController {
             active: false,
         };
 
-        return this.usersService.update(
+        return this.userService.update(
             userId,
             req.user.role,
             id,
@@ -299,7 +285,7 @@ export class UsersController {
     remove(@Request() req: any, @Param('id') id: string) {
         const userId = req.user.id;
 
-        return this.usersService.remove(userId, req.user.role, id);
+        return this.userService.remove(userId, req.user.role, id);
     }
 
     @AddUserPermissionDoc()
@@ -311,7 +297,7 @@ export class UsersController {
     ): Promise<void> {
         const { userId, ...dt } = dataDto;
 
-        const user: User = await this.usersService.findUnique(userId);
+        const user: User = await this.userService.findUnique(userId);
         if (
             user.role == Role.SUPERADMIN ||
             user.role == Role.ADMIN
@@ -324,7 +310,7 @@ export class UsersController {
             user: { connect: { id: userId } },
         };
 
-        await this.usersService.addPermission(data);
+        await this.userService.addPermission(data);
 
         return;
     }
@@ -334,7 +320,7 @@ export class UsersController {
     @HttpCode(204)
     @Delete('remove-permission/:id')
     async removePermission(@Param('id') id: string): Promise<void> {
-        await this.usersService.removePermission(id);
+        await this.userService.removePermission(id);
         return;
     }
 }

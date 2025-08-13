@@ -21,7 +21,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Prisma, User } from '@prisma/client';
-import { UsersService } from 'src/users/users.service';
+import { UserService } from 'src/user/user.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from './auth.metadata';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -47,7 +47,7 @@ import { RegisterDto } from './dto/register.dto';
 export class AuthController {
     constructor(
         private readonly authService: AuthService,
-        private readonly userService: UsersService,
+        private readonly userService: UserService,
         private readonly appService: AppService,
     ) { }
 

@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as dayjs from 'dayjs';
 import { Prisma, Role } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
-import { UsersService } from 'src/users/users.service';
+import { UserService } from 'src/user/user.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -20,7 +20,7 @@ export class AuthService {
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
-        private userService: UsersService,
+        private userService: UserService,
     ) { }
 
     // collect expired tokens in blacklist

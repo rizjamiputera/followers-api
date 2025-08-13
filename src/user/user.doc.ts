@@ -105,7 +105,7 @@ export function CreateOperatorDoc() {
             description: `Accessible only to users with the following roles:\n
     - SUPERADMIN
     - ADMIN
-    - or Permission: USERS.CREATE`,
+    - or Permission: USER.CREATE`,
         }),
         ApiBody({
             type: CreateUserOperatorDto,
@@ -126,7 +126,7 @@ export function CreateOperatorDoc() {
 export function GetAllUserDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Get All Users. Permission: USERS.READ',
+            summary: 'Get All Users. Permission: USER.READ',
         }),
         IncludeQuery('permissions'),
         ApiResponse({
@@ -150,7 +150,7 @@ export function GetAllUserDoc() {
 export function GetUserDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Get User By Id. Permission: USERS.READ',
+            summary: 'Get User By Id. Permission: USER.READ',
         }),
         IncludeQuery('permissions'),
         ApiResponse({
@@ -168,7 +168,7 @@ export function GetUserDoc() {
 export function ActivateUserDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Activate User By Id. Permission: USERS.EDIT',
+            summary: 'Activate User By Id. Permission: USER.EDIT',
         }),
         Success204,
         NotFound,
@@ -179,7 +179,7 @@ export function ActivateUserDoc() {
 export function ChangeUserPasswordDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Change User Password By Id. Permission: USERS.EDIT',
+            summary: 'Change User Password By Id. Permission: USER.EDIT',
         }),
         ApiBody({
             type: ChangeUserPasswordDto,
@@ -193,7 +193,7 @@ export function ChangeUserPasswordDoc() {
 export function UploadAvatarDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Change user avatar. Permission: USERS.EDIT',
+            summary: 'Change user avatar. Permission: USER.EDIT',
             description: 'Support file type: jpeg|jpg|png. Max file size 10mb.',
         }),
         ApiConsumes('multipart/form-data'),
@@ -240,7 +240,7 @@ export function UploadAvatarDoc() {
 export function DeactivateUserDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Deactivate User By ID. Permission: USERS.EDIT',
+            summary: 'Deactivate User By ID. Permission: USER.EDIT',
         }),
         Success204,
         NotFound,
@@ -251,7 +251,7 @@ export function DeactivateUserDoc() {
 export function UpdateUserDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Update User By ID. Permission: USERS.EDIT',
+            summary: 'Update User By ID. Permission: USER.EDIT',
         }),
         // ApiBody({
         //     type: UpdateUserDto,
@@ -271,7 +271,7 @@ export function UpdateUserDoc() {
 export function DeleteUserDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Delete User By Id. Permission: USERS.DELETE',
+            summary: 'Delete User By Id. Permission: USER.DELETE',
         }),
         Success204,
         NotFound,
@@ -282,7 +282,7 @@ export function DeleteUserDoc() {
 export function AddUserPermissionDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Add permission to user. Permission: USERS.EDIT',
+            summary: 'Add permission to user. Permission: USER.EDIT',
         }),
         ApiBody({
             type: CreateUserPermissionDto,
@@ -295,7 +295,7 @@ export function AddUserPermissionDoc() {
 export function RemoveUserPermissionDoc() {
     return applyDecorators(
         ApiOperation({
-            summary: 'Remove permission to user. Permission: USERS.EDIT',
+            summary: 'Remove permission to user. Permission: USER.EDIT',
         }),
         Success204,
         Unauthorized,
