@@ -129,6 +129,10 @@ enum ApprovalStatus {
 model Article {
     id          String                  @id @default(uuid())
     slug        String                  @unique @db.VarChar(255)
+    title       String                  @db.VarChar(255)
+    excerpt     String?                 @db.VarChar(500)
+    image       String                  @db.VarChar(255)
+    image_sm    String                  @db.VarChar(255)
     content     ArticleContent          @relation(fields: [contentId], references: [id], onDelete: Restrict)
     contentId   String                  @unique
     versions    ArticleContentVersion[]
@@ -156,11 +160,7 @@ model Article {
 
 model ArticleContent {
     id        String   @id @default(uuid())
-    title     String   @db.VarChar(255)
-    excerpt   String?  @db.VarChar(500)
-    content   Json     @db.JsonB // structured content
-    image     String   @db.VarChar(255)
-    image_sm  String   @db.VarChar(255)
+    content   Json     @db.JsonB // structured content only
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     article   Article?

@@ -7,7 +7,19 @@ import { Paginate } from 'src/app/interface/app.interface';
 import { PrismaService } from 'src/prisma.service';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
 
-const VALID_INCLUDES = ['content', 'tags', 'comments', 'comments.replies', 'comments.reactions', 'reactions', 'versions'];
+interface CreateArticleInput {
+    title: string;
+    excerpt?: string;
+    image: string;
+    image_sm: string;
+    slug: string;
+    authorId: string;
+    contentBody: any;
+    isFeatured?: boolean;
+    status?: ArticleStatus;
+}
+
+const VALID_INCLUDES = ['content', 'tags', 'comments', 'comments.replies', 'comments.reactions', 'reactions', 'versions', 'author'];
 
 @Injectable()
 export class ArticleService {
@@ -16,8 +28,25 @@ export class ArticleService {
         private app: AppService,
     ) { }
 
-    create(data: Prisma.ArticleCreateInput): Promise<Article> {
-        return this.prisma.article.create({ data })
+    async create(data: CreateArticleInput): Promise<Article> {
+        const { contentBody, authorId, ...articleData } = data;
+
+        return this.prisma.article.create({
+            data: {
+                ...articleData,
+                author: {
+                    connect: { id: authorId }
+                },
+                content: {
+                    create: {
+                        content: contentBody
+                    }
+                },
+                readStat: {
+                    create: {}
+                }
+            }
+        });
     }
 
     async findAll(
@@ -41,8 +70,8 @@ export class ArticleService {
         const searchCondition: Prisma.ArticleWhereInput = search
             ? {
                 OR: [
-                    { content: { title: { contains: search, mode: 'insensitive' } } },
-                    { content: { excerpt: { contains: search, mode: 'insensitive' } } },
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { excerpt: { contains: search, mode: 'insensitive' } },
                 ],
             }
             : {};
@@ -103,19 +132,48 @@ export class ArticleService {
         });
     }
 
-    async update(id: string, data: Prisma.ArticleUpdateInput): Promise<Article> {
-        const current = await this.findOne(id, ['content']) as Article & { content: ArticleContent };
+    async update(
+        id: string,
+        data: Prisma.ArticleUpdateInput & { contentBody?: any }
+    ): Promise<Article> {
+        const current = await this.findOne(id, ['content']) as Article & { content?: ArticleContent };
+
+        // Separate content body from article data
+        const { contentBody, ...articleData } = data;
+
+        // Check if content fields have changed
+        const contentChanged = articleData.title !== current.title ||
+            articleData.excerpt !== current.excerpt ||
+            articleData.image !== current.image ||
+            articleData.image_sm !== current.image_sm ||
+            (contentBody && current.content &&
+                JSON.stringify(contentBody) !== JSON.stringify(current.content.content));
+
+        // Create version if content changed
+        if (contentChanged && current.content) {
+            await this.prisma.articleContentVersion.create({
+                data: {
+                    articleId: id,
+                    title: current.title,
+                    excerpt: current.excerpt,
+                    image: current.image,
+                    image_sm: current.image_sm,
+                    content: current.content.content
+                }
+            });
+        }
+
+        // Update content if provided and changed
+        if (contentBody && current.contentId && contentChanged) {
+            await this.prisma.articleContent.update({
+                where: { id: current.contentId },
+                data: { content: contentBody }
+            });
+        }
 
         const update = await this.prisma.article.update({
             where: { id },
-            data: {
-                ...data,
-                ...(data.content && {
-                    versions: {
-                        create: current.content
-                    }
-                })
-            }
+            data: articleData
         });
 
         return update;
