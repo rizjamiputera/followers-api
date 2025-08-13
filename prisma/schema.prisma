@@ -149,6 +149,8 @@ model Article {
     visitors    Visit[]
 
     @@index([status, publishedAt])
+    @@index([authorId, status])
+    @@index([deleted, status, publishedAt])
     @@map("article")
 }
 

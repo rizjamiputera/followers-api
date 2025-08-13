@@ -255,6 +255,12 @@ CREATE UNIQUE INDEX "article_readStatId_key" ON "followers_dev"."article"("readS
 CREATE INDEX "article_status_publishedAt_idx" ON "followers_dev"."article"("status", "publishedAt");
 
 -- CreateIndex
+CREATE INDEX "article_authorId_status_idx" ON "followers_dev"."article"("authorId", "status");
+
+-- CreateIndex
+CREATE INDEX "article_deleted_status_publishedAt_idx" ON "followers_dev"."article"("deleted", "status", "publishedAt");
+
+-- CreateIndex
 CREATE INDEX "article_content_version_articleId_idx" ON "followers_dev"."article_content_version"("articleId");
 
 -- CreateIndex
