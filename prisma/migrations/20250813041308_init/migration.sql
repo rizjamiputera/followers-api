@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "followers_dev"."UserRole" AS ENUM ('SUPERADMIN', 'ADMIN', 'OPERATOR', 'USER');
+CREATE TYPE "followers_dev"."Role" AS ENUM ('SUPERADMIN', 'ADMIN', 'OPERATOR', 'USER');
 
 -- CreateEnum
 CREATE TYPE "followers_dev"."Permission" AS ENUM ('READ', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'PUBLISH');
@@ -23,7 +23,7 @@ CREATE TABLE "followers_dev"."user" (
     "email" VARCHAR(255) NOT NULL,
     "avatar" VARCHAR(255),
     "avatar_md" VARCHAR(255),
-    "role" "followers_dev"."UserRole" NOT NULL,
+    "role" "followers_dev"."Role" NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

@@ -38,10 +38,9 @@ import {
     UploadAvatarDoc,
 } from './users.doc';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
-import { Module, Permission, Prisma, User, UserRole } from '@prisma/client';
+import { Module, Permission, Prisma, Role, User } from '@prisma/client';
 import { UserFilterQueryDto } from './dto/user-filter.dto';
 import { Roles } from 'src/auth/guards/roles/roles.decorator';
-import { Role } from 'src/auth/guards/roles/role.enum';
 import { CreateUserDto } from './dto/user-create.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { ChangeUserPasswordDto } from './dto/user-change-password.dto';
@@ -71,19 +70,15 @@ export class UsersController {
     @Roles(Role.SUPERADMIN)
     @Post('superadmin')
     async createSuperadmin(
-        @Body(new ValidationPipe()) dt: CreateUserDto,
+        @Body(new ValidationPipe()) dataDto: CreateUserDto,
     ): Promise<User> {
-        const { warehouseId, ...dataDto } = dt;
         await this.authService.validateNewUser(dataDto);
 
-        const password = await bcrypt.hash(dt.password, 10);
+        const password = await bcrypt.hash(dataDto.password, 10);
 
         const dataUser: Prisma.UserCreateInput = {
             ...dataDto,
-            role: UserRole.SUPERADMIN,
-            ...(warehouseId && {
-                warehouse: { connect: { id: warehouseId } },
-            }),
+            role: Role.SUPERADMIN,
             password: {
                 create: {
                     password,
@@ -98,18 +93,14 @@ export class UsersController {
     @Roles(Role.SUPERADMIN, Role.ADMIN)
     @Post('admin')
     async createAdmin(
-        @Body(new ValidationPipe()) dt: CreateUserDto,
+        @Body(new ValidationPipe()) dataDto: CreateUserDto,
     ): Promise<User> {
-        const { warehouseId, ...dataDto } = dt;
         await this.authService.validateNewUser(dataDto);
-        const password = await bcrypt.hash(dt.password, 10);
+        const password = await bcrypt.hash(dataDto.password, 10);
 
         const dataUser: Prisma.UserCreateInput = {
             ...dataDto,
-            role: UserRole.ADMIN,
-            ...(warehouseId && {
-                warehouse: { connect: { id: warehouseId } },
-            }),
+            role: Role.ADMIN,
             password: {
                 create: {
                     password,
@@ -125,19 +116,14 @@ export class UsersController {
     @PermissionsRequired(Module.USER, Permission.CREATE)
     @Post('operator')
     async createManager(
-        @Body(new ValidationPipe()) dt: CreateUserOperatorDto,
+        @Body(new ValidationPipe()) dataDto: CreateUserOperatorDto,
     ): Promise<User> {
-        const { warehouseId, ...dataDto } = dt;
-
         await this.authService.validateNewUser(dataDto);
-        const password = await bcrypt.hash(dt.password, 10);
+        const password = await bcrypt.hash(dataDto.password, 10);
 
         const dataUser: Prisma.UserCreateInput = {
             ...dataDto,
-            role: UserRole.OPERATOR,
-            ...(warehouseId && {
-                warehouse: { connect: { id: warehouseId } },
-            }),
+            role: Role.OPERATOR,
             password: {
                 create: {
                     password,
@@ -259,37 +245,12 @@ export class UsersController {
             id,
             req.user.role,
         );
-        const { warehouseId, ...dt } = dataDto;
-
-        if (warehouseId === null) {
-            if (
-                [
-                    Role.SALES_MANAGER,
-                    Role.SALES_STAFF,
-                    Role.WAREHOUSE_MANAGER,
-                    Role.WAREHOUSE_STAFF,
-                ].includes(currentData.role as Role)
-            ) {
-                throw new BadRequestException(
-                    `User dengan role "${currentData.role.replaceAll('_', ' ')}" harus memiliki warehouse`,
-                );
-            }
-        }
-
-        const dataUser: Prisma.UserUpdateInput = {
-            ...dt,
-            ...(warehouseId !== undefined
-                ? warehouseId !== null && warehouseId !== ''
-                    ? { warehouse: { connect: { id: warehouseId } } }
-                    : { warehouse: { disconnect: true } }
-                : {}),
-        };
 
         return this.usersService.update(
             userId,
             req.user.role,
             id,
-            dataUser,
+            dataDto,
         );
     }
 
@@ -352,8 +313,8 @@ export class UsersController {
 
         const user: User = await this.usersService.findUnique(userId);
         if (
-            user.role == UserRole.SUPERADMIN ||
-            user.role == UserRole.ADMIN
+            user.role == Role.SUPERADMIN ||
+            user.role == Role.ADMIN
         ) {
             return;
         }

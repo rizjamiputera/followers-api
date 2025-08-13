@@ -1,13 +1,12 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
 import { ErrorLogService } from './error-log.service';
 import { Roles } from 'src/auth/guards/roles/roles.decorator';
-import { Role } from 'src/auth/guards/roles/role.enum';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Paginate } from 'src/app/interface/app.interface';
 import { PaginationIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { GetAllErrorLogsDoc, GetErorLogsDoc } from './error-log.doc';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
-import { ErrorLog } from '@prisma/client';
+import { ErrorLog, Role } from '@prisma/client';
 
 // @Controller('error-logs')
 @ApiBearerAuth()

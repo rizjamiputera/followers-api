@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { Prisma, User, UserRole } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import { Paginate } from 'src/app/interface/app.interface';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
@@ -25,7 +25,7 @@ export class UsersService {
     async findAll(
         pagination: PaginationDeletedIncludeQueryDto,
         filter: UserFilterQueryDto,
-        requester_role: UserRole,
+        requester_role: Role,
         includes: string[] = [],
     ): Promise<Paginate<User[]>> {
         const { page, limit, sortBy, order, deleted } = pagination;
@@ -42,8 +42,8 @@ export class UsersService {
                 { deleted },
                 role ? { role } : {},
                 ...(active !== undefined ? [{ active }] : []),
-                requester_role == UserRole.ADMIN
-                    ? { role: { not: UserRole.SUPERADMIN } }
+                requester_role == Role.ADMIN
+                    ? { role: { not: Role.SUPERADMIN } }
                     : {},
             ],
         };
@@ -72,7 +72,7 @@ export class UsersService {
 
     async update(
         updatedBy: string,
-        updateByRole: UserRole,
+        updateByRole: Role,
         id: string,
         data: Prisma.UserUpdateInput,
     ): Promise<User> {
@@ -101,7 +101,7 @@ export class UsersService {
 
     async remove(
         updatedBy: string,
-        deleteByRole: UserRole,
+        deleteByRole: Role,
         id: string,
     ): Promise<void> {
         const currentData = await this.findOne(id, deleteByRole);
@@ -132,7 +132,7 @@ export class UsersService {
 
     findOne(
         id: string,
-        requester_role: UserRole,
+        requester_role: Role,
         includes: string[] = [],
     ): Promise<User | null> {
         const include = getValidIncludes(VALID_INCLUDES, includes, false);
@@ -141,8 +141,8 @@ export class UsersService {
             where: {
                 AND: [
                     { id },
-                    requester_role == UserRole.ADMIN
-                        ? { role: { not: UserRole.SUPERADMIN } }
+                    requester_role == Role.ADMIN
+                        ? { role: { not: Role.SUPERADMIN } }
                         : {},
                 ],
             },

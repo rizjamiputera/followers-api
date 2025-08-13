@@ -6,7 +6,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Module, UserRole } from '@prisma/client';
+import { Module, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class PermissionsGuard implements CanActivate {
     constructor(
         private reflector: Reflector,
         private prisma: PrismaService,
-    ) {}
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const requiredPermissions = this.reflector.get<{
@@ -34,7 +34,7 @@ export class PermissionsGuard implements CanActivate {
         }
 
         // Allow superadmin and admin to access all modules
-        if ([UserRole.SUPERADMIN, UserRole.ADMIN].includes(user.role)) {
+        if ([Role.SUPERADMIN, Role.ADMIN].includes(user.role)) {
             return true;
         }
 

@@ -15,6 +15,8 @@ import {
     MaxFileSizeValidator,
     FileTypeValidator,
     Query,
+    HttpStatus,
+    Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -34,6 +36,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from 'src/app.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @ApiTags('Auth')
 @Controller({
@@ -59,42 +62,42 @@ export class AuthController {
         }
     }
 
-    // @Public()
-    // @HttpCode(HttpStatus.OK)
+    @Public()
+    @HttpCode(HttpStatus.OK)
     // @RegisterDoc()
-    // @Post('register')
-    // async register(
-    //     @Body(new ValidationPipe()) dt: RegisterDto,
-    //     @Res() res: Response,
-    // ) {
-    //     try {
-    //         // validate new user
-    //         await this.authService.validateNewUser(dt);
+    @Post('register')
+    async register(
+        @Body(new ValidationPipe()) dataDto: RegisterDto,
+        @Res() res,
+    ) {
+        try {
+            // validate new user
+            await this.authService.validateNewUser(dataDto);
 
-    //         // remove confirm password
-    //         delete dt.confirm_password;
+            const { password, confirm_password, ...data } = dataDto;
 
-    //         const dataUser: Prisma.UserCreateInput = {
-    //             ...dt,
-    //             password: {
-    //                 create: {
-    //                     password: dt.password,
-    //                 },
-    //             },
-    //         };
+            const dataUser: Prisma.UserCreateInput = {
+                ...data,
+                role: 'USER',
+                password: {
+                    create: {
+                        password
+                    },
+                },
+            };
 
-    //         await this.userService.create(dataUser);
-    //         // kirim kode aktivasi ke email
-    //         // await this.authService.sendActivation(user.email);
+            await this.userService.create(dataUser);
+            // kirim kode aktivasi ke email
+            // await this.authService.sendActivation(user.email);
 
-    //         res.status(HttpStatus.OK).json({
-    //             // message: 'Silahkan periksa email untuk verifikasi akun.',
-    //             message: 'Registrasi Berhasil, silahkan login.',
-    //         });
-    //     } catch (error) {
-    //         throw error;
-    //     }
-    // }
+            res.status(HttpStatus.OK).json({
+                // message: 'Silahkan periksa email untuk verifikasi akun.',
+                message: 'Registrasi Berhasil, silahkan login.',
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
 
     @GetProfileDoc()
     @ApiBearerAuth()

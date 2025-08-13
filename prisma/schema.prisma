@@ -14,7 +14,7 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-enum UserRole {
+enum Role {
     SUPERADMIN // everything
     ADMIN //manage all data, user dibawahnya
     OPERATOR // permission based
@@ -42,7 +42,7 @@ model User {
     email            String            @unique @db.VarChar(255)
     avatar           String?           @db.VarChar(255)
     avatar_md        String?           @db.VarChar(255)
-    role             UserRole
+    role             Role
     password         Password?
     auths            Auth[]
     active           Boolean           @default(true)

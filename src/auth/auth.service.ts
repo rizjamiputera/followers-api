@@ -9,7 +9,7 @@ import { LoginDto } from './dto/login.dto';
 import { PrismaService } from 'src/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as dayjs from 'dayjs';
-import { Prisma, User, UserRole } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { UsersService } from 'src/users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -32,6 +32,7 @@ export class AuthService {
             where: { email },
             include: { password: true, permissions: true },
         });
+
         if (!user)
             throw new UnauthorizedException('Email atau password salah.');
 
@@ -64,7 +65,7 @@ export class AuthService {
     async createToken(
         userId: string,
         email: string,
-        role: UserRole,
+        role: Role,
     ): Promise<Record<string, any>> {
         const access_token = (await this.jwtService.signAsync({
             sub: userId,

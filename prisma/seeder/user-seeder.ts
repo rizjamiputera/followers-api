@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 
-import { PrismaClient, UserRole } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 
 export async function UserSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: User');
@@ -42,7 +42,7 @@ export async function UserSeed(prisma: PrismaClient) {
     }
 
     // Create 5 operators
-    const roles: UserRole[] = ['OPERATOR', 'ADMIN'];
+    const roles: Role[] = ['OPERATOR', 'ADMIN'];
     roles.forEach(role => {
         for (let i = 1; i <= 5; i++) {
             promises.push(prisma.user.create({

@@ -9,11 +9,6 @@ import {
 } from 'class-validator';
 
 export class CreateUserDto {
-    @ApiProperty()
-    @IsString()
-    @IsOptional()
-    warehouseId: string;
-
     @ApiProperty({ description: 'User name', maxLength: 100 })
     @IsString()
     @Length(1, 100)

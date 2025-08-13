@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
@@ -11,12 +11,12 @@ export class UserFilterQueryDto {
 
     @ApiPropertyOptional({
         description: 'Filter by Role',
-        enum: UserRole,
-        enumName: 'UserRole',
+        enum: Role,
+        enumName: 'Role',
     })
     @IsOptional()
-    @IsEnum(UserRole)
-    role: UserRole;
+    @IsEnum(Role)
+    role: Role;
 
     @ApiPropertyOptional({
         description: 'Active status (true/false)',
