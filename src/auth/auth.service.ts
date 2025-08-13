@@ -7,10 +7,9 @@ import {
 } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { PrismaService } from 'src/prisma.service';
-import { User } from 'src/users/users.interface';
 import { JwtService } from '@nestjs/jwt';
 import * as dayjs from 'dayjs';
-import { Prisma, UserRole } from '@prisma/client';
+import { Prisma, User, UserRole } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { UsersService } from 'src/users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -29,7 +28,7 @@ export class AuthService {
 
     async login(dt: LoginDto) {
         const email: string = dt.email.toLowerCase();
-        const user: User = await this.prisma.user.findFirst({
+        const user = await this.prisma.user.findFirst({
             where: { email },
             include: { password: true, permissions: true },
         });
@@ -47,10 +46,10 @@ export class AuthService {
             throw new UnauthorizedException('Akun anda tidak aktif.');
         }
 
-        return this.loginProcess(email, user);
+        return this.loginProcess(user);
     }
 
-    async loginProcess(email: string, user: User) {
+    async loginProcess(user: any) {
         delete user.password;
         delete user.createdAt;
         delete user.updatedAt;

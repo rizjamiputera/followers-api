@@ -18,8 +18,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { Prisma } from '@prisma/client';
-import { User } from 'src/users/users.interface';
+import { Prisma, User } from '@prisma/client';
 import { UsersService } from 'src/users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from './auth.metadata';

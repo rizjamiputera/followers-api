@@ -20,7 +20,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { User } from './users.interface';
+// import { User } from './users.interface';
 import { Paginate } from 'src/app/interface/app.interface';
 import {
     ActivateUserDoc,
@@ -38,7 +38,7 @@ import {
     UploadAvatarDoc,
 } from './users.doc';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
-import { Module, Permission, Prisma, UserRole } from '@prisma/client';
+import { Module, Permission, Prisma, User, UserRole } from '@prisma/client';
 import { UserFilterQueryDto } from './dto/user-filter.dto';
 import { Roles } from 'src/auth/guards/roles/roles.decorator';
 import { Role } from 'src/auth/guards/roles/role.enum';
@@ -73,29 +73,25 @@ export class UsersController {
     async createSuperadmin(
         @Body(new ValidationPipe()) dt: CreateUserDto,
     ): Promise<User> {
-        try {
-            const { warehouseId, ...dataDto } = dt;
-            await this.authService.validateNewUser(dataDto);
+        const { warehouseId, ...dataDto } = dt;
+        await this.authService.validateNewUser(dataDto);
 
-            const password = await bcrypt.hash(dt.password, 10);
+        const password = await bcrypt.hash(dt.password, 10);
 
-            const dataUser: Prisma.UserCreateInput = {
-                ...dataDto,
-                role: UserRole.SUPERADMIN,
-                ...(warehouseId && {
-                    warehouse: { connect: { id: warehouseId } },
-                }),
-                password: {
-                    create: {
-                        password,
-                    },
+        const dataUser: Prisma.UserCreateInput = {
+            ...dataDto,
+            role: UserRole.SUPERADMIN,
+            ...(warehouseId && {
+                warehouse: { connect: { id: warehouseId } },
+            }),
+            password: {
+                create: {
+                    password,
                 },
-            };
+            },
+        };
 
-            return this.usersService.create(dataUser);
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.create(dataUser);
     }
 
     @CreateAdminDoc()
@@ -104,28 +100,24 @@ export class UsersController {
     async createAdmin(
         @Body(new ValidationPipe()) dt: CreateUserDto,
     ): Promise<User> {
-        try {
-            const { warehouseId, ...dataDto } = dt;
-            await this.authService.validateNewUser(dataDto);
-            const password = await bcrypt.hash(dt.password, 10);
+        const { warehouseId, ...dataDto } = dt;
+        await this.authService.validateNewUser(dataDto);
+        const password = await bcrypt.hash(dt.password, 10);
 
-            const dataUser: Prisma.UserCreateInput = {
-                ...dataDto,
-                role: UserRole.ADMIN,
-                ...(warehouseId && {
-                    warehouse: { connect: { id: warehouseId } },
-                }),
-                password: {
-                    create: {
-                        password,
-                    },
+        const dataUser: Prisma.UserCreateInput = {
+            ...dataDto,
+            role: UserRole.ADMIN,
+            ...(warehouseId && {
+                warehouse: { connect: { id: warehouseId } },
+            }),
+            password: {
+                create: {
+                    password,
                 },
-            };
+            },
+        };
 
-            return this.usersService.create(dataUser);
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.create(dataUser);
     }
 
     @CreateOperatorDoc()
@@ -135,29 +127,25 @@ export class UsersController {
     async createManager(
         @Body(new ValidationPipe()) dt: CreateUserOperatorDto,
     ): Promise<User> {
-        try {
-            const { warehouseId, ...dataDto } = dt;
+        const { warehouseId, ...dataDto } = dt;
 
-            await this.authService.validateNewUser(dataDto);
-            const password = await bcrypt.hash(dt.password, 10);
+        await this.authService.validateNewUser(dataDto);
+        const password = await bcrypt.hash(dt.password, 10);
 
-            const dataUser: Prisma.UserCreateInput = {
-                ...dataDto,
-                role: UserRole.OPERATOR,
-                ...(warehouseId && {
-                    warehouse: { connect: { id: warehouseId } },
-                }),
-                password: {
-                    create: {
-                        password,
-                    },
+        const dataUser: Prisma.UserCreateInput = {
+            ...dataDto,
+            role: UserRole.OPERATOR,
+            ...(warehouseId && {
+                warehouse: { connect: { id: warehouseId } },
+            }),
+            password: {
+                create: {
+                    password,
                 },
-            };
+            },
+        };
 
-            return this.usersService.create(dataUser);
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.create(dataUser);
     }
 
     @GetAllUserDoc()
@@ -171,16 +159,12 @@ export class UsersController {
         pagination: PaginationDeletedIncludeQueryDto,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ): Promise<Paginate<User[]>> {
-        try {
-            return this.usersService.findAll(
-                pagination,
-                filters,
-                req.user.role,
-                query.includes,
-            );
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.findAll(
+            pagination,
+            filters,
+            req.user.role,
+            query.includes,
+        );
     }
 
     @GetUserDoc()
@@ -191,11 +175,7 @@ export class UsersController {
         @Param('id') id: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        try {
-            return this.usersService.findOne(id, req.user.role, query.includes);
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.findOne(id, req.user.role, query.includes);
     }
 
     @ChangeUserPasswordDoc()
@@ -207,23 +187,19 @@ export class UsersController {
         @Param('id') id: string,
         @Body(new ValidationPipe()) data: ChangeUserPasswordDto,
     ) {
-        try {
-            const user = await this.usersService.findOne(id, req.user.role);
-            if (!user) {
-                throw new NotFoundException('User tidak ditemukan');
-            }
-
-            if (data.password != data.confirm_password)
-                throw new BadRequestException(
-                    'Konfirmasi password tidak sesuai',
-                );
-
-            const password = await bcrypt.hash(data.password, 10);
-
-            return this.usersService.change_password(id, password);
-        } catch (error) {
-            throw error;
+        const user = await this.usersService.findOne(id, req.user.role);
+        if (!user) {
+            throw new NotFoundException('User tidak ditemukan');
         }
+
+        if (data.password != data.confirm_password)
+            throw new BadRequestException(
+                'Konfirmasi password tidak sesuai',
+            );
+
+        const password = await bcrypt.hash(data.password, 10);
+
+        return this.usersService.change_password(id, password);
     }
 
     @UploadAvatarDoc()
@@ -277,48 +253,44 @@ export class UsersController {
         @Param('id') id: string,
         @Body(new ValidationPipe()) dataDto: UpdateUserDto,
     ) {
-        try {
-            const userId = req.user.id;
+        const userId = req.user.id;
 
-            const currentData = await this.usersService.findOne(
-                id,
-                req.user.role,
-            );
-            const { warehouseId, ...dt } = dataDto;
+        const currentData = await this.usersService.findOne(
+            id,
+            req.user.role,
+        );
+        const { warehouseId, ...dt } = dataDto;
 
-            if (warehouseId === null) {
-                if (
-                    [
-                        Role.SALES_MANAGER,
-                        Role.SALES_STAFF,
-                        Role.WAREHOUSE_MANAGER,
-                        Role.WAREHOUSE_STAFF,
-                    ].includes(currentData.role as Role)
-                ) {
-                    throw new BadRequestException(
-                        `User dengan role "${currentData.role.replaceAll('_', ' ')}" harus memiliki warehouse`,
-                    );
-                }
+        if (warehouseId === null) {
+            if (
+                [
+                    Role.SALES_MANAGER,
+                    Role.SALES_STAFF,
+                    Role.WAREHOUSE_MANAGER,
+                    Role.WAREHOUSE_STAFF,
+                ].includes(currentData.role as Role)
+            ) {
+                throw new BadRequestException(
+                    `User dengan role "${currentData.role.replaceAll('_', ' ')}" harus memiliki warehouse`,
+                );
             }
-
-            const dataUser: Prisma.UserUpdateInput = {
-                ...dt,
-                ...(warehouseId !== undefined
-                    ? warehouseId !== null && warehouseId !== ''
-                        ? { warehouse: { connect: { id: warehouseId } } }
-                        : { warehouse: { disconnect: true } }
-                    : {}),
-            };
-
-            return this.usersService.update(
-                userId,
-                req.user.role,
-                id,
-                dataUser,
-            );
-        } catch (error) {
-            throw error;
         }
+
+        const dataUser: Prisma.UserUpdateInput = {
+            ...dt,
+            ...(warehouseId !== undefined
+                ? warehouseId !== null && warehouseId !== ''
+                    ? { warehouse: { connect: { id: warehouseId } } }
+                    : { warehouse: { disconnect: true } }
+                : {}),
+        };
+
+        return this.usersService.update(
+            userId,
+            req.user.role,
+            id,
+            dataUser,
+        );
     }
 
     @ActivateUserDoc()
@@ -326,22 +298,18 @@ export class UsersController {
     @PermissionsRequired(Module.USER, Permission.EDIT)
     @Patch('activate/:id')
     activate(@Request() req: any, @Param('id') id: string) {
-        try {
-            const userId = req.user.id;
+        const userId = req.user.id;
 
-            const updateData: Prisma.UserUpdateInput = {
-                active: true,
-            };
+        const updateData: Prisma.UserUpdateInput = {
+            active: true,
+        };
 
-            return this.usersService.update(
-                userId,
-                req.user.role,
-                id,
-                updateData,
-            );
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.update(
+            userId,
+            req.user.role,
+            id,
+            updateData,
+        );
     }
 
     @DeactivateUserDoc()
@@ -349,22 +317,18 @@ export class UsersController {
     @PermissionsRequired(Module.USER, Permission.EDIT)
     @Patch('deactivate/:id')
     deactivate(@Request() req: any, @Param('id') id: string) {
-        try {
-            const userId = req.user.id;
+        const userId = req.user.id;
 
-            const updateData: Prisma.UserUpdateInput = {
-                active: false,
-            };
+        const updateData: Prisma.UserUpdateInput = {
+            active: false,
+        };
 
-            return this.usersService.update(
-                userId,
-                req.user.role,
-                id,
-                updateData,
-            );
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.update(
+            userId,
+            req.user.role,
+            id,
+            updateData,
+        );
     }
 
     @DeleteUserDoc()
@@ -372,13 +336,9 @@ export class UsersController {
     @PermissionsRequired(Module.USER, Permission.DELETE)
     @Delete(':id')
     remove(@Request() req: any, @Param('id') id: string) {
-        try {
-            const userId = req.user.id;
+        const userId = req.user.id;
 
-            return this.usersService.remove(userId, req.user.role, id);
-        } catch (error) {
-            throw error;
-        }
+        return this.usersService.remove(userId, req.user.role, id);
     }
 
     @AddUserPermissionDoc()
@@ -388,28 +348,24 @@ export class UsersController {
     async addPermission(
         @Body(new ValidationPipe()) dataDto: CreateUserPermissionDto,
     ): Promise<void> {
-        try {
-            const { userId, ...dt } = dataDto;
+        const { userId, ...dt } = dataDto;
 
-            const user: User = await this.usersService.findUnique(userId);
-            if (
-                user.role == UserRole.SUPERADMIN ||
-                user.role == UserRole.ADMIN
-            ) {
-                return;
-            }
-
-            const data: Prisma.UserPermissionCreateInput = {
-                ...dt,
-                user: { connect: { id: userId } },
-            };
-
-            await this.usersService.addPermission(data);
-
+        const user: User = await this.usersService.findUnique(userId);
+        if (
+            user.role == UserRole.SUPERADMIN ||
+            user.role == UserRole.ADMIN
+        ) {
             return;
-        } catch (error) {
-            throw error;
         }
+
+        const data: Prisma.UserPermissionCreateInput = {
+            ...dt,
+            user: { connect: { id: userId } },
+        };
+
+        await this.usersService.addPermission(data);
+
+        return;
     }
 
     @RemoveUserPermissionDoc()
@@ -417,15 +373,7 @@ export class UsersController {
     @HttpCode(204)
     @Delete('remove-permission/:id')
     async removePermission(@Param('id') id: string): Promise<void> {
-        try {
-            await this.usersService.removePermission(id);
-
-            return;
-        } catch (error) {
-            // throw error;
-
-            // always return 204
-            return;
-        }
+        await this.usersService.removePermission(id);
+        return;
     }
 }
