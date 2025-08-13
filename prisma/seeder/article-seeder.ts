@@ -33,7 +33,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
         'Design Patterns', 'Microservices', 'Docker', 'Kubernetes'
     ];
 
-    const tagPromises = tagNames.map(name => 
+    const tagPromises = tagNames.map(name =>
         prisma.tag.upsert({
             where: { slug: faker.helpers.slugify(name).toLowerCase() },
             update: {},
@@ -66,13 +66,15 @@ export async function ArticleSeed(prisma: PrismaClient) {
 
 
             const articlePromise = (async () => {
+                const image = faker.image.url({ width: 800, height: 600 })
                 // First create the article content
                 const articleContent = await prisma.articleContent.create({
                     data: {
                         title,
                         excerpt: faker.lorem.paragraph({ min: 1, max: 3 }),
                         content,
-                        featuredImage: faker.image.url({ width: 800, height: 600 })
+                        image,
+                        image_sm: image
                     }
                 });
 
@@ -135,7 +137,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
 
                 // Add random tags to the article (2-5 tags per article)
                 const selectedTags = faker.helpers.arrayElements(tags, { min: 2, max: 5 });
-                const tagPromises = selectedTags.map(tag => 
+                const tagPromises = selectedTags.map(tag =>
                     prisma.articleTag.create({
                         data: {
                             article: {

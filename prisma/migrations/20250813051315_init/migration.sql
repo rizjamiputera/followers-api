@@ -105,7 +105,8 @@ CREATE TABLE "followers_dev"."article_content" (
     "title" VARCHAR(255) NOT NULL,
     "excerpt" VARCHAR(500),
     "content" JSONB NOT NULL,
-    "featuredImage" VARCHAR(255),
+    "image" VARCHAR(255) NOT NULL,
+    "image_sm" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -118,7 +119,8 @@ CREATE TABLE "followers_dev"."article_content_version" (
     "title" VARCHAR(255) NOT NULL,
     "excerpt" VARCHAR(500),
     "content" JSONB NOT NULL,
-    "featuredImage" VARCHAR(255),
+    "image" VARCHAR(255) NOT NULL,
+    "image_sm" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "articleId" TEXT NOT NULL,
 
