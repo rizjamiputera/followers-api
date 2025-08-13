@@ -70,11 +70,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 // First create the article content
                 const articleContent = await prisma.articleContent.create({
                     data: {
-                        title,
-                        excerpt: faker.lorem.paragraph({ min: 1, max: 3 }),
                         content,
-                        image,
-                        image_sm: image
                     }
                 });
 
@@ -89,6 +85,10 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 // Then create the article with reference to content and readStat
                 const article = await prisma.article.create({
                     data: {
+                        title,
+                        excerpt: faker.lorem.paragraph({ min: 1, max: 3 }),
+                        image,
+                        image_sm: image,
                         slug: `${slug}-${faker.string.nanoid(6)}`, // Ensure uniqueness
                         content: {
                             connect: { id: articleContent.id }

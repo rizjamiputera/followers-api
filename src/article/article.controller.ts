@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, ValidationPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, ValidationPipe, Query, Request } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -19,8 +19,11 @@ export class ArticleController {
 
     @ApiBearerAuth()
     @Post()
-    create(@Body() createArticleDto: CreateArticleDto) {
-        // return this.articleService.create(createArticleDto);
+    create(
+        @Request() req: any,
+        @Body() createArticleDto: CreateArticleDto) {
+        const createdById = req.user.id;
+        return this.articleService.create(createdById, createArticleDto);
     }
 
     @ApiBearerAuth()
@@ -56,8 +59,13 @@ export class ArticleController {
 
     @ApiBearerAuth()
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
-        return this.articleService.update(id, updateArticleDto);
+    update(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body() updateArticleDto: UpdateArticleDto
+    ) {
+        const userId = req.user.id;
+        return this.articleService.update(userId, id, updateArticleDto);
     }
 
     @ApiBearerAuth()

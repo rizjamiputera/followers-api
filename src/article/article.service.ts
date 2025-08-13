@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Article, ArticleContent, ArticleStatus, Prisma } from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
@@ -13,7 +13,6 @@ interface CreateArticleInput {
     image: string;
     image_sm: string;
     slug: string;
-    authorId: string;
     contentBody: any;
     isFeatured?: boolean;
     status?: ArticleStatus;
@@ -28,19 +27,18 @@ export class ArticleService {
         private app: AppService,
     ) { }
 
-    async create(data: CreateArticleInput): Promise<Article> {
-        const { contentBody, authorId, ...articleData } = data;
+    async create(
+        authorId: string,
+        data: CreateArticleInput
+    ): Promise<Article> {
+        const { contentBody, ...articleData } = data;
 
         return this.prisma.article.create({
             data: {
                 ...articleData,
-                author: {
-                    connect: { id: authorId }
-                },
+                author: { connect: { id: authorId } },
                 content: {
-                    create: {
-                        content: contentBody
-                    }
+                    create: { content: contentBody }
                 },
                 readStat: {
                     create: {}
@@ -133,10 +131,15 @@ export class ArticleService {
     }
 
     async update(
+        changedBy: string,
         id: string,
         data: Prisma.ArticleUpdateInput & { contentBody?: any }
     ): Promise<Article> {
         const current = await this.findOne(id, ['content']) as Article & { content?: ArticleContent };
+
+        if (current.authorId !== changedBy) {
+            throw new ForbiddenException('Only the author can update this article');
+        }
 
         // Separate content body from article data
         const { contentBody, ...articleData } = data;
@@ -153,12 +156,13 @@ export class ArticleService {
         if (contentChanged && current.content) {
             await this.prisma.articleContentVersion.create({
                 data: {
-                    articleId: id,
+                    article: { connect: { id } },
                     title: current.title,
                     excerpt: current.excerpt,
                     image: current.image,
                     image_sm: current.image_sm,
-                    content: current.content.content
+                    content: current.content.content,
+                    createdAt: current.content.createdAt,
                 }
             });
         }

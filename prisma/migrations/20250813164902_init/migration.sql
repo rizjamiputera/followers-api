@@ -86,6 +86,10 @@ CREATE TABLE "followers_dev"."error-log" (
 CREATE TABLE "followers_dev"."article" (
     "id" TEXT NOT NULL,
     "slug" VARCHAR(255) NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "excerpt" VARCHAR(500),
+    "image" VARCHAR(255) NOT NULL,
+    "image_sm" VARCHAR(255) NOT NULL,
     "contentId" TEXT NOT NULL,
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "status" "followers_dev"."ArticleStatus" NOT NULL DEFAULT 'DRAFT',
@@ -102,11 +106,7 @@ CREATE TABLE "followers_dev"."article" (
 -- CreateTable
 CREATE TABLE "followers_dev"."article_content" (
     "id" TEXT NOT NULL,
-    "title" VARCHAR(255) NOT NULL,
-    "excerpt" VARCHAR(500),
     "content" JSONB NOT NULL,
-    "image" VARCHAR(255) NOT NULL,
-    "image_sm" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
