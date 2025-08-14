@@ -134,7 +134,6 @@ CREATE TABLE "followers_dev"."article_approval" (
     "approverId" TEXT NOT NULL,
     "status" "followers_dev"."ApprovalStatus" NOT NULL DEFAULT 'REJECTED',
     "note" TEXT,
-    "sequence" INTEGER NOT NULL DEFAULT 1,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "article_approval_pkey" PRIMARY KEY ("id")
@@ -264,7 +263,7 @@ CREATE INDEX "article_deleted_status_publishedAt_idx" ON "followers_dev"."articl
 CREATE INDEX "article_content_version_articleId_idx" ON "followers_dev"."article_content_version"("articleId");
 
 -- CreateIndex
-CREATE INDEX "article_approval_articleId_sequence_idx" ON "followers_dev"."article_approval"("articleId", "sequence");
+CREATE INDEX "article_approval_articleId_idx" ON "followers_dev"."article_approval"("articleId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "tag_name_key" ON "followers_dev"."tag"("name");

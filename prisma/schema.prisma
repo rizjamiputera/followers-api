@@ -191,10 +191,9 @@ model ArticleApproval {
     approverId String
     status     ApprovalStatus @default(REJECTED)
     note       String?        @db.Text
-    sequence   Int            @default(1) // for tracking approval order
     createdAt  DateTime       @default(now())
 
-    @@index([articleId, sequence])
+    @@index([articleId])
     @@map("article_approval")
 }
 

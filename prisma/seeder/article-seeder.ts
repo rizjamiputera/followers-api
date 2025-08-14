@@ -124,7 +124,6 @@ export async function ArticleSeed(prisma: PrismaClient) {
                                 },
                                 status: approvalStatus,
                                 note: faker.helpers.maybe(() => faker.lorem.paragraph(), { probability: 0.7 }),
-                                sequence: j + 1,
                                 createdAt: approvalCreatedAt,
                             }
                         })
