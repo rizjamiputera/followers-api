@@ -28,6 +28,7 @@ enum Permission {
     DELETE
     APPROVE
     PUBLISH
+    TAKE_DOWN
 }
 
 enum Module {
@@ -116,14 +117,17 @@ model ErrorLog {
 // ARTICLES
 enum ArticleStatus {
     DRAFT
-    PENDING_REVIEW
+    ON_REVIEW
     REJECTED
+    APPROVED
     PUBLISHED
+    TAKE_DOWN
 }
 
 enum ApprovalStatus {
-    APPROVED
     REJECTED
+    APPROVED
+    TAKE_DOWN
 }
 
 model Article {

@@ -56,7 +56,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
             const title = faker.lorem.sentence({ min: 4, max: 8 });
             const slug = faker.helpers.slugify(title).toLowerCase();
             const content = generateStructuredContent();
-            const status = faker.helpers.arrayElement<ArticleStatus>(['DRAFT', 'PENDING_REVIEW', 'PUBLISHED']);
+            const status = faker.helpers.arrayElement<ArticleStatus>(['DRAFT', 'ON_REVIEW', 'PUBLISHED']);
 
             // Random schedule and publish dates
             // const scheduledAt = faker.helpers.maybe(() => faker.date.future(), { probability: 0.6 });

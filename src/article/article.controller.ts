@@ -115,7 +115,7 @@ export class ArticleController {
     @Post('publish/:id')
     @HttpCode(204)
     approve(
-        @Request() req: any, 
+        @Request() req: any,
         @Param('id') id: string,
         @Body() approveArticleDto: ApproveArticleDto
     ) {
@@ -132,6 +132,18 @@ export class ArticleController {
         @Body() rejectArticleDto: RejectArticleDto,
     ) {
         const { note } = rejectArticleDto;
-        return this.articleService.reject(req.user.id, id, note);
+        return this.articleService.reject_or_takedown(req.user.id, id, 'REJECTED', note);
+    }
+
+    @ApiBearerAuth()
+    @Post('take-down/:id')
+    @HttpCode(204)
+    take_down(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body() rejectArticleDto: RejectArticleDto,
+    ) {
+        const { note } = rejectArticleDto;
+        return this.articleService.reject_or_takedown(req.user.id, id, 'TAKE_DOWN', note);
     }
 }
