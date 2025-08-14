@@ -34,9 +34,9 @@ import {
 } from './auth.doc';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from 'src/app.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateUserDto } from 'src/user/dto/user-update.dto';
 
 @ApiTags('Auth')
 @Controller({
