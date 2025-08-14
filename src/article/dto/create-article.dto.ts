@@ -13,16 +13,6 @@ export class CreateArticleDto {
     @IsString()
     excerpt?: string;
 
-    @ApiProperty({ description: 'Article main image' })
-    @IsNotEmpty()
-    @IsString()
-    image: string;
-
-    @ApiProperty({ description: 'Article small image' })
-    @IsNotEmpty()
-    @IsString()
-    image_sm: string;
-
     @ApiProperty({ description: 'Article slug' })
     @IsNotEmpty()
     @IsString()
@@ -37,7 +27,7 @@ export class CreateArticleDto {
     @IsBoolean()
     isFeatured?: boolean;
 
-    @ApiPropertyOptional({ 
+    @ApiPropertyOptional({
         description: 'Article status',
         enum: ArticleStatus,
         enumName: 'ArticleStatus'

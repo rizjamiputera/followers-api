@@ -1,22 +1,11 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { Article, ArticleContent, ArticleStatus, Prisma } from '@prisma/client';
+import { ApprovalStatus, Article, ArticleContent, ArticleStatus, Prisma } from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Paginate } from 'src/app/interface/app.interface';
 import { PrismaService } from 'src/prisma.service';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
-
-interface CreateArticleInput {
-    title: string;
-    excerpt?: string;
-    image: string;
-    image_sm: string;
-    slug: string;
-    contentBody: any;
-    isFeatured?: boolean;
-    status?: ArticleStatus;
-}
 
 const VALID_INCLUDES = ['content', 'tags', 'comments', 'comments.replies', 'comments.reactions', 'reactions', 'versions', 'author'];
 
@@ -28,23 +17,9 @@ export class ArticleService {
     ) { }
 
     async create(
-        authorId: string,
-        data: CreateArticleInput
+        data: Prisma.ArticleCreateInput
     ): Promise<Article> {
-        const { contentBody, ...articleData } = data;
-
-        return this.prisma.article.create({
-            data: {
-                ...articleData,
-                author: { connect: { id: authorId } },
-                content: {
-                    create: { content: contentBody }
-                },
-                readStat: {
-                    create: {}
-                }
-            }
-        });
+        return this.prisma.article.create({ data });
     }
 
     async findAll(
@@ -189,6 +164,49 @@ export class ArticleService {
         await this.prisma.article.update({
             where: { id },
             data: { deleted: true }
+        });
+
+        return;
+    }
+
+    async approve(approveBy: string, id: string): Promise<void> {
+        await this.findOne(id);
+
+        await this.prisma.article.update({
+            where: { id },
+            data: {
+                status: ArticleStatus.PUBLISHED,
+                approvals: {
+                    create: {
+                        status: ApprovalStatus.APPROVED,
+                        approver: {
+                            connect: { id: approveBy }
+                        }
+                    }
+                }
+            }
+        });
+
+        return;
+    }
+
+    async reject(rejectBy: string, id: string, note?: string): Promise<void> {
+        await this.findOne(id);
+
+        await this.prisma.article.update({
+            where: { id },
+            data: {
+                status: ArticleStatus.REJECTED,
+                approvals: {
+                    create: {
+                        status: ApprovalStatus.REJECTED,
+                        note,
+                        approver: {
+                            connect: { id: rejectBy },
+                        }
+                    }
+                }
+            }
         });
 
         return;
