@@ -36,53 +36,53 @@ export class AppService {
         file: Express.Multer.File,
         filepath: string,
     ) {
+        // Ensure the directory exists before writing the file
+        const dir = path.dirname(filepath);
+        await fs.mkdir(dir, { recursive: true });
+
         // Get image metadata (width, height)
         const metadata = await sharp(file.buffer).metadata();
 
         // Skip resizing if the original image width is smaller than the target size
         if (metadata.width && metadata.width < size) {
-            // Skipping resize: Original width is smaller`
-            await fs.writeFile(filepath, file.buffer); // Save original image
+            // Save original image as webp
+            const webpBuffer = await sharp(file.buffer)
+                .webp({ quality: 85 })
+                .toBuffer();
+            await fs.writeFile(filepath, webpBuffer);
             return;
         }
 
         const resizedBuffer = await sharp(file.buffer, { animated: true })
             .resize(size)
+            .webp({ quality: 85 })
             .toBuffer();
 
-        // Ensure the directory exists before writing the file
-        const dir = path.dirname(filepath);
-        await fs.mkdir(dir, { recursive: true });
-
         // Save the resized image to disk
-        fs.writeFile(filepath, resizedBuffer);
+        await fs.writeFile(filepath, resizedBuffer);
     }
 
     async save_image(
-        avatar: Express.Multer.File,
-        path_to_save: string = '/',
+        file: Express.Multer.File,
+        path_to_save: string = '',
         size: number = 1200,
     ): Promise<string> {
-        const ext = this.getFileExtention(avatar);
         const suffix = this.getFileSuffix();
-        const filename = `${suffix}.${ext}`;
+        const filename = `${suffix}.webp`;
         const filepath = path.join(`./public${path_to_save}/${filename}`);
         try {
-            await this.resizeImage(size, avatar, filepath);
-
+            await this.resizeImage(size, file, filepath);
             return `${path_to_save}/${filename}`;
         } catch (error) {
             this.removeFile(filepath);
         }
     }
     async save_images(
-        avatar: Express.Multer.File,
+        file: Express.Multer.File,
         path_to_save: string = '',
     ): Promise<SavedImage> {
-        const ext = this.getFileExtention(avatar);
         const suffix = this.getFileSuffix();
         try {
-            // resize images to 600, 900, 1200
             const sizes = [
                 { key: 'md', size: 900 },
                 { key: 'lg', size: 1200 },
@@ -91,21 +91,21 @@ export class AppService {
             await Promise.all(
                 sizes.map(async (s) => {
                     const { key, size } = s;
-                    const filename = `${suffix}_${key}.${ext}`;
+                    const filename = `${suffix}_${key}.webp`;
                     const filepath = path.join(
                         `./public${path_to_save}/${filename}`,
                     );
-                    await this.resizeImage(size, avatar, filepath);
+                    await this.resizeImage(size, file, filepath);
                 }),
             );
 
             return {
-                large: `${path_to_save}/${suffix}_lg.${ext}`,
-                medium: `${path_to_save}/${suffix}_md.${ext}`,
+                large: `${path_to_save}/${suffix}_lg.webp`,
+                medium: `${path_to_save}/${suffix}_md.webp`,
             };
         } catch (error) {
-            this.removeFile(`./public${path_to_save}/${suffix}_lg.${ext}`);
-            this.removeFile(`./public${path_to_save}/${suffix}_md.${ext}`);
+            this.removeFile(`./public${path_to_save}/${suffix}_lg.webp`);
+            this.removeFile(`./public${path_to_save}/${suffix}_md.webp`);
         }
     }
 
