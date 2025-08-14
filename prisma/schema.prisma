@@ -26,9 +26,8 @@ enum Permission {
     CREATE
     EDIT
     DELETE
-    APPROVE
-    PUBLISH
-    TAKE_DOWN
+    APPROVE // can approve article
+    PUBLISH // can publish or take down article
 }
 
 enum Module {

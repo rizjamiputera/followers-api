@@ -93,6 +93,20 @@ export class ArticleService {
         };
     }
 
+    async read(id: string, includes: string[] = [],): Promise<Article> {
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
+
+        return this.prisma.article.findUniqueOrThrow({
+            where: {
+                id,
+                status: ArticleStatus.PUBLISHED,
+                publishedAt: { lte: new Date() },
+                deleted: false
+            },
+            include
+        });
+    }
+
     async findOne(id: string, includes: string[] = [],): Promise<Article> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 

@@ -3,7 +3,7 @@ import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
-import { ApprovalStatus, Article, ArticleStatus, Prisma } from '@prisma/client';
+import { ApprovalStatus, Article, ArticleStatus, Module, Permission, Prisma } from '@prisma/client';
 import { Paginate } from 'src/app/interface/app.interface';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
 import { Public } from 'src/auth/auth.metadata';
@@ -13,6 +13,8 @@ import { AppService } from 'src/app.service';
 import { RejectArticleDto } from './dto/reject-article.dto';
 import { ApproveArticleDto } from './dto/approve-article.dto';
 import { PublishArticleDto } from './dto/publish-article.dto';
+import { PermissionsRequired } from 'src/auth/guards/permissions/permission.decorator';
+import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 
 @ApiTags('Article')
 @Controller({
@@ -25,6 +27,7 @@ export class ArticleController {
         private readonly appService: AppService,
     ) { }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
     @ApiBearerAuth()
     @Post()
     @UseInterceptors(FileInterceptor('image'))
@@ -64,6 +67,7 @@ export class ArticleController {
         return this.articleService.create(data);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.READ)
     @ApiBearerAuth()
     // @PermissionsRequired(Module.DRIVERS, Permission.READ)
     @Get()
@@ -89,12 +93,26 @@ export class ArticleController {
         });
     }
 
-    @ApiBearerAuth()
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.articleService.findOne(id);
+    @Public()
+    @Get('read/:id')
+    read(
+        @Param('id') id: string,
+        @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
+    ) {
+        return this.articleService.read(id, query.includes);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.READ)
+    @ApiBearerAuth()
+    @Get(':id')
+    findOne(
+        @Param('id') id: string,
+        @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
+    ) {
+        return this.articleService.findOne(id, query.includes);
+    }
+
+    @PermissionsRequired(Module.ARTICLE, Permission.EDIT)
     @ApiBearerAuth()
     @Patch(':id')
     update(
@@ -105,6 +123,7 @@ export class ArticleController {
         return this.articleService.update(req.user.id, id, updateArticleDto);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.DELETE)
     @ApiBearerAuth()
     @Delete(':id')
     @HttpCode(204)
@@ -112,6 +131,7 @@ export class ArticleController {
         return this.articleService.remove(id);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.PUBLISH)
     @ApiBearerAuth()
     @Post('publish/:id')
     @HttpCode(204)
@@ -140,6 +160,7 @@ export class ArticleController {
         return this.articleService.updateStatus(id, dataArticle);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
     @ApiBearerAuth()
     @Post('approve/:id')
     @HttpCode(204)
@@ -164,6 +185,7 @@ export class ArticleController {
         return this.articleService.updateStatus(id, dataArticle, dataApproval);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
     @ApiBearerAuth()
     @Post('reject/:id')
     @HttpCode(204)
@@ -188,6 +210,7 @@ export class ArticleController {
         return this.articleService.updateStatus(id, dataArticle, dataApproval);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.PUBLISH)
     @ApiBearerAuth()
     @Post('take-down/:id')
     @HttpCode(204)

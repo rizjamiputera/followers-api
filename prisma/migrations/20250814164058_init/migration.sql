@@ -2,7 +2,7 @@
 CREATE TYPE "followers_dev"."Role" AS ENUM ('SUPERADMIN', 'ADMIN', 'OPERATOR', 'USER');
 
 -- CreateEnum
-CREATE TYPE "followers_dev"."Permission" AS ENUM ('READ', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'PUBLISH', 'TAKE_DOWN');
+CREATE TYPE "followers_dev"."Permission" AS ENUM ('READ', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'PUBLISH');
 
 -- CreateEnum
 CREATE TYPE "followers_dev"."Module" AS ENUM ('ARTICLE', 'USER', 'COMMENT');
