@@ -169,44 +169,18 @@ export class ArticleService {
         return;
     }
 
-    async approve(approveBy: string, id: string, publishedAt?: Date): Promise<void> {
+    async updateStatus(id: string, dataDto: Prisma.ArticleUpdateInput, approvalDto?: Prisma.ArticleApprovalCreateInput): Promise<void> {
         await this.findOne(id);
 
         await this.prisma.article.update({
             where: { id },
             data: {
-                status: ArticleStatus.PUBLISHED,
-                ...(publishedAt && { publishedAt: publishedAt }),
-                approvals: {
-                    create: {
-                        status: ApprovalStatus.APPROVED,
-                        approver: {
-                            connect: { id: approveBy }
-                        }
+                ...dataDto,
+                ...(approvalDto && {
+                    approvals: {
+                        create: approvalDto
                     }
-                }
-            }
-        });
-
-        return;
-    }
-
-    async reject(rejectBy: string, id: string, note?: string): Promise<void> {
-        await this.findOne(id);
-
-        await this.prisma.article.update({
-            where: { id },
-            data: {
-                status: ArticleStatus.REJECTED,
-                approvals: {
-                    create: {
-                        status: ApprovalStatus.REJECTED,
-                        note,
-                        approver: {
-                            connect: { id: rejectBy },
-                        }
-                    }
-                }
+                })
             }
         });
 

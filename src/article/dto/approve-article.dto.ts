@@ -1,9 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsDateString } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { PublishArticleDto } from './publish-article.dto';
 
-export class ApproveArticleDto {
-    @ApiProperty({ description: 'Publish date' })
-    @IsOptional()
-    @IsDateString()
-    publishedAt?: string;
+export class ApproveArticleDto extends PartialType(PublishArticleDto) {
 }
