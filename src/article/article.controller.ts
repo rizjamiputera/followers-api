@@ -11,6 +11,7 @@ import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from 'src/app.service';
 import { RejectArticleDto } from './dto/reject-article.dto';
+import { ApproveArticleDto } from './dto/approve-article.dto';
 
 @ApiTags('Article')
 @Controller({
@@ -113,8 +114,13 @@ export class ArticleController {
     @ApiBearerAuth()
     @Post('publish/:id')
     @HttpCode(204)
-    approve(@Request() req: any, @Param('id') id: string) {
-        return this.articleService.approve(req.user.id, id);
+    approve(
+        @Request() req: any, 
+        @Param('id') id: string,
+        @Body() approveArticleDto: ApproveArticleDto
+    ) {
+        const publishedAt = approveArticleDto.publishedAt ? new Date(approveArticleDto.publishedAt) : undefined;
+        return this.articleService.approve(req.user.id, id, publishedAt);
     }
 
     @ApiBearerAuth()

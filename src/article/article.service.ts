@@ -169,13 +169,14 @@ export class ArticleService {
         return;
     }
 
-    async approve(approveBy: string, id: string): Promise<void> {
+    async approve(approveBy: string, id: string, publishedAt?: Date): Promise<void> {
         await this.findOne(id);
 
         await this.prisma.article.update({
             where: { id },
             data: {
                 status: ArticleStatus.PUBLISHED,
+                ...(publishedAt && { publishedAt: publishedAt }),
                 approvals: {
                     create: {
                         status: ApprovalStatus.APPROVED,
