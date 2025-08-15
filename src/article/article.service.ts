@@ -16,6 +16,17 @@ export class ArticleService {
         private app: AppService,
     ) { }
 
+    async is_slug_available(slug: string) {
+        const exist = await this.prisma.article.findUniqueOrThrow({
+            where: {
+                slug,
+            },
+            select: { id: true }
+        });
+
+        return !exist;
+    }
+
     async create(
         data: Prisma.ArticleCreateInput & { tags?: string[] }
     ): Promise<Article> {
