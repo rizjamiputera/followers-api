@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { Comment, Prisma } from '@prisma/client';
+import { Comment, Prisma, ReactionType } from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Paginate } from 'src/app/interface/app.interface';
@@ -112,6 +112,23 @@ export class CommentService {
         await this.prisma.comment.update({
             where: { id },
             data: { deleted: true }
+        });
+
+        return;
+    }
+
+    async react(userId: string, commentId: string, type: ReactionType): Promise<void> {
+        const data: Prisma.CommentReactionCreateInput = {
+            type,
+            comment: { connect: { id: commentId } },
+            user: { connect: { id: userId } }
+        }
+        await this.prisma.commentReaction.upsert({
+            where: {
+                commentId_userId: { commentId, userId },
+            },
+            update: data,
+            create: data
         });
 
         return;

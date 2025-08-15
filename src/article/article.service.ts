@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { Article, ArticleContent, ArticleStatus, Prisma, Tag } from '@prisma/client';
+import { Article, ArticleContent, ArticleStatus, Prisma, ReactionType, Tag } from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
@@ -255,5 +255,22 @@ export class ArticleService {
 
         return Promise.all(tagPromises);
 
+    }
+
+    async react(userId: string, articleId: string, type: ReactionType): Promise<void> {
+        const data: Prisma.ArticleReactionCreateInput = {
+            type,
+            article: { connect: { id: articleId } },
+            user: { connect: { id: userId } }
+        }
+        await this.prisma.articleReaction.upsert({
+            where: {
+                articleId_userId: { articleId, userId },
+            },
+            update: data,
+            create: data
+        });
+
+        return;
     }
 }

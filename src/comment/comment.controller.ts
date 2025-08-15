@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, HttpCode } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -8,6 +8,7 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import { Public } from 'src/auth/auth.metadata';
 import { FilterArticleQueryDto } from 'src/article/dto/filter-article.dto';
 import { FilterCommentQueryDto } from './dto/filter-comment.dto';
+import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
 
 @ApiTags('Comment')
 @Controller({
@@ -64,6 +65,21 @@ export class CommentController {
 
     @Delete(':id')
     remove(@Param('id') id: string) {
+        // TODO only admin / superadmin or author can delete
         return this.commentService.remove(id);
+    }
+
+    // FOR ERVERYONE
+    @ApiBearerAuth()
+    @Post('react/:id')
+    @HttpCode(204)
+    react(
+        @Request() req: any,
+        @Param('id') commentId: string,
+        @Body() reaction: ReactionQueryDto,
+    ) {
+        const { type } = reaction;
+
+        return this.commentService.react(req.user.id, commentId, type);
     }
 }

@@ -15,6 +15,7 @@ import { ApproveArticleDto } from './dto/approve-article.dto';
 import { PublishArticleDto } from './dto/publish-article.dto';
 import { PermissionsRequired } from 'src/auth/guards/permissions/permission.decorator';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
+import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
 
 @ApiTags('Article')
 @Controller({
@@ -234,5 +235,19 @@ export class ArticleController {
         }
 
         return this.articleService.updateStatus(id, dataArticle, dataApproval);
+    }
+
+    // FOR ERVERYONE
+    @ApiBearerAuth()
+    @Post('react/:id')
+    @HttpCode(204)
+    react(
+        @Request() req: any,
+        @Param('id') articleId: string,
+        @Body() reaction: ReactionQueryDto,
+    ) {
+        const { type } = reaction;
+
+        return this.articleService.react(req.user.id, articleId, type);
     }
 }
