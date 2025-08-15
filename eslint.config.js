@@ -47,5 +47,7 @@ module.exports = defineConfig([{
         "@typescript-eslint/no-explicit-any": "off",
         "indent": "off",
         "@typescript-eslint/indent": "off",
+        // "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
     },
 }, globalIgnores(["**/.eslintrc.js"])]);

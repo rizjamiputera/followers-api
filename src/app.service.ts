@@ -9,7 +9,7 @@ export class AppService {
     async createPath(path: string) {
         try {
             await fs.access(path);
-        } catch (error) {
+        } catch (_e) {
             await fs.mkdir(path);
         }
     }
@@ -20,7 +20,7 @@ export class AppService {
             if (file.includes('dummy')) return;
 
             await fs.rm('./public/' + file);
-        } catch (error) { }
+        } catch (_e) { }
     }
 
     getFileExtention(file: Express.Multer.File): string {
@@ -73,7 +73,7 @@ export class AppService {
         try {
             await this.resizeImage(size, file, filepath);
             return `${path_to_save}/${filename}`;
-        } catch (error) {
+        } catch (_e) {
             this.removeFile(filepath);
         }
     }
@@ -103,7 +103,7 @@ export class AppService {
                 large: `${path_to_save}/${suffix}_lg.webp`,
                 medium: `${path_to_save}/${suffix}_md.webp`,
             };
-        } catch (error) {
+        } catch (_e) {
             this.removeFile(`./public${path_to_save}/${suffix}_lg.webp`);
             this.removeFile(`./public${path_to_save}/${suffix}_md.webp`);
         }

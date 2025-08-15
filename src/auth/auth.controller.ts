@@ -74,7 +74,7 @@ export class AuthController {
             // validate new user
             await this.authService.validateNewUser(dataDto);
 
-            const { password, confirm_password, ...data } = dataDto;
+            const { password, confirm_password: _confirm_password, ...data } = dataDto;
 
             const dataUser: Prisma.UserCreateInput = {
                 ...data,
