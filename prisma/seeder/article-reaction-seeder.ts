@@ -89,6 +89,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                     }
                 }).then(async (comment) => {
                     // Create replies to some comments (40% chance, 1-5 replies each)
+                    // All replies point directly to the top-level comment (2-level only)
                     if (faker.datatype.boolean(0.4)) {
                         const replyCount = faker.number.int({ min: 1, max: 5 });
                         const replyPromises = [];
@@ -99,6 +100,12 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                 from: comment.createdAt,
                                 to: new Date()
                             });
+
+                            // 30% chance to mention someone (simulating reply to another reply)
+                            const shouldMention = faker.datatype.boolean(0.7);
+                            const mentionedUser = shouldMention
+                                ? faker.helpers.arrayElement(users.filter(u => u.id !== replyUser.id))
+                                : null;
 
                             replyPromises.push(
                                 prisma.comment.create({
@@ -112,7 +119,10 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                         parent: {
                                             connect: { id: comment.id }
                                         },
-                                        content: generateReplyContent(),
+                                        mentioned: mentionedUser ? {
+                                            connect: { id: mentionedUser.id }
+                                        } : undefined,
+                                        content: generateReplyContent(mentionedUser?.name),
                                         isEdited: faker.datatype.boolean(0.05), // 5% chance of being edited
                                         createdAt: replyCreatedAt,
                                         updatedAt: faker.datatype.boolean(0.05)
@@ -227,7 +237,7 @@ function generateCommentContent(): string {
     return faker.helpers.arrayElement(commentTypes)();
 }
 
-function generateReplyContent(): string {
+function generateReplyContent(mentionedName?: string): string {
     const replyTypes = [
         // Agreements
         () => `I agree! ${faker.lorem.sentence()}`,
@@ -240,7 +250,6 @@ function generateReplyContent(): string {
         () => `Another thing is ${faker.lorem.sentence()}`,
 
         // Answers
-        () => `@${faker.person.firstName()}, ${faker.lorem.sentence()}`,
         () => `Good question! ${faker.lorem.sentence()}`,
         () => `Here's what I think: ${faker.lorem.sentence()}`,
 
@@ -251,5 +260,12 @@ function generateReplyContent(): string {
         () => faker.lorem.sentence()
     ];
 
-    return faker.helpers.arrayElement(replyTypes)();
+    // If mentioning someone, add @ mention to the content
+    const baseContent = faker.helpers.arrayElement(replyTypes)();
+
+    if (mentionedName) {
+        return `@${mentionedName} ${baseContent}`;
+    }
+
+    return baseContent;
 }
