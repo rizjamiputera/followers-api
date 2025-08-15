@@ -164,7 +164,7 @@ CREATE TABLE "followers_dev"."article_reaction" (
     "id" TEXT NOT NULL,
     "articleId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
+    "type" "followers_dev"."ReactionType" NOT NULL DEFAULT 'like',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "article_reaction_pkey" PRIMARY KEY ("id")
@@ -191,7 +191,7 @@ CREATE TABLE "followers_dev"."comment_reaction" (
     "id" TEXT NOT NULL,
     "commentId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "type" TEXT NOT NULL DEFAULT 'loved',
+    "type" "followers_dev"."ReactionType" NOT NULL DEFAULT 'like',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "comment_reaction_pkey" PRIMARY KEY ("id")

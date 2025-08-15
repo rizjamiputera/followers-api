@@ -224,15 +224,15 @@ model ArticleTag {
 }
 
 model ArticleReaction {
-    id        String   @id @default(uuid())
-    article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    id        String       @id @default(uuid())
+    article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
     articleId String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId    String
     // Instead of enum LIKE/DISLIKE, make it string for future emojis
     // Example: "like", "dislike", "love", "clap"
-    type      String
-    createdAt DateTime @default(now())
+    type      ReactionType @default(like) // Always "like" for now
+    createdAt DateTime     @default(now())
 
     @@unique([articleId, userId]) // one reaction per user per article
     @@map("article_reaction")
@@ -270,13 +270,13 @@ model Comment {
 }
 
 model CommentReaction {
-    id        String   @id @default(uuid())
-    comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+    id        String       @id @default(uuid())
+    comment   Comment      @relation(fields: [commentId], references: [id], onDelete: Cascade)
     commentId String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId    String
-    type      String   @default("loved") // Always "loved" for now
-    createdAt DateTime @default(now())
+    type      ReactionType @default(like) // Always "like" for now
+    createdAt DateTime     @default(now())
 
     @@unique([commentId, userId]) // one reaction per user per comment
     @@map("comment_reaction")

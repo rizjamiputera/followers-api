@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { PrismaClient, User, Article } from "@prisma/client";
+import { PrismaClient, User, Article, ReactionType } from "@prisma/client";
 
 export async function ArticleReactionSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: Article Reactions & Comments');
@@ -24,7 +24,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
         return;
     }
 
-    const reactionTypes = ['like', 'dislike', 'love', 'clap'];
+    const reactionTypes: ReactionType[] = ['like', 'dislike', 'love', 'clap'];
     const reactionPromises = [];
     const commentPromises = [];
 
@@ -144,7 +144,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                                     user: {
                                                         connect: { id: lovingUser.id }
                                                     },
-                                                    type: 'loved',
+                                                    type: faker.helpers.arrayElement(reactionTypes),
                                                     createdAt: faker.date.between({
                                                         from: reply.createdAt,
                                                         to: new Date()
@@ -178,7 +178,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                     user: {
                                         connect: { id: lovingUser.id }
                                     },
-                                    type: 'loved',
+                                    type: faker.helpers.arrayElement(reactionTypes),
                                     createdAt: faker.date.between({
                                         from: comment.createdAt,
                                         to: new Date()
