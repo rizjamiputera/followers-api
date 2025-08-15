@@ -35,7 +35,7 @@ export class ArticleController {
     @ApiConsumes('multipart/form-data')
     async create(
         @Request() req: any,
-        @Body() createArticleDto: CreateArticleDto,
+        @Body(new ValidationPipe()) createArticleDto: CreateArticleDto,
         @UploadedFile(
             new ParseFilePipe({
                 validators: [
@@ -74,9 +74,8 @@ export class ArticleController {
     // @PermissionsRequired(Module.DRIVERS, Permission.READ)
     @Get()
     findAll(
-        @Query(new ValidationPipe({ transform: true }))
-        pagination: PaginationDeletedIncludeQueryDto,
-        filter: FilterArticleQueryDto,
+        @Query(new ValidationPipe({ transform: true })) pagination: PaginationDeletedIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true })) filter: FilterArticleQueryDto,
     ): Promise<Paginate<Article[]>> {
         return this.articleService.findAll(pagination, filter);
     }
@@ -84,9 +83,8 @@ export class ArticleController {
     @Public()
     @Get(':published')
     published(
-        @Query(new ValidationPipe({ transform: true }))
-        pagination: PaginationDeletedIncludeQueryDto,
-        filter: FilterArticleQueryDto,
+        @Query(new ValidationPipe({ transform: true })) pagination: PaginationDeletedIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true })) filter: FilterArticleQueryDto,
     ): Promise<Paginate<Article[]>> {
         return this.articleService.findAll(pagination, {
             ...filter,
@@ -120,7 +118,7 @@ export class ArticleController {
     update(
         @Request() req: any,
         @Param('id') id: string,
-        @Body() updateArticleDto: UpdateArticleDto
+        @Body(new ValidationPipe()) updateArticleDto: UpdateArticleDto
     ) {
         return this.articleService.update(req.user.id, id, updateArticleDto);
     }
@@ -140,7 +138,7 @@ export class ArticleController {
     async publish(
         @Request() req: any,
         @Param('id') id: string,
-        @Body() approveArticleDto: PublishArticleDto
+        @Body(new ValidationPipe()) approveArticleDto: PublishArticleDto
     ) {
         const currentData = await this.articleService.findOne(id);
 
@@ -169,7 +167,7 @@ export class ArticleController {
     approve(
         @Request() req: any,
         @Param('id') id: string,
-        @Body() approveArticleDto: ApproveArticleDto
+        @Body(new ValidationPipe()) approveArticleDto: ApproveArticleDto
     ) {
         const publishedAt = approveArticleDto.publishedAt ? new Date(approveArticleDto.publishedAt) : undefined;
 
@@ -194,7 +192,7 @@ export class ArticleController {
     reject(
         @Request() req: any,
         @Param('id') id: string,
-        @Body() rejectArticleDto: RejectArticleDto,
+        @Body(new ValidationPipe()) rejectArticleDto: RejectArticleDto,
     ) {
         const { note } = rejectArticleDto;
 
@@ -219,7 +217,7 @@ export class ArticleController {
     take_down(
         @Request() req: any,
         @Param('id') id: string,
-        @Body() rejectArticleDto: RejectArticleDto,
+        @Body(new ValidationPipe()) rejectArticleDto: RejectArticleDto,
     ) {
         const { note } = rejectArticleDto;
 
@@ -244,7 +242,7 @@ export class ArticleController {
     react(
         @Request() req: any,
         @Param('id') articleId: string,
-        @Body() reaction: ReactionQueryDto,
+        @Body(new ValidationPipe()) reaction: ReactionQueryDto,
     ) {
         const { type } = reaction;
 

@@ -93,7 +93,7 @@ export class CommentService {
         const currentData = await this.findOne(id);
 
         if (currentData.userId != updateBy) {
-            throw new ForbiddenException('Only the author can update this comment');
+            throw new ForbiddenException('Only the author can update his comment');
         }
 
         return this.prisma.comment.update({

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { Prisma, Role, User } from '@prisma/client';
+import { Module, Permission, Prisma, Role, User } from '@prisma/client';
 import { Paginate } from 'src/app/interface/app.interface';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
@@ -173,9 +173,27 @@ export class UserService {
         return;
     }
 
+    async getPermission(userId: string, module?: Module) {
+        return this.prisma.userPermission.findMany({
+            where: {
+                userId,
+                ...(module && { module })
+            },
+            select: { permission: true },
+        });
+    }
+
     async removePermission(id: string): Promise<void> {
         await this.prisma.userPermission.delete({ where: { id } });
 
         return;
+    }
+
+    async hasPermission(userId: string, module: Module, ...permissions: Permission[]): Promise<boolean> {
+        const userPermissions = await this.getPermission(userId, module);
+
+        return userPermissions.some(({ permission }) =>
+            permissions.includes(permission),
+        );
     }
 }

@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
 
-import { PrismaClient, Role } from "@prisma/client";
+import { Module, Permission, PrismaClient, Role } from "@prisma/client";
 
 export async function UserSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: User');
@@ -41,6 +41,10 @@ export async function UserSeed(prisma: PrismaClient) {
         }));
     }
 
+    // MODULES & PERMISSIONS
+    const modules: Module[] = ['USER', 'ARTICLE', 'COMMENT'];
+    const permissions: Permission[] = ['READ', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'PUBLISH'];
+
     // Create 5 operators
     const roles: Role[] = ['OPERATOR', 'ADMIN'];
     roles.forEach(role => {
@@ -48,14 +52,28 @@ export async function UserSeed(prisma: PrismaClient) {
             promises.push(prisma.user.create({
                 data: {
                     name: faker.person.fullName(),
-                    email: `${role}${i}@gmail.com`,
+                    email: `${role.toLowerCase()}${i}@gmail.com`,
                     role,
                     avatar: faker.image.avatar(),
                     password: {
                         create: {
                             password: password
                         }
-                    }
+                    },
+                    ...(role == 'OPERATOR' && {
+                        permissions: {
+                            createMany: {
+                                data: modules.flatMap(module =>
+                                    // Randomly select 2-4 permissions for each module
+                                    faker.helpers.arrayElements(permissions, faker.number.int({ min: 2, max: 4 }))
+                                        .map(permission => ({
+                                            module,
+                                            permission
+                                        }))
+                                )
+                            }
+                        }
+                    })
                 }
             }));
         }

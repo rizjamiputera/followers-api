@@ -1,14 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, HttpCode, Query, ValidationPipe, ForbiddenException } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Module, Permission, Prisma, Role } from '@prisma/client';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Public } from 'src/auth/auth.metadata';
-import { FilterArticleQueryDto } from 'src/article/dto/filter-article.dto';
 import { FilterCommentQueryDto } from './dto/filter-comment.dto';
 import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
+import { UserService } from 'src/user/user.service';
 
 @ApiTags('Comment')
 @Controller({
@@ -16,13 +16,16 @@ import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
     version: '1',
 })
 export class CommentController {
-    constructor(private readonly commentService: CommentService) { }
+    constructor(
+        private readonly commentService: CommentService,
+        private readonly userService: UserService
+    ) { }
 
     @ApiBearerAuth()
     @Post()
     create(
         @Request() req: any,
-        @Body() dataDto: CreateCommentDto
+        @Body(new ValidationPipe()) dataDto: CreateCommentDto
     ) {
         const { articleId, parentId, mentionedId, content } = dataDto;
         const data: Prisma.CommentCreateInput = {
@@ -42,8 +45,8 @@ export class CommentController {
     @Public()
     @Get()
     findAll(
-        pagination: PaginationDeletedIncludeQueryDto,
-        filter: FilterCommentQueryDto,
+        @Query(new ValidationPipe({ transform: true })) pagination: PaginationDeletedIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true })) filter: FilterCommentQueryDto,
     ) {
         return this.commentService.findAll(pagination, filter);
     }
@@ -53,19 +56,42 @@ export class CommentController {
     //     return this.commentService.findOne(id);
     // }
 
+    @ApiBearerAuth()
     @Patch(':id')
     update(
         @Param('id') id: string,
         @Request() req: any,
-        @Body() dataDto: UpdateCommentDto
+        @Body(new ValidationPipe()) dataDto: UpdateCommentDto
     ) {
 
         return this.commentService.update(id, req.user.id, dataDto.content);
     }
 
+    @ApiBearerAuth()
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        // TODO only admin / superadmin or author can delete
+    async remove(
+        @Request() req: any,
+        @Param('id') id: string
+    ) {
+        const { role, id: userId } = req.user
+
+        const currentData = await this.commentService.findOne(id);
+
+        const currentUserComment: boolean = role == Role.USER && currentData.userId != userId;
+
+        if (!currentUserComment) {
+            // superadmin & admin can delete
+            if (![Role.SUPERADMIN, Role.ADMIN].includes(role)) {
+                // if operator then check permission
+                if (role == Role.OPERATOR) {
+                    const hasPermission = await this.userService.hasPermission(userId, Module.COMMENT, Permission.DELETE);
+                    if (!hasPermission) throw new ForbiddenException();
+                } else {
+                    throw new ForbiddenException('Only the author can update his comment');
+                }
+            }
+        }
+
         return this.commentService.remove(id);
     }
 
@@ -76,7 +102,7 @@ export class CommentController {
     react(
         @Request() req: any,
         @Param('id') commentId: string,
-        @Body() reaction: ReactionQueryDto,
+        @Body(new ValidationPipe()) reaction: ReactionQueryDto,
     ) {
         const { type } = reaction;
 
