@@ -4,11 +4,11 @@ import { Public } from './auth/auth.metadata';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) { }
+    constructor(private readonly appService: AppService) { }
 
-  @Get()
-  @Public()
-  root(@Res() res) {
-    res.status(302).redirect('/api');
-  }
+    @Get()
+    @Public()
+    root(@Res() res) {
+        res.status(302).redirect('/api');
+    }
 }

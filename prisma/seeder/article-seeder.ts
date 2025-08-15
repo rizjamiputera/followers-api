@@ -1,48 +1,78 @@
 import { faker } from '@faker-js/faker';
 
-import { PrismaClient, User, ArticleStatus, ApprovalStatus } from "@prisma/client";
+import { PrismaClient, User, ArticleStatus } from '@prisma/client';
 
 export async function ArticleSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: Article');
 
     const operators: User[] = await prisma.user.findMany({
         where: {
-            role: 'OPERATOR'
-        }
-    })
+            role: 'OPERATOR',
+        },
+    });
 
     const admins: User[] = await prisma.user.findMany({
         where: {
-            role: 'ADMIN'
-        }
-    })
+            role: 'ADMIN',
+        },
+    });
 
     if (operators.length === 0 || admins.length === 0) {
-        console.log('No operators or admins found. Please run user seeder first.');
+        console.log(
+            'No operators or admins found. Please run user seeder first.',
+        );
         return;
     }
 
     // Create tags first
     const tagNames = [
-        'quran', 'hadith', 'tafsir', 'fiqh', 'aqidah', 'shariah',
-        'seerah', 'prophets', 'sahabah', 'islamic history',
-        'dua', 'dhikr', 'prayer', 'fasting', 'zakat', 'hajj', 'umrah',
-        'halal', 'haram', 'islamic ethics', 'akhlaq',
-        'family in islam', 'marriage', 'parenting', 'youth in islam',
-        'women in islam', 'islamic finance', 'business ethics',
-        'islamic lifestyle', 'modesty', 'hijab', 'sunnah',
-        'contemporary issues', 'interfaith', 'dawah', 'islamic art & culture'
+        'quran',
+        'hadith',
+        'tafsir',
+        'fiqh',
+        'aqidah',
+        'shariah',
+        'seerah',
+        'prophets',
+        'sahabah',
+        'islamic history',
+        'dua',
+        'dhikr',
+        'prayer',
+        'fasting',
+        'zakat',
+        'hajj',
+        'umrah',
+        'halal',
+        'haram',
+        'islamic ethics',
+        'akhlaq',
+        'family in islam',
+        'marriage',
+        'parenting',
+        'youth in islam',
+        'women in islam',
+        'islamic finance',
+        'business ethics',
+        'islamic lifestyle',
+        'modesty',
+        'hijab',
+        'sunnah',
+        'contemporary issues',
+        'interfaith',
+        'dawah',
+        'islamic art & culture',
     ];
 
-    const tagPromises = tagNames.map(name =>
+    const tagPromises = tagNames.map((name) =>
         prisma.tag.upsert({
             where: { slug: faker.helpers.slugify(name).toLowerCase() },
             update: {},
             create: {
                 name,
-                slug: faker.helpers.slugify(name).toLowerCase()
-            }
-        })
+                slug: faker.helpers.slugify(name).toLowerCase(),
+            },
+        }),
     );
 
     const tags = await Promise.all(tagPromises);
@@ -57,30 +87,39 @@ export async function ArticleSeed(prisma: PrismaClient) {
             const title = faker.lorem.sentence({ min: 4, max: 8 });
             const slug = faker.helpers.slugify(title).toLowerCase();
             const content = generateStructuredContent();
-            const status = faker.helpers.arrayElement<ArticleStatus>(['DRAFT', 'ON_REVIEW', 'PUBLISHED']);
+            const status = faker.helpers.arrayElement<ArticleStatus>([
+                'DRAFT',
+                'ON_REVIEW',
+                'PUBLISHED',
+            ]);
 
             // Random schedule and publish dates
             // const scheduledAt = faker.helpers.maybe(() => faker.date.future(), { probability: 0.6 });
             const createdAt = faker.date.past();
             // const publishedAt = status === 'PUBLISHED' ? faker.date.past() : null;
-            const publishedAt = faker.date.between({ from: createdAt, to: new Date() });
-
+            const publishedAt = faker.date.between({
+                from: createdAt,
+                to: new Date(),
+            });
 
             const articlePromise = (async () => {
-                const image = faker.image.url({ width: 800, height: 600 })
+                const image = faker.image.url({ width: 800, height: 600 });
                 // First create the article content
                 const articleContent = await prisma.articleContent.create({
                     data: {
                         content,
-                    }
+                    },
                 });
 
                 // Create read stats first
                 const readStat = await prisma.articleReadStat.create({
                     data: {
                         readCount: faker.number.int({ min: 0, max: 1000 }),
-                        lastReadAt: faker.helpers.maybe(() => faker.date.past(), { probability: 0.8 })
-                    }
+                        lastReadAt: faker.helpers.maybe(
+                            () => faker.date.past(),
+                            { probability: 0.8 },
+                        ),
+                    },
                 });
 
                 // Then create the article with reference to content and readStat
@@ -92,18 +131,18 @@ export async function ArticleSeed(prisma: PrismaClient) {
                         image_sm: image,
                         slug: `${slug}-${faker.string.nanoid(6)}`, // Ensure uniqueness
                         content: {
-                            connect: { id: articleContent.id }
+                            connect: { id: articleContent.id },
                         },
                         readStat: {
-                            connect: { id: readStat.id }
+                            connect: { id: readStat.id },
                         },
                         isFeatured: faker.datatype.boolean(0.2), // 20% chance of being featured
                         status,
                         publishedAt,
                         author: {
-                            connect: { id: operator.id }
-                        }
-                    }
+                            connect: { id: operator.id },
+                        },
+                    },
                 });
                 // Create random number of approvals (1-3) by random admins
                 const randomAdmin = faker.helpers.arrayElement(admins);
@@ -111,23 +150,32 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 const approvalPromises = [];
 
                 for (let j = 0; j < approvalCount; j++) {
-                    const approvalStatus = faker.helpers.arrayElement(['APPROVED', 'REJECTED'] as const);
-                    const approvalCreatedAt = faker.date.between({ from: createdAt, to: publishedAt });
+                    const approvalStatus = faker.helpers.arrayElement([
+                        'APPROVED',
+                        'REJECTED',
+                    ] as const);
+                    const approvalCreatedAt = faker.date.between({
+                        from: createdAt,
+                        to: publishedAt,
+                    });
 
                     approvalPromises.push(
                         prisma.articleApproval.create({
                             data: {
                                 article: {
-                                    connect: { id: article.id }
+                                    connect: { id: article.id },
                                 },
                                 approver: {
-                                    connect: { id: randomAdmin.id }
+                                    connect: { id: randomAdmin.id },
                                 },
                                 status: approvalStatus,
-                                note: faker.helpers.maybe(() => faker.lorem.paragraph(), { probability: 0.7 }),
+                                note: faker.helpers.maybe(
+                                    () => faker.lorem.paragraph(),
+                                    { probability: 0.7 },
+                                ),
                                 createdAt: approvalCreatedAt,
-                            }
-                        })
+                            },
+                        }),
                     );
 
                     if (approvalStatus === 'APPROVED') break;
@@ -136,18 +184,21 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 await Promise.all(approvalPromises);
 
                 // Add random tags to the article (2-5 tags per article)
-                const selectedTags = faker.helpers.arrayElements(tags, { min: 2, max: 5 });
-                const tagPromises = selectedTags.map(tag =>
+                const selectedTags = faker.helpers.arrayElements(tags, {
+                    min: 2,
+                    max: 5,
+                });
+                const tagPromises = selectedTags.map((tag) =>
                     prisma.articleTag.create({
                         data: {
                             article: {
-                                connect: { id: article.id }
+                                connect: { id: article.id },
                             },
                             tag: {
-                                connect: { id: tag.id }
-                            }
-                        }
-                    })
+                                connect: { id: tag.id },
+                            },
+                        },
+                    }),
                 );
 
                 await Promise.all(tagPromises);
@@ -160,7 +211,9 @@ export async function ArticleSeed(prisma: PrismaClient) {
 
     await Promise.all(articlePromises);
 
-    console.log(`Created ${operators.length * articleCount} articles with content, approvals, and read stats`);
+    console.log(
+        `Created ${operators.length * articleCount} articles with content, approvals, and read stats`,
+    );
     console.log('\nSeed End: Article');
 }
 
@@ -171,76 +224,93 @@ function generateStructuredContent() {
             {
                 type: 'heading',
                 attrs: { level: 1 },
-                content: [{ type: 'text', text: faker.lorem.sentence() }]
+                content: [{ type: 'text', text: faker.lorem.sentence() }],
             },
             {
                 type: 'paragraph',
-                content: [{ type: 'text', text: faker.lorem.paragraphs(2) }]
+                content: [{ type: 'text', text: faker.lorem.paragraphs(2) }],
             },
             // Add random image after first paragraph
-            faker.helpers.maybe(() => ({
-                type: 'image',
-                attrs: {
-                    src: faker.image.url({ width: 800, height: 400 }),
-                    alt: faker.lorem.words(3),
-                    title: faker.lorem.sentence()
-                }
-            }), { probability: 0.8 }),
+            faker.helpers.maybe(
+                () => ({
+                    type: 'image',
+                    attrs: {
+                        src: faker.image.url({ width: 800, height: 400 }),
+                        alt: faker.lorem.words(3),
+                        title: faker.lorem.sentence(),
+                    },
+                }),
+                { probability: 0.8 },
+            ),
             {
                 type: 'heading',
                 attrs: { level: 2 },
-                content: [{ type: 'text', text: faker.lorem.sentence() }]
+                content: [{ type: 'text', text: faker.lorem.sentence() }],
             },
             {
                 type: 'paragraph',
-                content: [{ type: 'text', text: faker.lorem.paragraphs(2) }]
+                content: [{ type: 'text', text: faker.lorem.paragraphs(2) }],
             },
             // Add another random image
-            faker.helpers.maybe(() => ({
-                type: 'image',
-                attrs: {
-                    src: faker.image.url({ width: 600, height: 300 }),
-                    alt: faker.lorem.words(4),
-                    title: faker.lorem.sentence(),
-                    caption: faker.lorem.sentence()
-                }
-            }), { probability: 0.6 }),
+            faker.helpers.maybe(
+                () => ({
+                    type: 'image',
+                    attrs: {
+                        src: faker.image.url({ width: 600, height: 300 }),
+                        alt: faker.lorem.words(4),
+                        title: faker.lorem.sentence(),
+                        caption: faker.lorem.sentence(),
+                    },
+                }),
+                { probability: 0.6 },
+            ),
             {
                 type: 'paragraph',
-                content: [{ type: 'text', text: faker.lorem.paragraph() }]
+                content: [{ type: 'text', text: faker.lorem.paragraph() }],
             },
             {
                 type: 'bulletList',
-                content: Array.from({ length: faker.number.int({ min: 3, max: 6 }) }, () => ({
-                    type: 'listItem',
-                    content: [
-                        {
-                            type: 'paragraph',
-                            content: [{ type: 'text', text: faker.lorem.sentence() }]
-                        }
-                    ]
-                }))
+                content: Array.from(
+                    { length: faker.number.int({ min: 3, max: 6 }) },
+                    () => ({
+                        type: 'listItem',
+                        content: [
+                            {
+                                type: 'paragraph',
+                                content: [
+                                    {
+                                        type: 'text',
+                                        text: faker.lorem.sentence(),
+                                    },
+                                ],
+                            },
+                        ],
+                    }),
+                ),
             },
             {
                 type: 'paragraph',
-                content: [{ type: 'text', text: faker.lorem.paragraphs(2) }]
+                content: [{ type: 'text', text: faker.lorem.paragraphs(2) }],
             },
             // Add final image with different dimensions
-            faker.helpers.maybe(() => ({
-                type: 'image',
-                attrs: {
-                    src: faker.image.url({ width: 1200, height: 600 }),
-                    alt: faker.lorem.words(5),
-                    title: faker.lorem.sentence(),
-                    caption: faker.lorem.sentence(),
-                    width: 1200,
-                    height: 600
-                }
-            }), { probability: 0.7 }),
+            faker.helpers.maybe(
+                () => ({
+                    type: 'image',
+                    attrs: {
+                        src: faker.image.url({ width: 1200, height: 600 }),
+                        alt: faker.lorem.words(5),
+                        title: faker.lorem.sentence(),
+                        caption: faker.lorem.sentence(),
+                        width: 1200,
+                        height: 600,
+                    },
+                }),
+                { probability: 0.7 },
+            ),
             {
                 type: 'paragraph',
-                content: [{ type: 'text', text: faker.lorem.paragraphs(1) }]
-            }
-        ].filter(Boolean) // Remove null/undefined items from maybe() calls
+                content: [{ type: 'text', text: faker.lorem.paragraphs(1) }],
+            },
+        ].filter(Boolean), // Remove null/undefined items from maybe() calls
     };
 }

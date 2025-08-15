@@ -31,14 +31,27 @@ import { ChangeUserPasswordDto } from './dto/user-change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from 'src/app.service';
-import * as path from 'path';
 import { UpdateUserDto } from './dto/user-update.dto';
 import { PermissionsRequired } from 'src/auth/guards/permissions/permission.decorator';
 import { CreateUserPermissionDto } from './dto/user-create-permission.dto';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { CreateUserOperatorDto } from './dto/user-create-operator.dto';
 import { UserService } from './user.service';
-import { ActivateUserDoc, AddUserPermissionDoc, ChangeUserPasswordDoc, CreateAdminDoc, CreateOperatorDoc, CreateSuperadminDoc, DeactivateUserDoc, DeleteUserDoc, GetAllUserDoc, GetUserDoc, RemoveUserPermissionDoc, UpdateUserDoc, UploadAvatarDoc } from './user.doc';
+import {
+    ActivateUserDoc,
+    AddUserPermissionDoc,
+    ChangeUserPasswordDoc,
+    CreateAdminDoc,
+    CreateOperatorDoc,
+    CreateSuperadminDoc,
+    DeactivateUserDoc,
+    DeleteUserDoc,
+    GetAllUserDoc,
+    GetUserDoc,
+    RemoveUserPermissionDoc,
+    UpdateUserDoc,
+    UploadAvatarDoc,
+} from './user.doc';
 
 @ApiBearerAuth()
 @Controller({
@@ -165,9 +178,7 @@ export class UserController {
         }
 
         if (data.password != data.confirm_password)
-            throw new BadRequestException(
-                'Konfirmasi password tidak sesuai',
-            );
+            throw new BadRequestException('Konfirmasi password tidak sesuai');
 
         const password = await bcrypt.hash(data.password, 10);
 
@@ -227,17 +238,7 @@ export class UserController {
     ) {
         const userId = req.user.id;
 
-        const currentData = await this.userService.findOne(
-            id,
-            req.user.role,
-        );
-
-        return this.userService.update(
-            userId,
-            req.user.role,
-            id,
-            dataDto,
-        );
+        return this.userService.update(userId, req.user.role, id, dataDto);
     }
 
     @ActivateUserDoc()
@@ -251,12 +252,7 @@ export class UserController {
             active: true,
         };
 
-        return this.userService.update(
-            userId,
-            req.user.role,
-            id,
-            updateData,
-        );
+        return this.userService.update(userId, req.user.role, id, updateData);
     }
 
     @DeactivateUserDoc()
@@ -270,12 +266,7 @@ export class UserController {
             active: false,
         };
 
-        return this.userService.update(
-            userId,
-            req.user.role,
-            id,
-            updateData,
-        );
+        return this.userService.update(userId, req.user.role, id, updateData);
     }
 
     @DeleteUserDoc()
@@ -298,10 +289,7 @@ export class UserController {
         const { userId, ...dt } = dataDto;
 
         const user: User = await this.userService.findUnique(userId);
-        if (
-            user.role == Role.SUPERADMIN ||
-            user.role == Role.ADMIN
-        ) {
+        if (user.role == Role.SUPERADMIN || user.role == Role.ADMIN) {
             return;
         }
 

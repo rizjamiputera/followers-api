@@ -31,7 +31,11 @@ export class UserService {
 
         const { role, active } = filter;
 
-        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
+        const include = this.app.getValidIncludes(
+            VALID_INCLUDES,
+            includes,
+            false,
+        );
 
         const skip = (page - 1) * limit;
         const take = limit > 0 ? limit : undefined;
@@ -77,9 +81,13 @@ export class UserService {
     ): Promise<User> {
         const currentData = await this.findOne(id, updateByRole);
 
+        if (!currentData) {
+            throw new NotFoundException('User not found');
+        }
+
         const update = await this.prisma.user.update({
             where: { id },
-            data
+            data,
         });
 
         if (currentData.avatar != update.avatar) {
@@ -105,6 +113,10 @@ export class UserService {
     ): Promise<void> {
         const currentData = await this.findOne(id, deleteByRole);
 
+        if (!currentData) {
+            throw new NotFoundException('User not found');
+        }
+
         await this.prisma.user.update({
             where: { id },
             data: {
@@ -115,7 +127,11 @@ export class UserService {
     }
 
     async findUnique(id: string, includes: string[] = []): Promise<User> {
-        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
+        const include = this.app.getValidIncludes(
+            VALID_INCLUDES,
+            includes,
+            false,
+        );
 
         const user = await this.prisma.user.findUnique({
             where: { id },
@@ -134,15 +150,21 @@ export class UserService {
         requester_role: Role,
         includes: string[] = [],
     ): Promise<User | null> {
-        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
+        const include = this.app.getValidIncludes(
+            VALID_INCLUDES,
+            includes,
+            false,
+        );
 
         return this.prisma.user.findFirst({
             where: {
                 AND: [
                     { id },
-                    requester_role == Role.ADMIN
-                        ? { role: { not: Role.SUPERADMIN } }
-                        : {},
+                    requester_role == Role.OPERATOR
+                        ? { role: { notIn: [Role.SUPERADMIN, Role.ADMIN] } }
+                        : requester_role == Role.ADMIN
+                            ? { role: { not: Role.SUPERADMIN } }
+                            : {},
                 ],
             },
             include,
@@ -177,7 +199,7 @@ export class UserService {
         return this.prisma.userPermission.findMany({
             where: {
                 userId,
-                ...(module && { module })
+                ...(module && { module }),
             },
             select: { permission: true },
         });
@@ -189,7 +211,11 @@ export class UserService {
         return;
     }
 
-    async hasPermission(userId: string, module: Module, ...permissions: Permission[]): Promise<boolean> {
+    async hasPermission(
+        userId: string,
+        module: Module,
+        ...permissions: Permission[]
+    ): Promise<boolean> {
         const userPermissions = await this.getPermission(userId, module);
 
         return userPermissions.some(({ permission }) =>

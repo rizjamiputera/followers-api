@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ArticleStatus } from '@prisma/client';
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+    IsArray,
+    IsBoolean,
+    IsEnum,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+} from 'class-validator';
 
 export class CreateArticleDto {
     @ApiProperty({ description: 'Article title' })
@@ -30,7 +37,7 @@ export class CreateArticleDto {
     @ApiPropertyOptional({
         description: 'Article status',
         enum: ArticleStatus,
-        enumName: 'ArticleStatus'
+        enumName: 'ArticleStatus',
     })
     @IsOptional()
     @IsEnum(ArticleStatus)
@@ -39,7 +46,7 @@ export class CreateArticleDto {
     @ApiPropertyOptional({
         description: 'Array of tag names to associate with the article',
         type: [String],
-        example: ['Technology', 'Programming', 'Web Development']
+        example: ['Technology', 'Programming', 'Web Development'],
     })
     @IsOptional()
     @IsArray()

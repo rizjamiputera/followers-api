@@ -26,7 +26,9 @@ import { CommentModule } from './comment/comment.module';
             ],
         }),
         ConfigModule.forRoot(), // to load .env file
-        AuthModule, ArticleModule, CommentModule,
+        AuthModule,
+        ArticleModule,
+        CommentModule,
     ],
     controllers: [AppController],
     providers: [

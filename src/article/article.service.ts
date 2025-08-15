@@ -1,5 +1,12 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { Article, ArticleContent, ArticleStatus, Prisma, ReactionType, Tag } from '@prisma/client';
+import {
+    Article,
+    ArticleContent,
+    ArticleStatus,
+    Prisma,
+    ReactionType,
+    Tag,
+} from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
@@ -7,7 +14,16 @@ import { Paginate } from 'src/app/interface/app.interface';
 import { PrismaService } from 'src/prisma.service';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
 
-const VALID_INCLUDES = ['content', 'tags', 'comments', 'comments.replies', 'comments.reactions', 'reactions', 'versions', 'author'];
+const VALID_INCLUDES = [
+    'content',
+    'tags',
+    'comments',
+    'comments.replies',
+    'comments.reactions',
+    'reactions',
+    'versions',
+    'author',
+];
 
 @Injectable()
 export class ArticleService {
@@ -21,41 +37,43 @@ export class ArticleService {
             where: {
                 slug,
             },
-            select: { id: true }
+            select: { id: true },
         });
 
         return !exist;
     }
 
     async create(
-        data: Prisma.ArticleCreateInput & { tags?: string[] }
+        data: Prisma.ArticleCreateInput & { tags?: string[] },
     ): Promise<Article> {
         const { tags, ...articleData } = data;
 
         // Handle tags if provided
-        let tagConnections: Prisma.ArticleTagCreateNestedManyWithoutArticleInput | undefined;
+        let tagConnections:
+            | Prisma.ArticleTagCreateNestedManyWithoutArticleInput
+            | undefined;
 
         if (tags && tags.length > 0) {
             const createdTags = await this.createTags(tags);
 
             tagConnections = {
-                create: createdTags.map(tag => ({
-                    tag: { connect: { id: tag.id } }
-                }))
+                create: createdTags.map((tag) => ({
+                    tag: { connect: { id: tag.id } },
+                })),
             };
         }
 
         return this.prisma.article.create({
             data: {
                 ...articleData,
-                ...(tagConnections && { tags: tagConnections })
-            }
+                ...(tagConnections && { tags: tagConnections }),
+            },
         });
     }
 
     async findAll(
         pagination: PaginationDeletedIncludeQueryDto,
-        filter: FilterArticleQueryDto
+        filter: FilterArticleQueryDto,
     ): Promise<Paginate<Article[]>> {
         const { page, limit, sortBy, order, includes, deleted, search } =
             pagination;
@@ -73,23 +91,27 @@ export class ArticleService {
 
         const whereConditions: Prisma.ArticleWhereInput[] = [
             searchCondition,
-            { deleted }
+            { deleted },
         ];
 
         if (authorId) whereConditions.push({ authorId });
         if (status) whereConditions.push({ status });
         if (tags?.length > 0) {
-            whereConditions.push({ tags: { some: { tag: { slug: { in: tags } } } } });
+            whereConditions.push({
+                tags: { some: { tag: { slug: { in: tags } } } },
+            });
         }
         if (published) {
             whereConditions.push({
                 status: ArticleStatus.PUBLISHED,
-                publishedAt: { lte: new Date() }
+                publishedAt: { lte: new Date() },
             });
         }
 
         const where: Prisma.ArticleWhereInput = {
-            AND: whereConditions.filter(condition => Object.keys(condition).length > 0)
+            AND: whereConditions.filter(
+                (condition) => Object.keys(condition).length > 0,
+            ),
         };
 
         const skip = (page - 1) * limit;
@@ -115,7 +137,7 @@ export class ArticleService {
         };
     }
 
-    async read(slug: string, includes: string[] = [],): Promise<Article> {
+    async read(slug: string, includes: string[] = []): Promise<Article> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         return this.prisma.article.findUniqueOrThrow({
@@ -123,45 +145,55 @@ export class ArticleService {
                 slug,
                 status: ArticleStatus.PUBLISHED,
                 publishedAt: { lte: new Date() },
-                deleted: false
+                deleted: false,
             },
-            include
+            include,
         });
     }
 
-    async findOne(id: string, includes: string[] = [],): Promise<Article> {
+    async findOne(id: string, includes: string[] = []): Promise<Article> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         return this.prisma.article.findUniqueOrThrow({
             where: {
                 id,
-                deleted: false
+                deleted: false,
             },
-            include
+            include,
         });
     }
 
     async update(
         changedBy: string,
         id: string,
-        data: Prisma.ArticleUpdateInput & { contentBody?: any; tags?: string[] }
+        data: Prisma.ArticleUpdateInput & {
+            contentBody?: any;
+            tags?: string[];
+        },
     ): Promise<Article> {
-        const current = await this.findOne(id, ['content']) as Article & { content?: ArticleContent };
+        const current = (await this.findOne(id, ['content'])) as Article & {
+            content?: ArticleContent;
+        };
 
         if (current.authorId !== changedBy) {
-            throw new ForbiddenException('Only the author can update this article');
+            throw new ForbiddenException(
+                'Only the author can update this article',
+            );
         }
 
         // Separate content body and tags from article data
         const { contentBody, tags, ...articleData } = data;
 
         // Check if content fields have changed
-        const contentChanged = articleData.title !== current.title ||
+        const contentChanged =
+            articleData.title !== current.title ||
             articleData.excerpt !== current.excerpt ||
             articleData.image !== current.image ||
             articleData.image_sm !== current.image_sm ||
-            (contentBody && current.content &&
-                JSON.stringify(contentBody) !== JSON.stringify(current.content.content));
+            (contentBody &&
+                current.content &&
+                JSON.stringify(contentBody) !==
+                JSON.stringify(current.content.content));
 
         // Create version if content changed
         if (contentChanged && current.content) {
@@ -174,7 +206,7 @@ export class ArticleService {
                     image_sm: current.image_sm,
                     content: current.content.content,
                     createdAt: current.content.createdAt,
-                }
+                },
             });
         }
 
@@ -182,26 +214,28 @@ export class ArticleService {
         if (contentBody && current.contentId && contentChanged) {
             await this.prisma.articleContent.update({
                 where: { id: current.contentId },
-                data: { content: contentBody }
+                data: { content: contentBody },
             });
         }
 
         // Handle tags update if provided
-        let tagUpdate: Prisma.ArticleTagUpdateManyWithoutArticleNestedInput | undefined;
+        let tagUpdate:
+            | Prisma.ArticleTagUpdateManyWithoutArticleNestedInput
+            | undefined;
 
         if (tags !== undefined) {
             if (tags.length === 0) {
                 // Delete all tags
                 tagUpdate = { deleteMany: {} };
             } else {
-                const createdTags = await this.createTags(tags)
+                const createdTags = await this.createTags(tags);
 
                 // Delete existing tags and create new ones
                 tagUpdate = {
                     deleteMany: {},
-                    create: createdTags.map(tag => ({
-                        tag: { connect: { id: tag.id } }
-                    }))
+                    create: createdTags.map((tag) => ({
+                        tag: { connect: { id: tag.id } },
+                    })),
                 };
             }
         }
@@ -210,8 +244,8 @@ export class ArticleService {
             where: { id },
             data: {
                 ...articleData,
-                ...(tagUpdate && { tags: tagUpdate })
-            }
+                ...(tagUpdate && { tags: tagUpdate }),
+            },
         });
 
         return update;
@@ -222,13 +256,17 @@ export class ArticleService {
 
         await this.prisma.article.update({
             where: { id },
-            data: { deleted: true }
+            data: { deleted: true },
         });
 
         return;
     }
 
-    async updateStatus(id: string, dataDto: Prisma.ArticleUpdateInput, approvalDto?: Prisma.ArticleApprovalCreateInput): Promise<void> {
+    async updateStatus(
+        id: string,
+        dataDto: Prisma.ArticleUpdateInput,
+        approvalDto?: Prisma.ArticleApprovalCreateInput,
+    ): Promise<void> {
         await this.findOne(id);
 
         await this.prisma.article.update({
@@ -237,49 +275,52 @@ export class ArticleService {
                 ...dataDto,
                 ...(approvalDto && {
                     approvals: {
-                        create: approvalDto
-                    }
-                })
-            }
+                        create: approvalDto,
+                    },
+                }),
+            },
         });
 
         return;
     }
 
     async createTags(tags: string[]): Promise<Tag[]> {
-        const processedTags = tags.map(tag => {
+        const processedTags = tags.map((tag) => {
             const lowerTag = tag.toLocaleLowerCase();
             return {
                 name: lowerTag,
-                slug: lowerTag.toLowerCase().replace(/\s+/g, '-')
+                slug: lowerTag.toLowerCase().replace(/\s+/g, '-'),
             };
         });
 
         // Upsert tags and get their data
-        const tagPromises = processedTags.map(tag =>
+        const tagPromises = processedTags.map((tag) =>
             this.prisma.tag.upsert({
                 where: { slug: tag.slug },
                 create: tag,
-                update: {}
-            })
+                update: {},
+            }),
         );
 
         return Promise.all(tagPromises);
-
     }
 
-    async react(userId: string, articleId: string, type: ReactionType): Promise<void> {
+    async react(
+        userId: string,
+        articleId: string,
+        type: ReactionType,
+    ): Promise<void> {
         const data: Prisma.ArticleReactionCreateInput = {
             type,
             article: { connect: { id: articleId } },
-            user: { connect: { id: userId } }
-        }
+            user: { connect: { id: userId } },
+        };
         await this.prisma.articleReaction.upsert({
             where: {
                 articleId_userId: { articleId, userId },
             },
             update: data,
-            create: data
+            create: data,
         });
 
         return;

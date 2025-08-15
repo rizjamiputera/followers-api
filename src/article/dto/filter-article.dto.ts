@@ -1,7 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ArticleStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsArray, IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+    IsArray,
+    IsBoolean,
+    IsEnum,
+    IsOptional,
+    IsString,
+} from 'class-validator';
 
 export class FilterArticleQueryDto {
     @ApiPropertyOptional({ description: 'Filter by author Id' })

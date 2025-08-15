@@ -81,7 +81,7 @@ export class AuthController {
                 role: 'USER',
                 password: {
                     create: {
-                        password
+                        password,
                     },
                 },
             };

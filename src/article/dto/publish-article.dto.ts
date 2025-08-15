@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsDateString } from 'class-validator';
+import { IsDateString } from 'class-validator';
 
 export class PublishArticleDto {
     @ApiProperty({ description: 'Publish date' })

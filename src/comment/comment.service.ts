@@ -22,7 +22,7 @@ export class CommentService {
 
     async findAll(
         pagination: PaginationDeletedIncludeQueryDto,
-        filter: FilterCommentQueryDto
+        filter: FilterCommentQueryDto,
     ): Promise<Paginate<Comment[]>> {
         const { page, limit, sortBy, order, includes, deleted, search } =
             pagination;
@@ -31,22 +31,22 @@ export class CommentService {
 
         const searchCondition: Prisma.CommentWhereInput = search
             ? {
-                OR: [
-                    { content: { contains: search, mode: 'insensitive' } },
-                ],
+                OR: [{ content: { contains: search, mode: 'insensitive' } }],
             }
             : {};
 
         const whereConditions: Prisma.CommentWhereInput[] = [
             searchCondition,
-            { deleted }
+            { deleted },
         ];
 
         if (articleId) whereConditions.push({ articleId });
         if (parentId) whereConditions.push({ parentId });
 
         const where: Prisma.CommentWhereInput = {
-            AND: whereConditions.filter(condition => Object.keys(condition).length > 0)
+            AND: whereConditions.filter(
+                (condition) => Object.keys(condition).length > 0,
+            ),
         };
 
         const skip = (page - 1) * limit;
@@ -62,8 +62,8 @@ export class CommentService {
                 include: {
                     ...include,
                     ...(parentId && {
-                        mentioned: true
-                    })
+                        mentioned: true,
+                    }),
                 },
             }),
         ]);
@@ -77,33 +77,38 @@ export class CommentService {
         };
     }
 
-    async findOne(id: string, includes: string[] = [],): Promise<Comment> {
+    async findOne(id: string, includes: string[] = []): Promise<Comment> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         return this.prisma.comment.findUniqueOrThrow({
             where: {
                 id,
-                deleted: false
+                deleted: false,
             },
-            include
+            include,
         });
     }
 
-    async update(id: string, updateBy: string, content: string): Promise<Comment> {
+    async update(
+        id: string,
+        updateBy: string,
+        content: string,
+    ): Promise<Comment> {
         const currentData = await this.findOne(id);
 
         if (currentData.userId != updateBy) {
-            throw new ForbiddenException('Only the author can update his comment');
+            throw new ForbiddenException(
+                'Only the author can update his comment',
+            );
         }
 
         return this.prisma.comment.update({
             where: { id },
             data: {
                 content,
-                isEdited: true
-            }
-        })
-
+                isEdited: true,
+            },
+        });
     }
 
     async remove(id: string): Promise<void> {
@@ -111,24 +116,28 @@ export class CommentService {
 
         await this.prisma.comment.update({
             where: { id },
-            data: { deleted: true }
+            data: { deleted: true },
         });
 
         return;
     }
 
-    async react(userId: string, commentId: string, type: ReactionType): Promise<void> {
+    async react(
+        userId: string,
+        commentId: string,
+        type: ReactionType,
+    ): Promise<void> {
         const data: Prisma.CommentReactionCreateInput = {
             type,
             comment: { connect: { id: commentId } },
-            user: { connect: { id: userId } }
-        }
+            user: { connect: { id: userId } },
+        };
         await this.prisma.commentReaction.upsert({
             where: {
                 commentId_userId: { commentId, userId },
             },
             update: data,
-            create: data
+            create: data,
         });
 
         return;

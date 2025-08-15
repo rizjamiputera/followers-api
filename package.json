@@ -12,7 +12,7 @@
         "dev": "nest start --watch",
         "start:debug": "nest start --debug --watch",
         "start:prod": "node dist/main",
-        "lint": "eslint \"{src,apps,libs,test, prisma}/**/*.ts\" --fix",
+        "lint": "eslint \"{src,apps,libs,test,prisma}/**/*.ts\" --fix",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage",
@@ -42,6 +42,8 @@
         "sharp": "^0.34.3"
     },
     "devDependencies": {
+        "@eslint/eslintrc": "^3.3.1",
+        "@eslint/js": "^9.33.0",
         "@faker-js/faker": "^9.9.0",
         "@nestjs/cli": "^11.0.10",
         "@nestjs/schematics": "^11.0.7",
@@ -56,6 +58,7 @@
         "eslint": "^9.33.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.4",
+        "globals": "^16.3.0",
         "jest": "^30.0.5",
         "prettier": "^3.6.2",
         "prisma": "^6.13.0",

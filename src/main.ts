@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppService } from './app.service';
 
@@ -29,9 +29,9 @@ async function bootstrap() {
     });
 
     const appService = app.get(AppService);
-    await appService.createPath('./public')
-    await appService.createPath('./public/avatar');;
-    await appService.createPath('./public/article');;
+    await appService.createPath('./public');
+    await appService.createPath('./public/avatar');
+    await appService.createPath('./public/article');
 
     // RUN APP
     const port = process.env.PORT ?? 5555;

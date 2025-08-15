@@ -118,24 +118,31 @@ export class AppService {
 
         // Models that have 'deleted' field
         const modelsWithDeleted = [
-            'user', 'users',
-            'comments', 'replies', 'parent',
-            'article', 'articles',
+            'user',
+            'users',
+            'comments',
+            'replies',
+            'parent',
+            'article',
+            'articles',
         ];
 
         // Helper to check if a relation should have deleted filter
         const shouldApplyDeletedFilter = (relationName: string): boolean => {
-            return check_deleted && modelsWithDeleted.some(model =>
-                relationName.toLowerCase().includes(model)
+            return (
+                check_deleted &&
+                modelsWithDeleted.some((model) =>
+                    relationName.toLowerCase().includes(model),
+                )
             );
         };
 
         // Filter valid includes that are requested
-        const requestedIncludes = validIncludes.filter(relation =>
-            includes.includes(relation)
+        const requestedIncludes = validIncludes.filter((relation) =>
+            includes.includes(relation),
         );
 
-        requestedIncludes.forEach(relation => {
+        requestedIncludes.forEach((relation) => {
             const parts = relation.split('.');
             let current = result;
 
@@ -158,8 +165,10 @@ export class AppService {
                 } else if (!isLast) {
                     // If the part already exists but we need to go deeper
                     // Convert boolean/object to nested structure if needed
-                    if (current[part] === true ||
-                        (current[part] && !current[part].include)) {
+                    if (
+                        current[part] === true ||
+                        (current[part] && !current[part].include)
+                    ) {
                         const includeObj: any = { include: {} };
                         if (shouldApplyDeletedFilter(part)) {
                             includeObj.where = { deleted: false };
@@ -176,6 +185,5 @@ export class AppService {
         });
 
         return result;
-    };
+    }
 }
-
