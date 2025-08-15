@@ -94,12 +94,12 @@ export class ArticleController {
     }
 
     @Public()
-    @Get('read/:id')
+    @Get('read/:slug')
     read(
-        @Param('id') id: string,
+        @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        return this.articleService.read(id, query.includes);
+        return this.articleService.read(slug, query.includes);
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.READ)
