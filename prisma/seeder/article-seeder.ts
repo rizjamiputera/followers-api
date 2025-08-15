@@ -24,13 +24,14 @@ export async function ArticleSeed(prisma: PrismaClient) {
 
     // Create tags first
     const tagNames = [
-        'Technology', 'Programming', 'JavaScript', 'TypeScript', 'React', 'Node.js',
-        'Database', 'API', 'Frontend', 'Backend', 'DevOps', 'Cloud',
-        'Machine Learning', 'AI', 'Data Science', 'Analytics',
-        'Mobile', 'iOS', 'Android', 'Web Development',
-        'Security', 'Performance', 'Testing', 'Debugging',
-        'Open Source', 'Tutorial', 'Best Practices', 'Architecture',
-        'Design Patterns', 'Microservices', 'Docker', 'Kubernetes'
+        'quran', 'hadith', 'tafsir', 'fiqh', 'aqidah', 'shariah',
+        'seerah', 'prophets', 'sahabah', 'islamic history',
+        'dua', 'dhikr', 'prayer', 'fasting', 'zakat', 'hajj', 'umrah',
+        'halal', 'haram', 'islamic ethics', 'akhlaq',
+        'family in islam', 'marriage', 'parenting', 'youth in islam',
+        'women in islam', 'islamic finance', 'business ethics',
+        'islamic lifestyle', 'modesty', 'hijab', 'sunnah',
+        'contemporary issues', 'interfaith', 'dawah', 'islamic art & culture'
     ];
 
     const tagPromises = tagNames.map(name =>

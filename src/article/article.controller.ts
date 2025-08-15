@@ -54,14 +54,15 @@ export class ArticleController {
             '/article',
         );
 
-        const { contentBody, ...articleDto } = createArticleDto;
-        const data: Prisma.ArticleCreateInput = {
+        const { contentBody, tags, ...articleDto } = createArticleDto;
+        const data: Prisma.ArticleCreateInput & { tags?: string[] } = {
             ...articleDto,
             image: large,
             image_sm: medium,
             content: { create: { content: contentBody } },
             author: { connect: { id: req.user.id } },
-            readStat: { create: {} }
+            readStat: { create: {} },
+            ...(tags && { tags })
         }
 
         return this.articleService.create(data);

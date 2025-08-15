@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { ApprovalStatus, Article, ArticleContent, ArticleStatus, Prisma } from '@prisma/client';
+import { Article, ArticleContent, ArticleStatus, Prisma, Tag } from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
@@ -17,9 +17,29 @@ export class ArticleService {
     ) { }
 
     async create(
-        data: Prisma.ArticleCreateInput
+        data: Prisma.ArticleCreateInput & { tags?: string[] }
     ): Promise<Article> {
-        return this.prisma.article.create({ data });
+        const { tags, ...articleData } = data;
+
+        // Handle tags if provided
+        let tagConnections: Prisma.ArticleTagCreateNestedManyWithoutArticleInput | undefined;
+
+        if (tags && tags.length > 0) {
+            const createdTags = await this.createTags(tags);
+
+            tagConnections = {
+                create: createdTags.map(tag => ({
+                    tag: { connect: { id: tag.id } }
+                }))
+            };
+        }
+
+        return this.prisma.article.create({
+            data: {
+                ...articleData,
+                ...(tagConnections && { tags: tagConnections })
+            }
+        });
     }
 
     async findAll(
@@ -122,7 +142,7 @@ export class ArticleService {
     async update(
         changedBy: string,
         id: string,
-        data: Prisma.ArticleUpdateInput & { contentBody?: any }
+        data: Prisma.ArticleUpdateInput & { contentBody?: any; tags?: string[] }
     ): Promise<Article> {
         const current = await this.findOne(id, ['content']) as Article & { content?: ArticleContent };
 
@@ -130,8 +150,8 @@ export class ArticleService {
             throw new ForbiddenException('Only the author can update this article');
         }
 
-        // Separate content body from article data
-        const { contentBody, ...articleData } = data;
+        // Separate content body and tags from article data
+        const { contentBody, tags, ...articleData } = data;
 
         // Check if content fields have changed
         const contentChanged = articleData.title !== current.title ||
@@ -164,9 +184,32 @@ export class ArticleService {
             });
         }
 
+        // Handle tags update if provided
+        let tagUpdate: Prisma.ArticleTagUpdateManyWithoutArticleNestedInput | undefined;
+
+        if (tags !== undefined) {
+            if (tags.length === 0) {
+                // Delete all tags
+                tagUpdate = { deleteMany: {} };
+            } else {
+                const createdTags = await this.createTags(tags)
+
+                // Delete existing tags and create new ones
+                tagUpdate = {
+                    deleteMany: {},
+                    create: createdTags.map(tag => ({
+                        tag: { connect: { id: tag.id } }
+                    }))
+                };
+            }
+        }
+
         const update = await this.prisma.article.update({
             where: { id },
-            data: articleData
+            data: {
+                ...articleData,
+                ...(tagUpdate && { tags: tagUpdate })
+            }
         });
 
         return update;
@@ -199,5 +242,27 @@ export class ArticleService {
         });
 
         return;
+    }
+
+    async createTags(tags: string[]): Promise<Tag[]> {
+        const processedTags = tags.map(tag => {
+            const lowerTag = tag.toLocaleLowerCase();
+            return {
+                name: lowerTag,
+                slug: lowerTag.toLowerCase().replace(/\s+/g, '-')
+            };
+        });
+
+        // Upsert tags and get their data
+        const tagPromises = processedTags.map(tag =>
+            this.prisma.tag.upsert({
+                where: { slug: tag.slug },
+                create: tag,
+                update: {}
+            })
+        );
+
+        return Promise.all(tagPromises);
+
     }
 }
