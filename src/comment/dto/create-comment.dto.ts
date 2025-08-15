@@ -12,6 +12,11 @@ export class CreateCommentDto {
     @IsString()
     parentId: string;
 
+    @ApiProperty({ description: 'Mention user Id' })
+    @IsOptional()
+    @IsString()
+    mentionedId: string;
+
     @ApiProperty({ description: 'Comment' })
     @IsNotEmpty()
     @IsString()

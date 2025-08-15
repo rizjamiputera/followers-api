@@ -51,15 +51,6 @@ export class ArticleService {
         const { authorId, tags, status, published } = filter;
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
-        /**
-         * Case-insensitive search
-         * Search condition for:
-         * - name
-         * - phone
-         * - address
-         * - identity_no
-         * - licence_no
-         */
         const searchCondition: Prisma.ArticleWhereInput = search
             ? {
                 OR: [

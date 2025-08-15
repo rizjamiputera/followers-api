@@ -6,6 +6,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Public } from 'src/auth/auth.metadata';
+import { FilterArticleQueryDto } from 'src/article/dto/filter-article.dto';
+import { FilterCommentQueryDto } from './dto/filter-comment.dto';
 
 @ApiTags('Comment')
 @Controller({
@@ -21,14 +23,17 @@ export class CommentController {
         @Request() req: any,
         @Body() dataDto: CreateCommentDto
     ) {
-        const { articleId, parentId, content } = dataDto;
+        const { articleId, parentId, mentionedId, content } = dataDto;
         const data: Prisma.CommentCreateInput = {
             content,
             user: { connect: { id: req.user.id } },
             article: { connect: { id: articleId } },
             ...(parentId && {
                 parent: { connect: { id: parentId } }
-            })
+            }),
+            ...(mentionedId && {
+                mentioned: { connect: { id: mentionedId } }
+            }),
         }
         return this.commentService.create(data);
     }
@@ -37,8 +42,9 @@ export class CommentController {
     @Get()
     findAll(
         pagination: PaginationDeletedIncludeQueryDto,
+        filter: FilterCommentQueryDto,
     ) {
-        // return this.commentService.findAll(pagination);
+        return this.commentService.findAll(pagination, filter);
     }
 
     // @Get(':id')

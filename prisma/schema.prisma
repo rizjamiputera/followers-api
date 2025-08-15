@@ -54,8 +54,9 @@ model User {
     articles         Article[]         @relation("author_articles")
     articleApprovals ArticleApproval[] @relation("article_approvals")
     articlesReaction ArticleReaction[]
-    articlesComments Comment[]
+    articlesComments Comment[]         @relation("comment")
     commentReactions CommentReaction[]
+    mentions         Comment[]         @relation("comment_mentions")
     visits           Visitor[]
 
     @@index([email])
@@ -133,7 +134,7 @@ model Article {
     id          String                  @id @default(uuid())
     slug        String                  @unique @db.VarChar(255)
     title       String                  @db.VarChar(255)
-    excerpt     String?                 @db.VarChar(500)
+    excerpt     String                  @db.VarChar(500)
     image       String                  @db.VarChar(255)
     image_sm    String                  @db.VarChar(255)
     content     ArticleContent          @relation(fields: [contentId], references: [id], onDelete: Restrict)
@@ -245,20 +246,24 @@ enum ReactionType {
 }
 
 model Comment {
-    id        String            @id @default(uuid())
-    article   Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId String
-    user      User              @relation(fields: [userId], references: [id], onDelete: Restrict)
-    userId    String
-    parent    Comment?          @relation("comment_replies", fields: [parentId], references: [id], onDelete: Cascade)
-    parentId  String?
-    replies   Comment[]         @relation("comment_replies")
-    reactions CommentReaction[]
-    content   String            @db.Text
-    isEdited  Boolean           @default(false)
-    deleted   Boolean           @default(false)
-    createdAt DateTime          @default(now())
-    updatedAt DateTime          @updatedAt
+    id          String            @id @default(uuid())
+    article     Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId   String
+    user        User              @relation("comment", fields: [userId], references: [id], onDelete: Restrict)
+    userId      String
+    content     String            @db.Text
+    reactions   CommentReaction[]
+    // Always points to top-level comment if it's a reply
+    parent      Comment?          @relation("comment_replies", fields: [parentId], references: [id], onDelete: Cascade)
+    parentId    String?
+    replies     Comment[]         @relation("comment_replies")
+    // Mentioned user (optional, for replying to a reply)
+    mentioned   User?             @relation("comment_mentions", fields: [mentionedId], references: [id], onDelete: SetNull)
+    mentionedId String?
+    isEdited    Boolean           @default(false)
+    deleted     Boolean           @default(false)
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
 
     @@index([articleId])
     @@map("comment")

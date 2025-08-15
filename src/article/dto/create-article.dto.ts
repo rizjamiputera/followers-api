@@ -8,10 +8,10 @@ export class CreateArticleDto {
     @IsString()
     title: string;
 
-    @ApiPropertyOptional({ description: 'Article excerpt' })
-    @IsOptional()
+    @ApiProperty({ description: 'Article excerpt' })
+    @IsNotEmpty()
     @IsString()
-    excerpt?: string;
+    excerpt: string;
 
     @ApiProperty({ description: 'Article slug' })
     @IsNotEmpty()

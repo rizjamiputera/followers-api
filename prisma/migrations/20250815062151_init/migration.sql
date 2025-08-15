@@ -87,7 +87,7 @@ CREATE TABLE "followers_dev"."article" (
     "id" TEXT NOT NULL,
     "slug" VARCHAR(255) NOT NULL,
     "title" VARCHAR(255) NOT NULL,
-    "excerpt" VARCHAR(500),
+    "excerpt" VARCHAR(500) NOT NULL,
     "image" VARCHAR(255) NOT NULL,
     "image_sm" VARCHAR(255) NOT NULL,
     "contentId" TEXT NOT NULL,
@@ -175,8 +175,9 @@ CREATE TABLE "followers_dev"."comment" (
     "id" TEXT NOT NULL,
     "articleId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "parentId" TEXT,
     "content" TEXT NOT NULL,
+    "parentId" TEXT,
+    "mentionedId" TEXT,
     "isEdited" BOOLEAN NOT NULL DEFAULT false,
     "deleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -339,6 +340,9 @@ ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_userId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "followers_dev"."comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_mentionedId_fkey" FOREIGN KEY ("mentionedId") REFERENCES "followers_dev"."user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment_reaction" ADD CONSTRAINT "comment_reaction_commentId_fkey" FOREIGN KEY ("commentId") REFERENCES "followers_dev"."comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;

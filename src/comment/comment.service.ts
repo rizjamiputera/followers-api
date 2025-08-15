@@ -1,9 +1,11 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PrismaService } from 'src/prisma.service';
 import { Comment, Prisma } from '@prisma/client';
 import { AppService } from 'src/app.service';
+import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
+import { Paginate } from 'src/app/interface/app.interface';
+import { FilterCommentQueryDto } from './dto/filter-comment.dto';
+import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 
 const VALID_INCLUDES = ['user', 'replies', 'reactions'];
 
@@ -18,8 +20,61 @@ export class CommentService {
         return this.prisma.comment.create({ data });
     }
 
-    findAll() {
-        return `This action returns all comment`;
+    async findAll(
+        pagination: PaginationDeletedIncludeQueryDto,
+        filter: FilterCommentQueryDto
+    ): Promise<Paginate<Comment[]>> {
+        const { page, limit, sortBy, order, includes, deleted, search } =
+            pagination;
+        const { articleId, parentId } = filter;
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
+
+        const searchCondition: Prisma.CommentWhereInput = search
+            ? {
+                OR: [
+                    { content: { contains: search, mode: 'insensitive' } },
+                ],
+            }
+            : {};
+
+        const whereConditions: Prisma.CommentWhereInput[] = [
+            searchCondition,
+            { deleted }
+        ];
+
+        if (articleId) whereConditions.push({ articleId });
+        if (parentId) whereConditions.push({ parentId });
+
+        const where: Prisma.CommentWhereInput = {
+            AND: whereConditions.filter(condition => Object.keys(condition).length > 0)
+        };
+
+        const skip = (page - 1) * limit;
+        const take = limit > 0 ? limit : undefined;
+
+        const [total, data] = await Promise.all([
+            this.prisma.comment.count({ where }),
+            this.prisma.comment.findMany({
+                where,
+                orderBy: nestedOrderBy(sortBy, order),
+                skip,
+                take,
+                include: {
+                    ...include,
+                    ...(parentId && {
+                        mentioned: true
+                    })
+                },
+            }),
+        ]);
+        return {
+            data,
+            limit,
+            total,
+            page,
+            last_page:
+                limit > 0 ? (limit > 0 ? Math.ceil(total / limit) : 1) : 1,
+        };
     }
 
     async findOne(id: string, includes: string[] = [],): Promise<Comment> {
