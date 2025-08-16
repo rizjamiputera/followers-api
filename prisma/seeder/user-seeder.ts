@@ -78,9 +78,9 @@ export async function UserSeed(prisma: PrismaClient) {
     // Create 5 operators
     const roles: Role[] = ['OPERATOR', 'ADMIN'];
     roles.forEach((role) => {
-        const superadmin_operator_admin = faker.helpers.arrayElement(avatars);
-        console.log({ superadmin_operator_admin })
         for (let i = 1; i <= 25; i++) {
+            const superadmin_operator_admin = faker.helpers.arrayElement(avatars);
+            console.log({ superadmin_operator_admin })
             promises.push(
                 prisma.user.create({
                     data: {
