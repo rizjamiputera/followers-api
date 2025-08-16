@@ -14,11 +14,12 @@ export class AppController {
     }
 
     @Public()
-    @Get('dummy/:file')
-    async getDummyPhoto(@Param('file') file: string, @Res() res) {
+    @Get('dummy/*path')
+    async getDummyPhoto(@Param('path') path: any, @Res() res) {
+        const filePath = path.join('/')
         try {
-            await fs.access(`./public/dummy/${file}`);
-            res.sendFile(file, { root: './public/dummy' });
+            await fs.access(`./public/dummy/${filePath}`);
+            res.sendFile(filePath, { root: './public/dummy' });
         } catch (error) {
             throw new NotFoundException('File not found');
         }

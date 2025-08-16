@@ -186,4 +186,59 @@ export class AppService {
 
         return result;
     }
+
+    transformImageUrls(data: any, ...keys: string[]): any {
+        if (!data || keys.length === 0) return data;
+
+        const apiUri = process.env.API_URI || 'http://localhost:5111';
+
+        // Handle array data
+        if (Array.isArray(data)) {
+            return data.map(item => this.transformImageUrls(item, ...keys));
+        }
+
+        // Handle primitive types
+        if (typeof data !== 'object') return data;
+
+        const result = { ...data };
+
+        keys.forEach(key => {
+            if (key.includes('.')) {
+                // Handle nested keys like 'user.avatar'
+                const keyPath = key.split('.');
+                const value = this.getNestedValue(result, keyPath);
+
+                if (value && typeof value === 'string') {
+                    this.setNestedValue(result, keyPath, `${apiUri}${value}`);
+                }
+            } else {
+                // Handle simple keys like 'image'
+                if (result[key] && typeof result[key] === 'string') {
+                    result[key] = `${apiUri}${result[key]}`;
+                }
+            }
+        });
+
+        return result;
+    }
+
+    private getNestedValue(obj: any, path: string[]): any {
+        return path.reduce((current, key) => {
+            return current && current[key] !== undefined ? current[key] : null;
+        }, obj);
+    }
+
+    private setNestedValue(obj: any, path: string[], value: any): void {
+        const lastKey = path[path.length - 1];
+        const parentPath = path.slice(0, -1);
+
+        const parent = parentPath.reduce((current, key) => {
+            if (!current[key]) current[key] = {};
+            return current[key];
+        }, obj);
+
+        if (parent) {
+            parent[lastKey] = value;
+        }
+    }
 }

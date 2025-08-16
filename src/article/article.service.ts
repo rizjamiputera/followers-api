@@ -3,6 +3,7 @@ import {
     Article,
     ArticleContent,
     ArticleStatus,
+    ArticleTag,
     Prisma,
     ReactionType,
     Tag,
@@ -16,7 +17,7 @@ import { FilterArticleQueryDto } from './dto/filter-article.dto';
 
 const VALID_INCLUDES = [
     'content',
-    'tags',
+    'tags.tag',
     'comments',
     'comments.replies',
     'comments.reactions',
@@ -24,6 +25,7 @@ const VALID_INCLUDES = [
     'versions',
     'author',
 ];
+const transformImages = ['image', 'image_sm', 'author.avatar', 'author.avatar_md'];
 
 @Injectable()
 export class ArticleService {
@@ -32,18 +34,22 @@ export class ArticleService {
         private app: AppService,
     ) { }
 
-    private transformImageUrls(article: Article): Article {
-        const apiUri = process.env.API_URI || 'http://localhost:5111';
+    private transformData(data: Article & { tags?: (ArticleTag & { tag: Tag })[] }): Article {
+        const tags = data.tags;
+        delete data.tags;
 
-        return {
-            ...article,
-            image: article.image ? `${apiUri}${article.image}` : article.image,
-            image_sm: article.image_sm ? `${apiUri}${article.image_sm}` : article.image_sm,
-        };
+        const article = {
+            ...data,
+            ...(tags && {
+                tags: tags.map(t => t.tag)
+            })
+        }
+
+        return this.app.transformImageUrls(article, ...transformImages)
     }
 
-    private transformArticleArray(articles: Article[]): Article[] {
-        return articles.map(article => this.transformImageUrls(article));
+    private transformDataArray(data: Article[]): Article[] {
+        return data.map(article => this.transformData(article));
     }
 
     async is_slug_available(slug: string) {
@@ -142,7 +148,7 @@ export class ArticleService {
             }),
         ]);
         return {
-            data: this.transformArticleArray(data),
+            data: this.transformDataArray(data),
             limit,
             total,
             page,
@@ -164,7 +170,7 @@ export class ArticleService {
             include,
         });
 
-        return this.transformImageUrls(article);
+        return this.transformData(article)
     }
 
     async findOne(id: string, includes: string[] = []): Promise<Article> {
@@ -178,7 +184,7 @@ export class ArticleService {
             include,
         });
 
-        return this.transformImageUrls(article);
+        return this.transformData(article)
     }
 
     async update(
@@ -266,7 +272,7 @@ export class ArticleService {
             },
         });
 
-        return this.transformImageUrls(update);;
+        return this.transformData(update);
     }
 
     async remove(id: string): Promise<void> {
