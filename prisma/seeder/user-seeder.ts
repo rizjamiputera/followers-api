@@ -7,7 +7,7 @@ export async function UserSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: User');
 
     const password = await bcrypt.hash('rahasia', 10);
-    const avatars = [
+    const avatars: string[] = [
         '/dummy/avatar/avatar1.jpeg',
         '/dummy/avatar/avatar2.png',
         '/dummy/avatar/avatar3.jpeg',
@@ -23,14 +23,16 @@ export async function UserSeed(prisma: PrismaClient) {
 
     const promises = [];
     // Create 1 superadmin
+    const superadmin_avatar = faker.helpers.arrayElement(avatars);
+    console.log({ superadmin_avatar })
     promises.push(
         prisma.user.create({
             data: {
                 name: 'Super Admin',
                 email: 'superadmin@example.com',
                 role: 'SUPERADMIN',
-                avatar: faker.helpers.arrayElement(avatars),
-                avatar_md: faker.helpers.arrayElement(avatars),
+                avatar: superadmin_avatar,
+                avatar_md: superadmin_avatar,
                 password: {
                     create: {
                         password: password,
@@ -42,14 +44,16 @@ export async function UserSeed(prisma: PrismaClient) {
 
     // Create 20 regular users
     for (let i = 1; i <= 20; i++) {
+        const superadmin_user = faker.helpers.arrayElement(avatars);
+        console.log({ superadmin_user })
         promises.push(
             prisma.user.create({
                 data: {
                     name: faker.person.fullName(),
                     email: `user${i}@gmail.com`,
                     role: 'USER',
-                    avatar: faker.helpers.arrayElement(avatars),
-                    avatar_md: faker.helpers.arrayElement(avatars),
+                    avatar: superadmin_user,
+                    avatar_md: superadmin_user,
                     password: {
                         create: {
                             password: password,
@@ -74,15 +78,17 @@ export async function UserSeed(prisma: PrismaClient) {
     // Create 5 operators
     const roles: Role[] = ['OPERATOR', 'ADMIN'];
     roles.forEach((role) => {
-        for (let i = 1; i <= 5; i++) {
+        const superadmin_operator_admin = faker.helpers.arrayElement(avatars);
+        console.log({ superadmin_operator_admin })
+        for (let i = 1; i <= 25; i++) {
             promises.push(
                 prisma.user.create({
                     data: {
                         name: faker.person.fullName(),
                         email: `${role.toLowerCase()}${i}@gmail.com`,
                         role,
-                        avatar: faker.helpers.arrayElement(avatars),
-                        avatar_md: faker.helpers.arrayElement(avatars),
+                        avatar: superadmin_operator_admin,
+                        avatar_md: superadmin_operator_admin,
                         password: {
                             create: {
                                 password: password,
@@ -117,5 +123,5 @@ export async function UserSeed(prisma: PrismaClient) {
 
     await Promise.all(promises);
 
-    console.log(`Created 1 superadmin, 5 admin,5 operators, and 20 users`);
+    console.log(`Created 1 superadmin, 25 admin,25 operators, and 20 users`);
 }
