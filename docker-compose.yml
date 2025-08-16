@@ -6,7 +6,7 @@ services:
             context: .
             dockerfile: Dockerfile
         container_name: dev_api_followers
-        image: dev_api_followers:0.0.5
+        image: dev_api_followers:0.0.6
         restart: always
         ports:
             - 5111:5000
