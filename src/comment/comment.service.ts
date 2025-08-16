@@ -8,7 +8,7 @@ import { FilterCommentQueryDto } from './dto/filter-comment.dto';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 
 const VALID_INCLUDES = ['user', 'replies', 'reactions'];
-
+const transformImages = ['user.avatar', 'user.avatar_md', 'replies.user.avatar', 'replies.user.avatar_md'];
 @Injectable()
 export class CommentService {
     constructor(
@@ -37,11 +37,13 @@ export class CommentService {
 
         const whereConditions: Prisma.CommentWhereInput[] = [
             searchCondition,
-            { deleted },
+            {
+                parentId: parentId ? parentId : null,
+                deleted
+            },
         ];
 
         if (articleId) whereConditions.push({ articleId });
-        if (parentId) whereConditions.push({ parentId });
 
         const where: Prisma.CommentWhereInput = {
             AND: whereConditions.filter(
@@ -61,14 +63,23 @@ export class CommentService {
                 take,
                 include: {
                     ...include,
+                    user: true,
                     ...(parentId && {
                         mentioned: true,
                     }),
+                    ...(include.replies ? {
+                        replies: {
+                            include: {
+                                user: true,
+                                mentioned: true
+                            }
+                        }
+                    } : {})
                 },
             }),
         ]);
         return {
-            data,
+            data: this.app.transformImageUrls(data, ...transformImages),
             limit,
             total,
             page,

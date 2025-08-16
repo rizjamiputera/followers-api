@@ -204,17 +204,42 @@ export class AppService {
 
         keys.forEach(key => {
             if (key.includes('.')) {
-                // Handle nested keys like 'user.avatar'
+                // Handle nested keys like 'user.avatar' or 'replies.user.avatar'
                 const keyPath = key.split('.');
-                const value = this.getNestedValue(result, keyPath);
 
-                if (value && typeof value === 'string') {
-                    this.setNestedValue(result, keyPath, `${apiUri}${value}`);
+                // Check if first part is an array (e.g., 'replies' in 'replies.user.avatar')
+                if (Array.isArray(result[keyPath[0]])) {
+                    const arrayKey = keyPath[0];
+                    const nestedPath = keyPath.slice(1);
+
+                    result[arrayKey] = result[arrayKey].map(item => {
+                        const nestedValue = this.getNestedValue(item, nestedPath);
+                        if (nestedValue && typeof nestedValue === 'string') {
+                            this.setNestedValue(item, nestedPath, `${apiUri}${nestedValue}`);
+                        }
+                        return item;
+                    });
+                } else {
+                    const value = this.getNestedValue(result, keyPath);
+                    if (value) {
+                        if (typeof value === 'string') {
+                            this.setNestedValue(result, keyPath, `${apiUri}${value}`);
+                        } else if (Array.isArray(value)) {
+                            const transformedArray = value.map(item =>
+                                typeof item === 'string' ? `${apiUri}${item}` : item
+                            );
+                            this.setNestedValue(result, keyPath, transformedArray);
+                        }
+                    }
                 }
             } else {
                 // Handle simple keys like 'image'
-                if (result[key] && typeof result[key] === 'string') {
-                    result[key] = `${apiUri}${result[key]}`;
+                if (result[key]) {
+                    if (typeof result[key] === 'string') {
+                        result[key] = `${apiUri}${result[key]}`;
+                    } else if (Array.isArray(result[key])) {
+                        result[key] = result[key].map(item => this.transformImageUrls(item, ...key));
+                    }
                 }
             }
         });
