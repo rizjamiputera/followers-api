@@ -16,6 +16,12 @@ CREATE TYPE "followers_dev"."ApprovalStatus" AS ENUM ('REJECTED', 'APPROVED', 'T
 -- CreateEnum
 CREATE TYPE "followers_dev"."ReactionType" AS ENUM ('like', 'dislike', 'love', 'clap');
 
+-- CreateEnum
+CREATE TYPE "followers_dev"."VerificationStatus" AS ENUM ('UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "followers_dev"."SocialPlatform" AS ENUM ('INSTAGRAM', 'FACEBOOK', 'TWITTER', 'YOUTUBE', 'TIKTOK', 'LINKEDIN', 'TELEGRAM', 'WHATSAPP', 'WEBSITE', 'BLOG');
+
 -- CreateTable
 CREATE TABLE "followers_dev"."user" (
     "id" TEXT NOT NULL,
@@ -28,6 +34,7 @@ CREATE TABLE "followers_dev"."user" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deleted" BOOLEAN NOT NULL DEFAULT false,
+    "isProfilePublic" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
@@ -230,6 +237,62 @@ CREATE TABLE "followers_dev"."visitor" (
     CONSTRAINT "visitor_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "followers_dev"."profile" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "location" VARCHAR(100),
+    "birthDate" TIMESTAMP(3),
+    "biography" TEXT,
+    "specializations" TEXT[],
+    "educationDetails" TEXT,
+    "totalArticles" INTEGER NOT NULL DEFAULT 0,
+    "totalFollowers" INTEGER NOT NULL DEFAULT 0,
+    "totalLikes" INTEGER NOT NULL DEFAULT 0,
+    "avgRating" DOUBLE PRECISION,
+    "slug" VARCHAR(100),
+    "website" VARCHAR(255),
+    "contact" VARCHAR(255),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "profile_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "followers_dev"."social_link" (
+    "id" TEXT NOT NULL,
+    "profileId" TEXT,
+    "platform" "followers_dev"."SocialPlatform" NOT NULL,
+    "url" VARCHAR(255) NOT NULL,
+    "handle" VARCHAR(100),
+
+    CONSTRAINT "social_link_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "followers_dev"."follow" (
+    "id" TEXT NOT NULL,
+    "followerId" TEXT NOT NULL,
+    "followingId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "follow_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "followers_dev"."writer_rating" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "raterId" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "review" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "writer_rating_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "user_email_key" ON "followers_dev"."user"("email");
 
@@ -289,6 +352,33 @@ CREATE INDEX "visit_articleId_visitedAt_idx" ON "followers_dev"."visit"("article
 
 -- CreateIndex
 CREATE UNIQUE INDEX "visitor_fingerprint_key" ON "followers_dev"."visitor"("fingerprint");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "profile_userId_key" ON "followers_dev"."profile"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "profile_slug_key" ON "followers_dev"."profile"("slug");
+
+-- CreateIndex
+CREATE INDEX "profile_slug_idx" ON "followers_dev"."profile"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "social_link_profileId_platform_key" ON "followers_dev"."social_link"("profileId", "platform");
+
+-- CreateIndex
+CREATE INDEX "follow_followerId_idx" ON "followers_dev"."follow"("followerId");
+
+-- CreateIndex
+CREATE INDEX "follow_followingId_idx" ON "followers_dev"."follow"("followingId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "follow_followerId_followingId_key" ON "followers_dev"."follow"("followerId", "followingId");
+
+-- CreateIndex
+CREATE INDEX "writer_rating_userId_rating_idx" ON "followers_dev"."writer_rating"("userId", "rating");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "writer_rating_userId_raterId_key" ON "followers_dev"."writer_rating"("userId", "raterId");
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."password" ADD CONSTRAINT "password_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -358,3 +448,21 @@ ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_visitorId_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."visitor" ADD CONSTRAINT "visitor_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."profile" ADD CONSTRAINT "profile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."social_link" ADD CONSTRAINT "social_link_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "followers_dev"."profile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."follow" ADD CONSTRAINT "follow_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."follow" ADD CONSTRAINT "follow_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."writer_rating" ADD CONSTRAINT "writer_rating_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."writer_rating" ADD CONSTRAINT "writer_rating_raterId_fkey" FOREIGN KEY ("raterId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
