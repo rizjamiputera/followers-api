@@ -7,6 +7,19 @@ export async function UserSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: User');
 
     const password = await bcrypt.hash('rahasia', 10);
+    const avatars = [
+        '/dummy/avatar/avatar1.jpeg',
+        '/dummy/avatar/avatar2.png',
+        '/dummy/avatar/avatar3.jpeg',
+        '/dummy/avatar/avatar4.jpg',
+        '/dummy/avatar/avatar5.jpg',
+        '/dummy/avatar/avatar6.png',
+        '/dummy/avatar/avatar7.jpeg',
+        '/dummy/avatar/avatar8.webp',
+        '/dummy/avatar/avatar9.webp',
+        '/dummy/avatar/avatar10.jpg',
+        '/dummy/avatar/avatar11.webp',
+    ]
 
     const promises = [];
     // Create 1 superadmin
@@ -16,7 +29,8 @@ export async function UserSeed(prisma: PrismaClient) {
                 name: 'Super Admin',
                 email: 'superadmin@example.com',
                 role: 'SUPERADMIN',
-                avatar: faker.image.avatar(),
+                avatar: faker.helpers.arrayElement(avatars),
+                avatar_md: faker.helpers.arrayElement(avatars),
                 password: {
                     create: {
                         password: password,
@@ -34,7 +48,8 @@ export async function UserSeed(prisma: PrismaClient) {
                     name: faker.person.fullName(),
                     email: `user${i}@gmail.com`,
                     role: 'USER',
-                    avatar: faker.image.avatar(),
+                    avatar: faker.helpers.arrayElement(avatars),
+                    avatar_md: faker.helpers.arrayElement(avatars),
                     password: {
                         create: {
                             password: password,
@@ -66,7 +81,8 @@ export async function UserSeed(prisma: PrismaClient) {
                         name: faker.person.fullName(),
                         email: `${role.toLowerCase()}${i}@gmail.com`,
                         role,
-                        avatar: faker.image.avatar(),
+                        avatar: faker.helpers.arrayElement(avatars),
+                        avatar_md: faker.helpers.arrayElement(avatars),
                         password: {
                             create: {
                                 password: password,
