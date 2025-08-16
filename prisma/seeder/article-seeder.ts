@@ -103,7 +103,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
             });
 
             const articlePromise = (async () => {
-                const image = faker.image.url({ width: 800, height: 600 });
+                const image = `/dummy/article${faker.number.int({ min: 1, max: 13 })}.jpg`;
                 // First create the article content
                 const articleContent = await prisma.articleContent.create({
                     data: {

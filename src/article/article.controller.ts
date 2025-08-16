@@ -114,7 +114,7 @@ export class ArticleController {
     }
 
     @Public()
-    @Get(':published')
+    @Get('published')
     published(
         @Query(new ValidationPipe({ transform: true }))
         pagination: PaginationDeletedIncludeQueryDto,
