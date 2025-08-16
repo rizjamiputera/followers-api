@@ -224,7 +224,11 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                 );
                             }
 
-                            await Promise.all(replyPromises);
+                            // Execute replies in batches
+                            for (let k = 0; k < replyPromises.length; k += 5) {
+                                const replyBatch = replyPromises.slice(k, k + 5);
+                                await Promise.all(replyBatch);
+                            }
                         }
 
                         // Add reactions to comments (20-50% chance, 1-8 loves per comment)
@@ -269,14 +273,25 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
         }
     }
 
-    // Execute all reactions
-    await Promise.all(reactionPromises);
-    console.log(`Created ${reactionPromises.length} article reactions`);
+    // Execute reactions in batches to avoid connection pool exhaustion
+    const BATCH_SIZE = 10;
+    let reactionCount = 0;
+    for (let i = 0; i < reactionPromises.length; i += BATCH_SIZE) {
+        const batch = reactionPromises.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch);
+        reactionCount += batch.length;
+    }
+    console.log(`Created ${reactionCount} article reactions`);
 
-    // Execute all comments (including replies and comment reactions)
-    await Promise.all(commentPromises);
+    // Execute comments in batches to avoid connection pool exhaustion
+    let commentCount = 0;
+    for (let i = 0; i < commentPromises.length; i += BATCH_SIZE) {
+        const batch = commentPromises.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch);
+        commentCount += batch.length;
+    }
     console.log(
-        `Created ${commentPromises.length} comments with replies and comment reactions`,
+        `Created ${commentCount} comments with replies and comment reactions`,
     );
 
     // Count total comment reactions created
