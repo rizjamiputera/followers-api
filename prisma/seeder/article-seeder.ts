@@ -217,6 +217,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
     console.log('\nSeed End: Article');
 }
 
+const apiUri = process.env.API_URI || 'http://localhost:5111';
 function generateStructuredContent() {
     return {
         type: 'doc',
@@ -232,14 +233,17 @@ function generateStructuredContent() {
             },
             // Add random image after first paragraph
             faker.helpers.maybe(
-                () => ({
-                    type: 'image',
-                    attrs: {
-                        src: faker.image.url({ width: 800, height: 400 }),
-                        alt: faker.lorem.words(3),
-                        title: faker.lorem.sentence(),
-                    },
-                }),
+                () => {
+                    const src = `${apiUri}/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    return {
+                        type: 'image',
+                        attrs: {
+                            src,
+                            alt: faker.lorem.words(3),
+                            title: faker.lorem.sentence(),
+                        },
+                    }
+                },
                 { probability: 0.8 },
             ),
             {
@@ -253,15 +257,18 @@ function generateStructuredContent() {
             },
             // Add another random image
             faker.helpers.maybe(
-                () => ({
-                    type: 'image',
-                    attrs: {
-                        src: faker.image.url({ width: 600, height: 300 }),
-                        alt: faker.lorem.words(4),
-                        title: faker.lorem.sentence(),
-                        caption: faker.lorem.sentence(),
-                    },
-                }),
+                () => {
+                    const src = `${apiUri}/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    return {
+                        type: 'image',
+                        attrs: {
+                            src,
+                            alt: faker.lorem.words(4),
+                            title: faker.lorem.sentence(),
+                            caption: faker.lorem.sentence(),
+                        },
+                    }
+                },
                 { probability: 0.6 },
             ),
             {
@@ -294,17 +301,20 @@ function generateStructuredContent() {
             },
             // Add final image with different dimensions
             faker.helpers.maybe(
-                () => ({
-                    type: 'image',
-                    attrs: {
-                        src: faker.image.url({ width: 1200, height: 600 }),
-                        alt: faker.lorem.words(5),
-                        title: faker.lorem.sentence(),
-                        caption: faker.lorem.sentence(),
-                        width: 1200,
-                        height: 600,
-                    },
-                }),
+                () => {
+                    const src = `${apiUri}/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    return {
+                        type: 'image',
+                        attrs: {
+                            src,
+                            alt: faker.lorem.words(5),
+                            title: faker.lorem.sentence(),
+                            caption: faker.lorem.sentence(),
+                            width: 1200,
+                            height: 600,
+                        },
+                    }
+                },
                 { probability: 0.7 },
             ),
             {

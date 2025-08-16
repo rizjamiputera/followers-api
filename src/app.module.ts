@@ -21,7 +21,7 @@ import { CommentModule } from './comment/comment.module';
             throttlers: [
                 {
                     ttl: 10000,
-                    limit: 20,
+                    limit: 100,
                 },
             ],
         }),
