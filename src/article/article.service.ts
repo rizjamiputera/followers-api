@@ -32,6 +32,20 @@ export class ArticleService {
         private app: AppService,
     ) { }
 
+    private transformImageUrls(article: Article): Article {
+        const apiUri = process.env.API_URI || 'http://localhost:5111';
+
+        return {
+            ...article,
+            image: article.image ? `${apiUri}${article.image}` : article.image,
+            image_sm: article.image_sm ? `${apiUri}${article.image_sm}` : article.image_sm,
+        };
+    }
+
+    private transformArticleArray(articles: Article[]): Article[] {
+        return articles.map(article => this.transformImageUrls(article));
+    }
+
     async is_slug_available(slug: string) {
         const exist = await this.prisma.article.findUniqueOrThrow({
             where: {
@@ -128,7 +142,7 @@ export class ArticleService {
             }),
         ]);
         return {
-            data,
+            data: this.transformArticleArray(data),
             limit,
             total,
             page,
@@ -140,7 +154,7 @@ export class ArticleService {
     async read(slug: string, includes: string[] = []): Promise<Article> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
-        return this.prisma.article.findUniqueOrThrow({
+        const article = await this.prisma.article.findUniqueOrThrow({
             where: {
                 slug,
                 status: ArticleStatus.PUBLISHED,
@@ -149,18 +163,22 @@ export class ArticleService {
             },
             include,
         });
+
+        return this.transformImageUrls(article);
     }
 
     async findOne(id: string, includes: string[] = []): Promise<Article> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
-        return this.prisma.article.findUniqueOrThrow({
+        const article = await this.prisma.article.findUniqueOrThrow({
             where: {
                 id,
                 deleted: false,
             },
             include,
         });
+
+        return this.transformImageUrls(article);
     }
 
     async update(
@@ -248,7 +266,7 @@ export class ArticleService {
             },
         });
 
-        return update;
+        return this.transformImageUrls(update);;
     }
 
     async remove(id: string): Promise<void> {
