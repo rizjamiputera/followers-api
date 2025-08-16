@@ -224,7 +224,11 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                 );
                             }
 
-                            await Promise.all(replyPromises);
+                            // Execute replies in batches
+                            for (let k = 0; k < replyPromises.length; k += 5) {
+                                const replyBatch = replyPromises.slice(k, k + 5);
+                                await Promise.all(replyBatch);
+                            }
                         }
 
                         // Add reactions to comments (20-50% chance, 1-8 loves per comment)
