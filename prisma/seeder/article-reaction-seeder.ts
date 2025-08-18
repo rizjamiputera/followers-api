@@ -26,7 +26,9 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
         return;
     }
 
-    const reactionTypes: ReactionType[] = ['like', 'dislike', 'love', 'clap'];
+    const articleReactionTypes: ReactionType[] = ['like', 'dislike'];
+    const commentReactionTypes: ReactionType[] = ['like', 'dislike', 'love', 'clap'];
+    const bookmarkPromises = [];
     const reactionPromises = [];
     const commentPromises = [];
 
@@ -38,10 +40,28 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
             max: Math.floor(users.length * 0.8),
         });
 
+        // bookmark
+        const bookmarkUsers = faker.helpers.arrayElements(users, users.length);
+        for (const user of bookmarkUsers) {
+            reactionPromises.push(
+                prisma.articleBookmark.create({
+                    data: {
+                        article: {
+                            connect: { id: article.id },
+                        },
+                        user: {
+                            connect: { id: user.id },
+                        },
+                    },
+                }),
+            );
+        }
+
+        // react
         const reactingUsers = faker.helpers.arrayElements(users, reactionCount);
 
         for (const user of reactingUsers) {
-            const reactionType = faker.helpers.arrayElement(reactionTypes);
+            const reactionType = faker.helpers.arrayElement(articleReactionTypes);
 
             reactionPromises.push(
                 prisma.articleReaction.create({
@@ -63,14 +83,11 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
         }
 
         // Create top-level comments (5-15 comments per article)
-        const commentCount = faker.number.int({ min: 5, max: 15 });
-        const commentingUsers = faker.helpers.arrayElements(
-            users,
-            commentCount,
-        );
+        const commentCount = faker.number.int({ min: 5, max: 100 });
 
         for (let i = 0; i < commentCount; i++) {
-            const user = commentingUsers[i];
+            const commentingUsers = faker.helpers.arrayElement(users);
+            // const user = commentingUsers[i];
             const commentCreatedAt = faker.date.between({
                 from: article.publishedAt || article.createdAt,
                 to: new Date(),
@@ -84,7 +101,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                 connect: { id: article.id },
                             },
                             user: {
-                                connect: { id: user.id },
+                                connect: { id: commentingUsers.id },
                             },
                             content: generateCommentContent(),
                             isEdited: faker.datatype.boolean(0.1), // 10% chance of being edited
@@ -200,7 +217,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                                                             },
                                                                         },
                                                                         type: faker.helpers.arrayElement(
-                                                                            reactionTypes,
+                                                                            commentReactionTypes,
                                                                         ),
                                                                         createdAt:
                                                                             faker.date.between(
@@ -254,7 +271,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                                                 connect: { id: lovingUser.id },
                                             },
                                             type: faker.helpers.arrayElement(
-                                                reactionTypes,
+                                                commentReactionTypes,
                                             ),
                                             createdAt: faker.date.between({
                                                 from: comment.createdAt,
@@ -271,6 +288,41 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                     }),
             );
         }
+
+        // Count actual comments for this article
+        const actualCommentCount = await prisma.comment.count({
+            where: {
+                articleId: article.id,
+                deleted: false,
+            }
+        });
+        const actualLikeCount = await prisma.articleReaction.count({
+            where: {
+                articleId: article.id,
+                type: ReactionType.like
+            }
+        });
+        const actualDislikeCount = await prisma.articleReaction.count({
+            where: {
+                articleId: article.id,
+                type: ReactionType.dislike
+            }
+        });
+
+        await prisma.article.update({
+            where: { id: article.id },
+            data: {
+                stats: {
+                    update: {
+                        commentCount: actualCommentCount,
+                        likeCount: actualLikeCount,
+                        dislikeCount: actualDislikeCount,
+                        shareCount: faker.number.int({ min: 5, max: 300 }),
+                        bookmarkCount: bookmarkUsers.length,
+                    }
+                }
+            }
+        });
     }
 
     // Execute reactions in batches to avoid connection pool exhaustion

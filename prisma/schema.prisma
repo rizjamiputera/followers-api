@@ -64,6 +64,7 @@ model User {
     following        Follow[]          @relation("UserFollowing")
     ratingsGiven     UserRating[]      @relation("RatingsGiven")
     ratingsReceived  UserRating[]      @relation("RatingsReceived")
+    articleBookmarks ArticleBookmark[]
 
     @@index([email])
     @@map("user")
@@ -158,9 +159,10 @@ model Article {
     createdAt   DateTime                @default(now())
     updatedAt   DateTime                @updatedAt
     deleted     Boolean                 @default(false)
-    readStat    ArticleReadStat         @relation(fields: [readStatId], references: [id], onDelete: Restrict)
-    readStatId  String                  @unique
+    stats       ArticleStats            @relation(fields: [statsId], references: [id], onDelete: Restrict)
+    statsId     String                  @unique
     visitors    Visit[]
+    bookmarks   ArticleBookmark[]
 
     @@index([status, publishedAt])
     @@index([authorId, status])
@@ -289,11 +291,16 @@ model CommentReaction {
 }
 
 // ARTICLE STATS
-model ArticleReadStat {
-    id         String    @id @default(uuid())
-    article    Article?
-    readCount  Int       @default(0)
-    lastReadAt DateTime?
+model ArticleStats {
+    id            String    @id @default(uuid())
+    readCount     Int       @default(0)
+    commentCount  Int       @default(0)
+    likeCount     Int       @default(0)
+    dislikeCount  Int       @default(0)
+    shareCount    Int       @default(0)
+    bookmarkCount Int       @default(0)
+    lastReadAt    DateTime?
+    Article       Article?
 
     @@map("article_read_stat")
 }
@@ -327,6 +334,16 @@ model Visitor {
 
     @@unique([fingerprint])
     @@map("visitor")
+}
+
+model ArticleBookmark {
+    id        String  @id @default(uuid())
+    user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+    userId    String?
+    article   Article @relation(fields: [articleId], references: [id])
+    articleId String
+
+    @@map("article_bookmark")
 }
 
 // WRITER PROFILE & BIOGRAPHY

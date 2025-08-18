@@ -112,7 +112,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 });
 
                 // Create read stats first
-                const readStat = await prisma.articleReadStat.create({
+                const readStat = await prisma.articleStats.create({
                     data: {
                         readCount: faker.number.int({ min: 0, max: 1000 }),
                         lastReadAt: faker.helpers.maybe(
@@ -133,7 +133,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                         content: {
                             connect: { id: articleContent.id },
                         },
-                        readStat: {
+                        stats: {
                             connect: { id: readStat.id },
                         },
                         isFeatured: faker.datatype.boolean(0.2), // 20% chance of being featured

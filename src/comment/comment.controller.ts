@@ -58,11 +58,15 @@ export class CommentController {
     @Public()
     @Get()
     findAll(
+        @Request() req: any,
         @Query(new ValidationPipe({ transform: true }))
         pagination: PaginationDeletedIncludeQueryDto,
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterCommentQueryDto,
     ) {
+
+        const authUserId = req.user?.id;
+
         return this.commentService.findAll(pagination, filter);
     }
 

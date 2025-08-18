@@ -93,7 +93,7 @@ export class ArticleController {
             image_sm: medium,
             content: { create: { content: contentBody } },
             author: { connect: { id: req.user.id } },
-            readStat: { create: {} },
+            stats: { create: {} },
             ...(tags && { tags }),
         };
 

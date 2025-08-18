@@ -24,6 +24,7 @@ const VALID_INCLUDES = [
     'reactions',
     'versions',
     'author',
+    'stats',
 ];
 const transformImages = ['image', 'image_sm', 'author.avatar', 'author.avatar_md'];
 
