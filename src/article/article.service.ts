@@ -54,7 +54,7 @@ export class ArticleService {
     }
 
     async is_slug_available(slug: string) {
-        const exist = await this.prisma.article.findUniqueOrThrow({
+        const exist = await this.prisma.article.findUnique({
             where: {
                 slug,
             },
@@ -192,7 +192,7 @@ export class ArticleService {
         changedBy: string,
         id: string,
         data: Prisma.ArticleUpdateInput & {
-            contentBody?: any;
+            content?: any;
             tags?: string[];
         },
     ): Promise<Article> {
@@ -207,7 +207,7 @@ export class ArticleService {
         }
 
         // Separate content body and tags from article data
-        const { contentBody, tags, ...articleData } = data;
+        const { content, tags, ...articleData } = data;
 
         // Check if content fields have changed
         const contentChanged =
@@ -215,10 +215,8 @@ export class ArticleService {
             articleData.excerpt !== current.excerpt ||
             articleData.image !== current.image ||
             articleData.image_sm !== current.image_sm ||
-            (contentBody &&
-                current.content &&
-                JSON.stringify(contentBody) !==
-                JSON.stringify(current.content.content));
+            (content && current.content &&
+                (JSON.stringify(content) !== JSON.stringify(current.content.content)));
 
         // Create version if content changed
         if (contentChanged && current.content) {
@@ -236,10 +234,10 @@ export class ArticleService {
         }
 
         // Update content if provided and changed
-        if (contentBody && current.contentId && contentChanged) {
+        if (content && current.contentId && contentChanged) {
             await this.prisma.articleContent.update({
                 where: { id: current.contentId },
-                data: { content: contentBody },
+                data: { content: content },
             });
         }
 

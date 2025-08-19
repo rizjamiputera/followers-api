@@ -25,9 +25,9 @@ export class CreateArticleDto {
     @IsString()
     slug: string;
 
-    @ApiProperty({ description: 'Article content body (JSON)' })
+    @ApiProperty({ description: 'Article content (JSON)' })
     @IsNotEmpty()
-    contentBody: any;
+    content: any;
 
     @ApiPropertyOptional({ description: 'Is featured article' })
     @IsOptional()

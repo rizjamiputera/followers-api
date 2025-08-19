@@ -86,12 +86,12 @@ export class ArticleController {
             '/article',
         );
 
-        const { contentBody, tags, ...articleDto } = createArticleDto;
+        const { content, tags, ...articleDto } = createArticleDto;
         const data: Prisma.ArticleCreateInput & { tags?: string[] } = {
             ...articleDto,
             image: large,
             image_sm: medium,
-            content: { create: { content: contentBody } },
+            content: { create: { content: content } },
             author: { connect: { id: req.user.id } },
             stats: { create: {} },
             ...(tags && { tags }),
@@ -164,7 +164,7 @@ export class ArticleController {
         return this.articleService.findOne(id, query.includes);
     }
 
-    @PermissionsRequired(Module.ARTICLE, Permission.EDIT)
+    @PermissionsRequired(Module.ARTICLE, Permission.EDIT, Permission.CREATE)
     @ApiBearerAuth()
     @Patch(':id')
     update(
