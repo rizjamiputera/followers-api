@@ -217,7 +217,6 @@ export async function ArticleSeed(prisma: PrismaClient) {
     console.log('\nSeed End: Article');
 }
 
-const apiUri = process.env.API_URI || 'http://localhost:5111';
 function generateStructuredContent() {
     return {
         type: 'doc',
@@ -234,7 +233,7 @@ function generateStructuredContent() {
             // Add random image after first paragraph
             faker.helpers.maybe(
                 () => {
-                    const src = `${apiUri}/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
                     return {
                         type: 'image',
                         attrs: {
@@ -258,7 +257,7 @@ function generateStructuredContent() {
             // Add another random image
             faker.helpers.maybe(
                 () => {
-                    const src = `${apiUri}/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
                     return {
                         type: 'image',
                         attrs: {
@@ -302,7 +301,7 @@ function generateStructuredContent() {
             // Add final image with different dimensions
             faker.helpers.maybe(
                 () => {
-                    const src = `${apiUri}/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
                     return {
                         type: 'image',
                         attrs: {

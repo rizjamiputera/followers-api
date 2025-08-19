@@ -24,6 +24,7 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import {
     ApprovalStatus,
     Article,
+    ArticlePhotoContent,
     ArticleStatus,
     Module,
     Permission,
@@ -164,9 +165,27 @@ export class ArticleController {
         return this.articleService.findOne(id, query.includes);
     }
 
+    @PermissionsRequired(Module.ARTICLE, Permission.READ, Permission.CREATE)
+    @ApiBearerAuth()
+    @Get('my/:id')
+    async readMyArticle(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
+    ) {
+        const article = await this.articleService.findOne(id, query.includes);
+
+        if (article.authorId != req.user.id) {
+            throw new ForbiddenException('Article hanya bisa di akses oleh penulisnya')
+        }
+
+        return article;
+    }
+
     @PermissionsRequired(Module.ARTICLE, Permission.EDIT, Permission.CREATE)
     @ApiBearerAuth()
     @Patch(':id')
+    @ApiConsumes('multipart/form-data')
     update(
         @Request() req: any,
         @Param('id') id: string,
@@ -305,5 +324,40 @@ export class ArticleController {
         const { type } = reaction;
 
         return this.articleService.react(req.user.id, articleId, type);
+    }
+
+    @Post('photo/upload')
+    @ApiBearerAuth()
+    @UseInterceptors(FileInterceptor('photo'))
+    async uploadAvatar(
+        @Request() req,
+        @UploadedFile(
+            new ParseFilePipe({
+                validators: [
+                    // max 10 MB
+                    new MaxFileSizeValidator({ maxSize: 10000 * 1000 }),
+                    new FileTypeValidator({
+                        fileType: 'image/jpeg|jpg|png',
+                    }),
+                ],
+            }),
+        )
+        photo: Express.Multer.File,
+    ): Promise<ArticlePhotoContent> {
+        try {
+            const path = await this.appService.save_image(
+                photo,
+                '/article',
+                800
+            );
+
+            const data: Prisma.ArticlePhotoContentCreateInput = {
+                path
+            };
+
+            return this.articleService.save_photo(data);
+
+        } catch (error) {
+        }
     }
 }

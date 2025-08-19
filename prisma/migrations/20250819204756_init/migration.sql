@@ -121,6 +121,16 @@ CREATE TABLE "followers_dev"."article_content" (
 );
 
 -- CreateTable
+CREATE TABLE "followers_dev"."article_photo_content" (
+    "id" TEXT NOT NULL,
+    "path" VARCHAR(255) NOT NULL,
+    "articleId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "article_photo_content_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "followers_dev"."article_content_version" (
     "id" TEXT NOT NULL,
     "title" VARCHAR(255) NOT NULL,
@@ -414,6 +424,9 @@ ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_authorId_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_statsId_fkey" FOREIGN KEY ("statsId") REFERENCES "followers_dev"."article_read_stat"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."article_photo_content" ADD CONSTRAINT "article_photo_content_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article_content_version" ADD CONSTRAINT "article_content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -146,6 +146,7 @@ model Article {
     image_sm    String                  @db.VarChar(255)
     content     ArticleContent          @relation(fields: [contentId], references: [id], onDelete: Restrict)
     contentId   String                  @unique
+    photos      ArticlePhotoContent[]
     versions    ArticleContentVersion[]
     isFeatured  Boolean                 @default(false)
     status      ArticleStatus           @default(DRAFT)
@@ -178,6 +179,16 @@ model ArticleContent {
     article   Article?
 
     @@map("article_content")
+}
+
+model ArticlePhotoContent {
+    id        String   @id @default(uuid())
+    path      String   @db.VarChar(255)
+    Article   Article? @relation(fields: [articleId], references: [id])
+    articleId String?
+    createdAt DateTime @default(now())
+
+    @@map("article_photo_content")
 }
 
 model ArticleContentVersion {

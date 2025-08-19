@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import {
     Article,
     ArticleContent,
+    ArticlePhotoContent,
     ArticleStatus,
     ArticleTag,
     Prisma,
@@ -27,6 +28,7 @@ const VALID_INCLUDES = [
     'stats',
 ];
 const transformImages = ['image', 'image_sm', 'author.avatar', 'author.avatar_md'];
+const transformUploadPhoto = ['path'];
 
 @Injectable()
 export class ArticleService {
@@ -35,7 +37,10 @@ export class ArticleService {
         private app: AppService,
     ) { }
 
-    private transformData(data: Article & { tags?: (ArticleTag & { tag: Tag })[] }): Article {
+    private transformData(data: Article & {
+        tags?: (ArticleTag & { tag: Tag })[]
+        content?: ArticleContent
+    }): Article {
         const tags = data.tags;
         delete data.tags;
 
@@ -44,6 +49,20 @@ export class ArticleService {
             ...(tags && {
                 tags: tags.map(t => t.tag)
             })
+        }
+
+        const apiUri = process.env.API_URI || 'http://localhost:5111';
+
+        if (article.content) {
+            article.content.content['content'] = article.content.content['content'].map((c: any) => ({
+                ...c,
+                ...(c.type == 'image' && {
+                    attrs: {
+                        ...c.attrs,
+                        src: apiUri + c.attrs.src
+                    }
+                })
+            }))
         }
 
         return this.app.transformImageUrls(article, ...transformImages)
@@ -235,10 +254,35 @@ export class ArticleService {
 
         // Update content if provided and changed
         if (content && current.contentId && contentChanged) {
+            // remove host url
+            const apiUri = process.env.API_URI || 'http://localhost:5111';
+            content.content = content.content.map((c: any) => ({
+                ...c,
+                ...(c.type == 'image' && {
+                    attrs: {
+                        ...c.attrs,
+                        src: c.attrs.src.replace(apiUri, '')
+                    }
+                })
+            }));
+
             await this.prisma.articleContent.update({
                 where: { id: current.contentId },
                 data: { content: content },
             });
+
+            const articleImagesPath = content.content.filter((c: any) => c.type == 'image').map((c: any) => c.attrs.src);
+            // assign photo to article
+            await this.prisma.articlePhotoContent.updateMany({
+                where: {
+                    path: {
+                        in: articleImagesPath
+                    }
+                },
+                data: {
+                    articleId: id
+                }
+            })
         }
 
         // Handle tags update if provided
@@ -347,5 +391,13 @@ export class ArticleService {
         });
 
         return;
+    }
+
+    async save_photo(data: Prisma.ArticlePhotoContentCreateInput): Promise<ArticlePhotoContent> {
+        const photo = await this.prisma.articlePhotoContent.create({
+            data
+        });
+
+        return this.app.transformImageUrls(photo, ...transformUploadPhoto)
     }
 }

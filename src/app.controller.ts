@@ -7,8 +7,8 @@ import { promises as fs } from 'fs';
 export class AppController {
     constructor(private readonly appService: AppService) { }
 
-    @Get()
     @Public()
+    @Get()
     root(@Res() res) {
         res.status(302).redirect('/api');
     }
@@ -20,6 +20,17 @@ export class AppController {
         try {
             await fs.access(`./public/dummy/${filePath}`);
             res.sendFile(filePath, { root: './public/dummy' });
+        } catch (error) {
+            throw new NotFoundException('File not found');
+        }
+    }
+    @Public()
+    @Get('article/*path')
+    async getArticlePhoto(@Param('path') path: any, @Res() res) {
+        const filePath = path.join('/')
+        try {
+            await fs.access(`./public/article/${filePath}`);
+            res.sendFile(filePath, { root: './public/article' });
         } catch (error) {
             throw new NotFoundException('File not found');
         }

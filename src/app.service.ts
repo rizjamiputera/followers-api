@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { promises as fs } from 'fs';
 import { SavedImage } from './app/interface/app.interface';
-import sharp from 'sharp';
-import path from 'path';
+import * as path from 'path';
+import * as sharp from 'sharp';
 
 @Injectable()
 export class AppService {
+
     async createPath(path: string) {
         try {
             await fs.access(path);
@@ -75,6 +76,7 @@ export class AppService {
             return `${path_to_save}/${filename}`;
         } catch (_e) {
             this.removeFile(filepath);
+            throw _e;
         }
     }
     async save_images(
