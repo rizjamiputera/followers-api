@@ -113,6 +113,23 @@ export class ArticleController {
         return this.articleService.findAll(pagination, filter);
     }
 
+    @ApiBearerAuth()
+    @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
+    @Get('my-article')
+    findMyArticle(
+        @Request() req: any,
+        @Query(new ValidationPipe({ transform: true }))
+        pagination: PaginationDeletedIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true }))
+        filter: FilterArticleQueryDto,
+    ): Promise<Paginate<Article[]>> {
+
+        return this.articleService.findAll(pagination, {
+            ...filter,
+            authorId: req.user.id
+        });
+    }
+
     @Public()
     @Get('published')
     published(
