@@ -68,7 +68,6 @@ export class AuthController {
     @Post('register')
     async register(
         @Body(new ValidationPipe()) dataDto: RegisterDto,
-        @Res() res,
     ) {
         try {
             // validate new user
@@ -86,14 +85,11 @@ export class AuthController {
                 },
             };
 
-            await this.userService.create(dataUser);
+            const user = await this.userService.create(dataUser);
             // kirim kode aktivasi ke email
             // await this.authService.sendActivation(user.email);
 
-            res.status(HttpStatus.OK).json({
-                // message: 'Silahkan periksa email untuk verifikasi akun.',
-                message: 'Registrasi Berhasil, silahkan login.',
-            });
+            return this.authService.loginProcess(user);
         } catch (error) {
             throw error;
         }

@@ -14,6 +14,9 @@ import { RegisterDto } from './dto/register.dto';
 import { UserService } from 'src/user/user.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
+import { AppService } from 'src/app.service';
+
+const transformImages = ['avatar', 'avatar_md'];
 
 @Injectable()
 export class AuthService {
@@ -21,6 +24,7 @@ export class AuthService {
         private prisma: PrismaService,
         private jwtService: JwtService,
         private userService: UserService,
+        private app: AppService,
     ) { }
 
     // collect expired tokens in blacklist
@@ -59,6 +63,8 @@ export class AuthService {
             user.email,
             user.role,
         );
+
+        user = this.app.transformImageUrls(user, ...transformImages)
         return { access_token, exp, user };
     }
 

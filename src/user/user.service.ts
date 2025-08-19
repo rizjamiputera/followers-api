@@ -9,7 +9,7 @@ import { UserFilterQueryDto } from './dto/user-filter.dto';
 
 // Define reusable includes
 const VALID_INCLUDES = ['permissions'];
-
+const transformImages = ['avatar', 'avatar_md'];
 @Injectable()
 export class UserService {
     constructor(
@@ -142,7 +142,7 @@ export class UserService {
             throw new NotFoundException('User tidak ditemukan');
         }
 
-        return user;
+        return this.app.transformImageUrls(user, ...transformImages)
     }
 
     findOne(
