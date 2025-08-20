@@ -10,11 +10,6 @@ import {
     ValidationPipe,
     Query,
     Request,
-    UseInterceptors,
-    UploadedFile,
-    MaxFileSizeValidator,
-    FileTypeValidator,
-    ParseFilePipe,
     ForbiddenException,
     NotFoundException,
 } from '@nestjs/common';
@@ -33,15 +28,13 @@ import {
 import { Paginate } from 'src/app/interface/app.interface';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
 import { Public } from 'src/auth/auth.metadata';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AppService } from 'src/app.service';
 import { RejectArticleDto } from './dto/reject-article.dto';
-import { ApproveArticleDto } from './dto/approve-article.dto';
-import { PublishArticleDto } from './dto/publish-article.dto';
 import { PermissionsRequired } from 'src/auth/guards/permissions/permission.decorator';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
+import { PublishArticleDto } from './dto/publish-article.dto';
 
 @ApiTags('Article')
 @Controller({
@@ -266,16 +259,9 @@ export class ArticleController {
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
-        if (currentData.status == ArticleStatus.PUBLISHED) {
-            return
-        }
-
-        console.log({ publishDto })
-        const publishedAt = (publishDto && publishDto.publishedAt != undefined) ? new Date(publishDto.publishedAt) : null;
-
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ArticleStatus.PUBLISHED,
-            publishedAt,
+            publishedAt: publishDto.publishedAt ?? null,
         };
 
         const dataApproval: Prisma.ArticleApprovalCreateInput = {
