@@ -1,12 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { PhotoContentService } from './photo-content.service';
-import { CreatePhotoContentDto } from './dto/create-photo-content.dto';
-import { UpdatePhotoContentDto } from './dto/update-photo-content.dto';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PhotoContent, Prisma } from '@prisma/client';
 import { AppService } from 'src/app.service';
-import path from 'path';
 
 @ApiBearerAuth()
 @ApiTags('Photo Content')

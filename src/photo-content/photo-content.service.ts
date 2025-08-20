@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePhotoContentDto } from './dto/create-photo-content.dto';
-import { UpdatePhotoContentDto } from './dto/update-photo-content.dto';
 import { PhotoContent, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { AppService } from 'src/app.service';

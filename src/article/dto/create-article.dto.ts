@@ -1,9 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArticleStatus } from '@prisma/client';
 import {
     IsArray,
     IsBoolean,
-    IsEnum,
     IsNotEmpty,
     IsOptional,
     IsString,

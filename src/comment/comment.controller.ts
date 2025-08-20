@@ -65,7 +65,7 @@ export class CommentController {
         filter: FilterCommentQueryDto,
     ) {
 
-        const authUserId = req.user?.id;
+        // const authUserId = req.user?.id;
 
         return this.commentService.findAll(pagination, filter);
     }

@@ -4,7 +4,6 @@ import {
     ArticleStatus,
     ArticleTag,
     Content,
-    PhotoContent,
     Prisma,
     ReactionType,
     Tag,

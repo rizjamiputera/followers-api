@@ -20,7 +20,7 @@ export class AppController {
         try {
             await fs.access(`./public/dummy/${filePath}`);
             res.sendFile(filePath, { root: './public/dummy' });
-        } catch (error) {
+        } catch (_error) {
             throw new NotFoundException('File not found');
         }
     }
@@ -31,7 +31,7 @@ export class AppController {
         try {
             await fs.access(`./public/photo/${filePath}`);
             res.sendFile(filePath, { root: './public/photo' });
-        } catch (error) {
+        } catch (_error) {
             throw new NotFoundException('File not found');
         }
     }
