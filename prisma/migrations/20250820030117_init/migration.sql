@@ -111,27 +111,17 @@ CREATE TABLE "followers_dev"."article" (
 );
 
 -- CreateTable
-CREATE TABLE "followers_dev"."article_content" (
+CREATE TABLE "followers_dev"."content" (
     "id" TEXT NOT NULL,
     "content" JSONB NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "article_content_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "content_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "followers_dev"."article_photo_content" (
-    "id" TEXT NOT NULL,
-    "path" VARCHAR(255) NOT NULL,
-    "articleId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "article_photo_content_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "followers_dev"."article_content_version" (
+CREATE TABLE "followers_dev"."content_version" (
     "id" TEXT NOT NULL,
     "title" VARCHAR(255) NOT NULL,
     "excerpt" VARCHAR(500),
@@ -141,7 +131,17 @@ CREATE TABLE "followers_dev"."article_content_version" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "articleId" TEXT NOT NULL,
 
-    CONSTRAINT "article_content_version_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "content_version_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "followers_dev"."photo_content" (
+    "id" TEXT NOT NULL,
+    "path" VARCHAR(255) NOT NULL,
+    "articleId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "photo_content_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -348,7 +348,7 @@ CREATE INDEX "article_authorId_status_idx" ON "followers_dev"."article"("authorI
 CREATE INDEX "article_deleted_status_publishedAt_idx" ON "followers_dev"."article"("deleted", "status", "publishedAt");
 
 -- CreateIndex
-CREATE INDEX "article_content_version_articleId_idx" ON "followers_dev"."article_content_version"("articleId");
+CREATE INDEX "content_version_articleId_idx" ON "followers_dev"."content_version"("articleId");
 
 -- CreateIndex
 CREATE INDEX "article_approval_articleId_idx" ON "followers_dev"."article_approval"("articleId");
@@ -417,7 +417,7 @@ ALTER TABLE "followers_dev"."auth" ADD CONSTRAINT "auth_userId_fkey" FOREIGN KEY
 ALTER TABLE "followers_dev"."error-log" ADD CONSTRAINT "error-log_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "followers_dev"."article_content"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "followers_dev"."content"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -426,10 +426,10 @@ ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_authorId_fkey" FOR
 ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_statsId_fkey" FOREIGN KEY ("statsId") REFERENCES "followers_dev"."article_read_stat"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."article_photo_content" ADD CONSTRAINT "article_photo_content_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."content_version" ADD CONSTRAINT "content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."article_content_version" ADD CONSTRAINT "article_content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."photo_content" ADD CONSTRAINT "photo_content_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article_approval" ADD CONSTRAINT "article_approval_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;

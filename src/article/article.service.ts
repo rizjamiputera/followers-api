@@ -1,10 +1,10 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import {
     Article,
-    ArticleContent,
-    ArticlePhotoContent,
     ArticleStatus,
     ArticleTag,
+    Content,
+    PhotoContent,
     Prisma,
     ReactionType,
     Tag,
@@ -39,7 +39,7 @@ export class ArticleService {
 
     private transformData(data: Article & {
         tags?: (ArticleTag & { tag: Tag })[]
-        content?: ArticleContent
+        content?: Content
     }): Article {
         const tags = data.tags;
         delete data.tags;
@@ -216,7 +216,7 @@ export class ArticleService {
         },
     ): Promise<Article> {
         const current = (await this.findOne(id, ['content'])) as Article & {
-            content?: ArticleContent;
+            content?: Content;
         };
 
         if (current.authorId !== changedBy) {
@@ -239,7 +239,7 @@ export class ArticleService {
 
         // Create version if content changed
         if (contentChanged && current.content) {
-            await this.prisma.articleContentVersion.create({
+            await this.prisma.contentVersion.create({
                 data: {
                     article: { connect: { id } },
                     title: current.title,
@@ -266,14 +266,14 @@ export class ArticleService {
                 })
             }));
 
-            await this.prisma.articleContent.update({
+            await this.prisma.content.update({
                 where: { id: current.contentId },
                 data: { content: content },
             });
 
             const articleImagesPath = content.content.filter((c: any) => c.type == 'image').map((c: any) => c.attrs.src);
             // assign photo to article
-            await this.prisma.articlePhotoContent.updateMany({
+            await this.prisma.photoContent.updateMany({
                 where: {
                     path: {
                         in: articleImagesPath
@@ -393,8 +393,8 @@ export class ArticleService {
         return;
     }
 
-    async save_photo(data: Prisma.ArticlePhotoContentCreateInput): Promise<ArticlePhotoContent> {
-        const photo = await this.prisma.articlePhotoContent.create({
+    async save_photo(data: Prisma.PhotoContentCreateInput): Promise<PhotoContent> {
+        const photo = await this.prisma.photoContent.create({
             data
         });
 

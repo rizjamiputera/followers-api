@@ -138,30 +138,30 @@ enum ApprovalStatus {
 }
 
 model Article {
-    id          String                  @id @default(uuid())
-    slug        String                  @unique @db.VarChar(255)
-    title       String                  @db.VarChar(255)
-    excerpt     String                  @db.VarChar(500)
-    image       String                  @db.VarChar(255)
-    image_sm    String                  @db.VarChar(255)
-    content     ArticleContent          @relation(fields: [contentId], references: [id], onDelete: Restrict)
-    contentId   String                  @unique
-    photos      ArticlePhotoContent[]
-    versions    ArticleContentVersion[]
-    isFeatured  Boolean                 @default(false)
-    status      ArticleStatus           @default(DRAFT)
+    id          String            @id @default(uuid())
+    slug        String            @unique @db.VarChar(255)
+    title       String            @db.VarChar(255)
+    excerpt     String            @db.VarChar(500)
+    image       String            @db.VarChar(255)
+    image_sm    String            @db.VarChar(255)
+    content     Content           @relation(fields: [contentId], references: [id], onDelete: Restrict)
+    contentId   String            @unique
+    photos      PhotoContent[]
+    versions    ContentVersion[]
+    isFeatured  Boolean           @default(false)
+    status      ArticleStatus     @default(DRAFT)
     publishedAt DateTime? // actual publish time
-    author      User                    @relation("author_articles", fields: [authorId], references: [id], onDelete: Restrict)
+    author      User              @relation("author_articles", fields: [authorId], references: [id], onDelete: Restrict)
     authorId    String
     approvals   ArticleApproval[]
     tags        ArticleTag[]
     comments    Comment[]
     reactions   ArticleReaction[]
-    createdAt   DateTime                @default(now())
-    updatedAt   DateTime                @updatedAt
-    deleted     Boolean                 @default(false)
-    stats       ArticleStats            @relation(fields: [statsId], references: [id], onDelete: Restrict)
-    statsId     String                  @unique
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
+    deleted     Boolean           @default(false)
+    stats       ArticleStats      @relation(fields: [statsId], references: [id], onDelete: Restrict)
+    statsId     String            @unique
     visitors    Visit[]
     bookmarks   ArticleBookmark[]
 
@@ -171,27 +171,17 @@ model Article {
     @@map("article")
 }
 
-model ArticleContent {
+model Content {
     id        String   @id @default(uuid())
     content   Json     @db.JsonB // structured content only
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     article   Article?
 
-    @@map("article_content")
+    @@map("content")
 }
 
-model ArticlePhotoContent {
-    id        String   @id @default(uuid())
-    path      String   @db.VarChar(255)
-    Article   Article? @relation(fields: [articleId], references: [id])
-    articleId String?
-    createdAt DateTime @default(now())
-
-    @@map("article_photo_content")
-}
-
-model ArticleContentVersion {
+model ContentVersion {
     id        String   @id @default(uuid())
     title     String   @db.VarChar(255)
     excerpt   String?  @db.VarChar(500)
@@ -203,7 +193,17 @@ model ArticleContentVersion {
     articleId String
 
     @@index([articleId])
-    @@map("article_content_version")
+    @@map("content_version")
+}
+
+model PhotoContent {
+    id        String   @id @default(uuid())
+    path      String   @db.VarChar(255)
+    Article   Article? @relation(fields: [articleId], references: [id])
+    articleId String?
+    createdAt DateTime @default(now())
+
+    @@map("photo_content")
 }
 
 model ArticleApproval {

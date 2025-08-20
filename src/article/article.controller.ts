@@ -24,10 +24,10 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import {
     ApprovalStatus,
     Article,
-    ArticlePhotoContent,
     ArticleStatus,
     Module,
     Permission,
+    PhotoContent,
     Prisma,
 } from '@prisma/client';
 import { Paginate } from 'src/app/interface/app.interface';
@@ -343,7 +343,7 @@ export class ArticleController {
             }),
         )
         photo: Express.Multer.File,
-    ): Promise<ArticlePhotoContent> {
+    ): Promise<PhotoContent> {
         try {
             const path = await this.appService.save_image(
                 photo,
@@ -351,7 +351,7 @@ export class ArticleController {
                 800
             );
 
-            const data: Prisma.ArticlePhotoContentCreateInput = {
+            const data: Prisma.PhotoContentCreateInput = {
                 path
             };
 
