@@ -22,6 +22,20 @@ export class PhotoContentService {
         return this.app.transformImageUrls(photo, ...transformImages)
     }
 
+    async createMany(paths: string[]): Promise<PhotoContent[]> {
+        // });
+        const photos = await Promise.all(
+            paths.map(path =>
+                this.prisma.photoContent.create({
+                    data: { path }
+                }),
+            ),
+        );
+
+
+        return photos.map(photo => this.app.transformImageUrls(photo, ...transformImages));
+    }
+
     // findAll() {
     //     return `This action returns all photoContent`;
     // }

@@ -25,6 +25,16 @@ export class CreateArticleDto {
     @IsString()
     slug: string;
 
+    @ApiProperty({ description: 'Image' })
+    @IsNotEmpty()
+    @IsString()
+    image: string;
+
+    @ApiProperty({ description: 'Image medium' })
+    @IsNotEmpty()
+    @IsString()
+    image_md: string;
+
     @ApiProperty({ description: 'Article content (JSON)' })
     @IsNotEmpty()
     content: any;

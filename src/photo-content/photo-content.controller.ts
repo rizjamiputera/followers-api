@@ -2,10 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, Upl
 import { PhotoContentService } from './photo-content.service';
 import { CreatePhotoContentDto } from './dto/create-photo-content.dto';
 import { UpdatePhotoContentDto } from './dto/update-photo-content.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PhotoContent, Prisma } from '@prisma/client';
 import { AppService } from 'src/app.service';
+import path from 'path';
 
 @ApiBearerAuth()
 @ApiTags('Photo Content')
@@ -20,6 +21,7 @@ export class PhotoContentController {
     ) { }
 
     @Post()
+    @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('photo'))
     async create(
         @UploadedFile(
@@ -46,6 +48,33 @@ export class PhotoContentController {
         };
 
         return this.photoContentService.create(data);
+    }
+
+    @Post('main-image')
+    @ApiConsumes('multipart/form-data')
+    @ApiBearerAuth()
+    @UseInterceptors(FileInterceptor('photo'))
+    async uploadAvatar(
+        @UploadedFile(
+            new ParseFilePipe({
+                validators: [
+                    // max 10 MB
+                    new MaxFileSizeValidator({ maxSize: 10000 * 1000 }),
+                    new FileTypeValidator({
+                        fileType: 'image/jpeg|jpg|png',
+                    }),
+                ],
+            }),
+        )
+        avatar: Express.Multer.File,
+    ) {
+        const { large, medium } = await this.appService.save_images(
+            avatar,
+            '/photo',
+        );
+
+        return this.photoContentService.createMany([large, medium]);
+
     }
 
     // @Get()

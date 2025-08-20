@@ -143,7 +143,7 @@ model Article {
     title       String            @db.VarChar(255)
     excerpt     String            @db.VarChar(500)
     image       String            @db.VarChar(255)
-    image_sm    String            @db.VarChar(255)
+    image_md    String            @db.VarChar(255)
     content     Content           @relation(fields: [contentId], references: [id], onDelete: Restrict)
     contentId   String            @unique
     photos      PhotoContent[]
@@ -197,11 +197,12 @@ model ContentVersion {
 }
 
 model PhotoContent {
-    id        String   @id @default(uuid())
-    path      String   @db.VarChar(255)
-    Article   Article? @relation(fields: [articleId], references: [id])
-    articleId String?
-    createdAt DateTime @default(now())
+    id         String   @id @default(uuid())
+    path       String   @db.VarChar(255)
+    Article    Article? @relation(fields: [articleId], references: [id])
+    articleId  String?
+    main_photo Boolean  @default(false)
+    createdAt  DateTime @default(now())
 
     @@map("photo_content")
 }

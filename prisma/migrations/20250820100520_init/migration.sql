@@ -96,7 +96,7 @@ CREATE TABLE "followers_dev"."article" (
     "title" VARCHAR(255) NOT NULL,
     "excerpt" VARCHAR(500) NOT NULL,
     "image" VARCHAR(255) NOT NULL,
-    "image_sm" VARCHAR(255) NOT NULL,
+    "image_md" VARCHAR(255) NOT NULL,
     "contentId" TEXT NOT NULL,
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "status" "followers_dev"."ArticleStatus" NOT NULL DEFAULT 'DRAFT',
@@ -139,6 +139,7 @@ CREATE TABLE "followers_dev"."photo_content" (
     "id" TEXT NOT NULL,
     "path" VARCHAR(255) NOT NULL,
     "articleId" TEXT,
+    "main_photo" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "photo_content_pkey" PRIMARY KEY ("id")

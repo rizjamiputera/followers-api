@@ -63,34 +63,18 @@ export class ArticleController {
     @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
     @ApiBearerAuth()
     @Post()
-    @UseInterceptors(FileInterceptor('image'))
-    @ApiConsumes('multipart/form-data')
     async create(
         @Request() req: any,
         @Body(new ValidationPipe()) createArticleDto: CreateArticleDto,
-        @UploadedFile(
-            new ParseFilePipe({
-                validators: [
-                    // max 10 MB
-                    new MaxFileSizeValidator({ maxSize: 10000 * 1000 }),
-                    new FileTypeValidator({
-                        fileType: 'image/jpeg|jpg|png',
-                    }),
-                ],
-            }),
-        )
-        image: Express.Multer.File,
     ) {
-        const { large, medium } = await this.appService.save_images(
-            image,
-            '/article',
-        );
 
-        const { content, tags, ...articleDto } = createArticleDto;
+        const apiUri = process.env.API_URI || 'http://localhost:5111';
+
+        const { content, tags, image, image_md, ...articleDto } = createArticleDto;
         const data: Prisma.ArticleCreateInput & { tags?: string[] } = {
             ...articleDto,
-            image: large,
-            image_sm: medium,
+            image: image.replace(apiUri, ''),
+            image_md: image_md.replace(apiUri, ''),
             content: { create: { content: content } },
             author: { connect: { id: req.user.id } },
             stats: { create: {} },
@@ -184,12 +168,17 @@ export class ArticleController {
     @PermissionsRequired(Module.ARTICLE, Permission.EDIT, Permission.CREATE)
     @ApiBearerAuth()
     @Patch(':id')
-    @ApiConsumes('multipart/form-data')
     update(
         @Request() req: any,
         @Param('id') id: string,
         @Body(new ValidationPipe()) updateArticleDto: UpdateArticleDto,
     ) {
+        const apiUri = process.env.API_URI || 'http://localhost:5111';
+
+        if (updateArticleDto.image && updateArticleDto.image_md) {
+            updateArticleDto.image = updateArticleDto.image.replace(apiUri, '');
+            updateArticleDto.image_md = updateArticleDto.image_md.replace(apiUri, '');
+        }
         return this.articleService.update(req.user.id, id, updateArticleDto);
     }
 

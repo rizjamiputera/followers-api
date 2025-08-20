@@ -86,7 +86,7 @@ export class AppService {
         const suffix = this.getFileSuffix();
         try {
             const sizes = [
-                { key: 'md', size: 900 },
+                { key: 'md', size: 600 },
                 { key: 'lg', size: 1200 },
             ];
 

@@ -128,7 +128,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                         title,
                         excerpt: faker.lorem.paragraph({ min: 1, max: 3 }),
                         image,
-                        image_sm: image,
+                        image_md: image,
                         slug: `${slug}-${faker.string.nanoid(6)}`, // Ensure uniqueness
                         content: {
                             connect: { id: articleContent.id },

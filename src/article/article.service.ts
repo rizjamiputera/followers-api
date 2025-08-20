@@ -27,7 +27,7 @@ const VALID_INCLUDES = [
     'author',
     'stats',
 ];
-const transformImages = ['image', 'image_sm', 'author.avatar', 'author.avatar_md'];
+const transformImages = ['image', 'image_md', 'author.avatar', 'author.avatar_md'];
 
 @Injectable()
 export class ArticleService {
@@ -102,12 +102,32 @@ export class ArticleService {
             };
         }
 
-        return this.prisma.article.create({
+        const create = await this.prisma.article.create({
             data: {
                 ...articleData,
                 ...(tagConnections && { tags: tagConnections }),
             },
         });
+
+        // update photo content
+        // const photoPaths = [
+        //     create.image,
+        //     create.image_md
+        // ]
+        await this.assignMainPhoto(create.id, [create.image, create.image_md])
+        // await this.prisma.photoContent.updateMany({
+        //     where: {
+        //         path: {
+        //             in: photoPaths
+        //         }
+        //     },
+        //     data: {
+        //         articleId: create.id,
+        //         main_photo: true,
+        //     }
+        // })
+
+        return create;
     }
 
     async findAll(
@@ -232,7 +252,7 @@ export class ArticleService {
             articleData.title !== current.title ||
             articleData.excerpt !== current.excerpt ||
             articleData.image !== current.image ||
-            articleData.image_sm !== current.image_sm ||
+            articleData.image_md !== current.image_md ||
             (content && current.content &&
                 (JSON.stringify(content) !== JSON.stringify(current.content.content)));
 
@@ -244,12 +264,27 @@ export class ArticleService {
                     title: current.title,
                     excerpt: current.excerpt,
                     image: current.image,
-                    image_sm: current.image_sm,
+                    image_sm: current.image_md,
                     content: current.content.content,
                     createdAt: current.content.createdAt,
                 },
             });
         }
+
+        // update photo
+        if (articleData.image && current.image_md) {
+            // disconnet current photo
+            await this.prisma.photoContent.updateMany({
+                where: {
+                    articleId: id,
+                    main_photo: true,
+                },
+                data: { articleId: null }
+            });
+
+            await this.assignMainPhoto(id, [articleData.image as string, articleData.image_md as string])
+        }
+
 
         // Update content if provided and changed
         if (content && current.contentId && contentChanged) {
@@ -272,7 +307,10 @@ export class ArticleService {
 
             // disconnet current photo
             await this.prisma.photoContent.updateMany({
-                where: { articleId: id },
+                where: {
+                    articleId: id,
+                    main_photo: false,
+                },
                 data: { articleId: null }
             })
 
@@ -393,6 +431,22 @@ export class ArticleService {
             },
             update: data,
             create: data,
+        });
+
+        return;
+    }
+
+    private async assignMainPhoto(articleId: string, photoPaths: string[]): Promise<void> {
+        await this.prisma.photoContent.updateMany({
+            where: {
+                path: {
+                    in: photoPaths
+                }
+            },
+            data: {
+                articleId: articleId,
+                main_photo: true,
+            }
         });
 
         return;
