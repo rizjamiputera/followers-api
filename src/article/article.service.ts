@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
     Article,
     ArticleStatus,
@@ -199,7 +199,7 @@ export class ArticleService {
     async read(slug: string, includes: string[] = []): Promise<Article> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
-        const article = await this.prisma.article.findUniqueOrThrow({
+        const article = await this.prisma.article.findUnique({
             where: {
                 slug,
                 status: ArticleStatus.PUBLISHED,
@@ -209,13 +209,15 @@ export class ArticleService {
             include,
         });
 
+        if (!article) throw new NotFoundException('Article is not found');
+
         return this.transformData(article)
     }
 
     async findOne(id: string, includes: string[] = []): Promise<Article> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
-        const article = await this.prisma.article.findUniqueOrThrow({
+        const article = await this.prisma.article.findUnique({
             where: {
                 id,
                 deleted: false,
@@ -237,6 +239,8 @@ export class ArticleService {
         const current = (await this.findOne(id, ['content'])) as Article & {
             content?: Content;
         };
+
+        if (!current) throw new NotFoundException('Article is not found');
 
         if (current.authorId !== changedBy) {
             throw new ForbiddenException(
@@ -362,7 +366,9 @@ export class ArticleService {
     }
 
     async remove(id: string): Promise<void> {
-        await this.findOne(id);
+        const current = await this.findOne(id);
+
+        if (!current) throw new NotFoundException('Article is not found');
 
         await this.prisma.article.update({
             where: { id },
@@ -377,7 +383,9 @@ export class ArticleService {
         dataDto: Prisma.ArticleUpdateInput,
         approvalDto?: Prisma.ArticleApprovalCreateInput,
     ): Promise<void> {
-        await this.findOne(id);
+        const current = await this.findOne(id);
+
+        if (!current) throw new NotFoundException('Article is not found');
 
         await this.prisma.article.update({
             where: { id },

@@ -16,6 +16,7 @@ import {
     FileTypeValidator,
     ParseFilePipe,
     ForbiddenException,
+    NotFoundException,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -141,11 +142,15 @@ export class ArticleController {
     @PermissionsRequired(Module.ARTICLE, Permission.READ)
     @ApiBearerAuth()
     @Get(':id')
-    findOne(
+    async findOne(
         @Param('id') id: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        return this.articleService.findOne(id, query.includes);
+        const article = await this.articleService.findOne(id, query.includes);
+
+        if (!article) throw new NotFoundException('Article is not found');
+
+        return article;
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.READ, Permission.CREATE)
@@ -157,6 +162,8 @@ export class ArticleController {
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
         const article = await this.articleService.findOne(id, query.includes);
+
+        if (!article) throw new NotFoundException('Article is not found');
 
         if (article.authorId != req.user.id) {
             throw new ForbiddenException('Article hanya bisa di akses oleh penulisnya')
@@ -200,6 +207,8 @@ export class ArticleController {
         @Body(new ValidationPipe()) approveArticleDto: PublishArticleDto,
     ) {
         const currentData = await this.articleService.findOne(id);
+
+        if (!currentData) throw new NotFoundException('Article is not found');
 
         if (currentData.status == ArticleStatus.PUBLISHED) {
             throw new ForbiddenException(`Artikel sudah di PUBLISH`);
