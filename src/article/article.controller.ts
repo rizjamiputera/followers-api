@@ -27,7 +27,6 @@ import {
     ArticleStatus,
     Module,
     Permission,
-    PhotoContent,
     Prisma,
 } from '@prisma/client';
 import { Paginate } from 'src/app/interface/app.interface';
@@ -324,40 +323,5 @@ export class ArticleController {
         const { type } = reaction;
 
         return this.articleService.react(req.user.id, articleId, type);
-    }
-
-    @Post('photo/upload')
-    @ApiBearerAuth()
-    @UseInterceptors(FileInterceptor('photo'))
-    async uploadPhotoContent(
-        @Request() req,
-        @UploadedFile(
-            new ParseFilePipe({
-                validators: [
-                    // max 10 MB
-                    new MaxFileSizeValidator({ maxSize: 10000 * 1000 }),
-                    new FileTypeValidator({
-                        fileType: 'image/jpeg|jpg|png',
-                    }),
-                ],
-            }),
-        )
-        photo: Express.Multer.File,
-    ): Promise<PhotoContent> {
-        try {
-            const path = await this.appService.save_image(
-                photo,
-                '/article',
-                800
-            );
-
-            const data: Prisma.PhotoContentCreateInput = {
-                path
-            };
-
-            return this.articleService.save_photo(data);
-
-        } catch (error) {
-        }
     }
 }

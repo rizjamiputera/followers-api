@@ -28,7 +28,6 @@ const VALID_INCLUDES = [
     'stats',
 ];
 const transformImages = ['image', 'image_sm', 'author.avatar', 'author.avatar_md'];
-const transformUploadPhoto = ['path'];
 
 @Injectable()
 export class ArticleService {
@@ -397,13 +396,5 @@ export class ArticleService {
         });
 
         return;
-    }
-
-    async save_photo(data: Prisma.PhotoContentCreateInput): Promise<PhotoContent> {
-        const photo = await this.prisma.photoContent.create({
-            data
-        });
-
-        return this.app.transformImageUrls(photo, ...transformUploadPhoto)
     }
 }

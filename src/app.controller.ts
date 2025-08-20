@@ -25,12 +25,12 @@ export class AppController {
         }
     }
     @Public()
-    @Get('article/*path')
-    async getArticlePhoto(@Param('path') path: any, @Res() res) {
+    @Get('photo/*path')
+    async getphotoPhoto(@Param('path') path: any, @Res() res) {
         const filePath = path.join('/')
         try {
-            await fs.access(`./public/article/${filePath}`);
-            res.sendFile(filePath, { root: './public/article' });
+            await fs.access(`./public/photo/${filePath}`);
+            res.sendFile(filePath, { root: './public/photo' });
         } catch (error) {
             throw new NotFoundException('File not found');
         }

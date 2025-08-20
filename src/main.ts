@@ -31,7 +31,7 @@ async function bootstrap() {
     const appService = app.get(AppService);
     await appService.createPath('./public');
     await appService.createPath('./public/avatar');
-    await appService.createPath('./public/article');
+    await appService.createPath('./public/photo');
 
     // RUN APP
     const port = process.env.PORT ?? 5555;

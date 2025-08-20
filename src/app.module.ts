@@ -13,6 +13,7 @@ import { ErrorLoggerFilter } from './error-log/error-logger.filter';
 import { AuthModule } from './auth/auth.module';
 import { ArticleModule } from './article/article.module';
 import { CommentModule } from './comment/comment.module';
+import { PhotoContentModule } from './photo-content/photo-content.module';
 
 @Module({
     imports: [
@@ -28,6 +29,7 @@ import { CommentModule } from './comment/comment.module';
         ConfigModule.forRoot(), // to load .env file
         AuthModule,
         ArticleModule,
+        PhotoContentModule,
         CommentModule,
     ],
     controllers: [AppController],
