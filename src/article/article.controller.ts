@@ -329,7 +329,7 @@ export class ArticleController {
     @Post('photo/upload')
     @ApiBearerAuth()
     @UseInterceptors(FileInterceptor('photo'))
-    async uploadAvatar(
+    async uploadPhotoContent(
         @Request() req,
         @UploadedFile(
             new ParseFilePipe({

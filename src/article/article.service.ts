@@ -271,12 +271,18 @@ export class ArticleService {
                 data: { content: content },
             });
 
-            const articleImagesPath = content.content.filter((c: any) => c.type == 'image').map((c: any) => c.attrs.src);
+            // disconnet current photo
+            await this.prisma.photoContent.updateMany({
+                where: { articleId: id },
+                data: { articleId: null }
+            })
+
+            const photoPaths = content.content.filter((c: any) => c.type == 'image').map((c: any) => c.attrs.src);
             // assign photo to article
             await this.prisma.photoContent.updateMany({
                 where: {
                     path: {
-                        in: articleImagesPath
+                        in: photoPaths
                     }
                 },
                 data: {
