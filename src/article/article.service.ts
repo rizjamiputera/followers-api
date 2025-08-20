@@ -114,7 +114,9 @@ export class ArticleService {
         //     create.image,
         //     create.image_md
         // ]
-        await this.assignMainPhoto(create.id, [create.image, create.image_md])
+        if (create.image && create.image_md) {
+            await this.assignMainPhoto(create.id, [create.image, create.image_md])
+        }
         // await this.prisma.photoContent.updateMany({
         //     where: {
         //         path: {
@@ -389,15 +391,12 @@ export class ArticleService {
 
         await this.prisma.article.update({
             where: { id },
-            data: {
-                ...dataDto,
-                ...(approvalDto && {
-                    approvals: {
-                        create: approvalDto,
-                    },
-                }),
-            },
+            data: dataDto
         });
+
+        if (approvalDto) {
+            await this.prisma.articleApproval.create({ data: approvalDto });
+        }
 
         return;
     }

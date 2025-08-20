@@ -26,12 +26,12 @@ export class CreateArticleDto {
     slug: string;
 
     @ApiProperty({ description: 'Image' })
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     image: string;
 
     @ApiProperty({ description: 'Image medium' })
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     image_md: string;
 
@@ -44,14 +44,14 @@ export class CreateArticleDto {
     @IsBoolean()
     isFeatured?: boolean;
 
-    @ApiPropertyOptional({
-        description: 'Article status',
-        enum: ArticleStatus,
-        enumName: 'ArticleStatus',
-    })
-    @IsOptional()
-    @IsEnum(ArticleStatus)
-    status?: ArticleStatus;
+    // @ApiPropertyOptional({
+    //     description: 'Article status',
+    //     enum: ArticleStatus,
+    //     enumName: 'ArticleStatus',
+    // })
+    // @IsOptional()
+    // @IsEnum(ArticleStatus)
+    // status?: ArticleStatus;
 
     @ApiPropertyOptional({
         description: 'Array of tag names to associate with the article',

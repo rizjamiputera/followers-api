@@ -151,7 +151,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
 
                 for (let j = 0; j < approvalCount; j++) {
                     const approvalStatus = faker.helpers.arrayElement([
-                        'APPROVED',
+                        'PUBLISHED',
                         'REJECTED',
                     ] as const);
                     const approvalCreatedAt = faker.date.between({
@@ -178,7 +178,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                         }),
                     );
 
-                    if (approvalStatus === 'APPROVED') break;
+                    if (approvalStatus === 'PUBLISHED') break;
                 }
 
                 await Promise.all(approvalPromises);

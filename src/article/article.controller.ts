@@ -74,8 +74,12 @@ export class ArticleController {
         const { content, tags, image, image_md, ...articleDto } = createArticleDto;
         const data: Prisma.ArticleCreateInput & { tags?: string[] } = {
             ...articleDto,
-            image: image.replace(apiUri, ''),
-            image_md: image_md.replace(apiUri, ''),
+            ...(image && {
+                image: image.replace(apiUri, ''),
+            }),
+            ...(image_md && {
+                image_md: image_md.replace(apiUri, ''),
+            }),
             content: { create: { content: content } },
             author: { connect: { id: req.user.id } },
             stats: { create: {} },
@@ -172,7 +176,7 @@ export class ArticleController {
         return article;
     }
 
-    @PermissionsRequired(Module.ARTICLE, Permission.EDIT, Permission.CREATE)
+    @PermissionsRequired(Module.ARTICLE, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Patch(':id')
     update(
@@ -197,82 +201,118 @@ export class ArticleController {
         return this.articleService.remove(id);
     }
 
-    @PermissionsRequired(Module.ARTICLE, Permission.PUBLISH)
+    @PermissionsRequired(Module.ARTICLE, Permission.CREATE, Permission.EDIT, Permission.APPROVE)
+    @ApiBearerAuth()
+    @Post('draft/:id')
+    @HttpCode(204)
+    async draft(
+        @Request() req: any,
+        @Param('id') id: string,
+    ) {
+        const currentData = await this.articleService.findOne(id);
+
+        if (!currentData) throw new NotFoundException('Article is not found');
+
+        if (currentData.status == ArticleStatus.DRAFT) {
+            return
+        }
+
+        const dataArticle: Prisma.ArticleUpdateInput = {
+            status: ArticleStatus.DRAFT,
+            publishedAt: null,
+        };
+
+        await this.articleService.updateStatus(id, dataArticle);
+
+        return
+    }
+
+    @PermissionsRequired(Module.ARTICLE, Permission.CREATE, Permission.EDIT)
+    @ApiBearerAuth()
+    @Post('review/:id')
+    @HttpCode(204)
+    async review(
+        @Request() req: any,
+        @Param('id') id: string,
+    ) {
+        const currentData = await this.articleService.findOne(id);
+
+        if (!currentData) throw new NotFoundException('Article is not found');
+
+        if (currentData.status == ArticleStatus.ON_REVIEW) {
+            return
+        }
+
+        const dataArticle: Prisma.ArticleUpdateInput = {
+            status: ArticleStatus.ON_REVIEW,
+            publishedAt: null,
+        };
+
+        await this.articleService.updateStatus(id, dataArticle);
+
+        return
+    }
+
+    @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
     @ApiBearerAuth()
     @Post('publish/:id')
     @HttpCode(204)
     async publish(
         @Request() req: any,
         @Param('id') id: string,
-        @Body(new ValidationPipe()) approveArticleDto: PublishArticleDto,
+        @Body(new ValidationPipe()) publishDto: PublishArticleDto,
     ) {
         const currentData = await this.articleService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
         if (currentData.status == ArticleStatus.PUBLISHED) {
-            throw new ForbiddenException(`Artikel sudah di PUBLISH`);
+            return
         }
 
-        if (currentData.status != ArticleStatus.APPROVED) {
-            throw new ForbiddenException(
-                `Artikel dengan status ${currentData.status.replaceAll('_', ' ')} tidak dapat di publish.`,
-            );
-        }
-
-        const publishedAt = new Date(approveArticleDto.publishedAt);
+        console.log({ publishDto })
+        const publishedAt = (publishDto && publishDto.publishedAt != undefined) ? new Date(publishDto.publishedAt) : null;
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ArticleStatus.PUBLISHED,
             publishedAt,
         };
 
-        return this.articleService.updateStatus(id, dataArticle);
-    }
-
-    @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
-    @ApiBearerAuth()
-    @Post('approve/:id')
-    @HttpCode(204)
-    approve(
-        @Request() req: any,
-        @Param('id') id: string,
-        @Body(new ValidationPipe()) approveArticleDto: ApproveArticleDto,
-    ) {
-        const publishedAt = approveArticleDto.publishedAt
-            ? new Date(approveArticleDto.publishedAt)
-            : undefined;
-
-        const dataArticle: Prisma.ArticleUpdateInput = {
-            status: publishedAt
-                ? ArticleStatus.PUBLISHED
-                : ArticleStatus.APPROVED,
-            publishedAt,
-        };
-
         const dataApproval: Prisma.ArticleApprovalCreateInput = {
             article: { connect: { id } },
-            status: ApprovalStatus.APPROVED,
+            status: ApprovalStatus.PUBLISHED,
             approver: { connect: { id: req.user.id } },
         };
 
-        return this.articleService.updateStatus(id, dataArticle, dataApproval);
+        await this.articleService.updateStatus(id, dataArticle, dataApproval);
+
+        return
     }
+
 
     @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
     @ApiBearerAuth()
     @Post('reject/:id')
     @HttpCode(204)
-    reject(
+    async reject(
         @Request() req: any,
         @Param('id') id: string,
         @Body(new ValidationPipe()) rejectArticleDto: RejectArticleDto,
     ) {
+        const currentData = await this.articleService.findOne(id);
+        if (currentData.status == ArticleStatus.REJECTED) {
+            return
+        }
+
+        if (!currentData) throw new NotFoundException('Article is not found');
+
         const { note } = rejectArticleDto;
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ArticleStatus.REJECTED,
+            publishedAt: null
         };
+
 
         const dataApproval: Prisma.ArticleApprovalCreateInput = {
             article: { connect: { id } },
@@ -284,15 +324,20 @@ export class ArticleController {
         return this.articleService.updateStatus(id, dataArticle, dataApproval);
     }
 
-    @PermissionsRequired(Module.ARTICLE, Permission.PUBLISH)
+    @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
     @ApiBearerAuth()
     @Post('take-down/:id')
     @HttpCode(204)
-    take_down(
+    async take_down(
         @Request() req: any,
         @Param('id') id: string,
         @Body(new ValidationPipe()) rejectArticleDto: RejectArticleDto,
     ) {
+        const currentData = await this.articleService.findOne(id);
+        if (currentData.status == ArticleStatus.TAKE_DOWN) {
+            return
+        }
+
         const { note } = rejectArticleDto;
 
         const dataArticle: Prisma.ArticleUpdateInput = {

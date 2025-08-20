@@ -2,16 +2,16 @@
 CREATE TYPE "followers_dev"."Role" AS ENUM ('SUPERADMIN', 'ADMIN', 'OPERATOR', 'USER');
 
 -- CreateEnum
-CREATE TYPE "followers_dev"."Permission" AS ENUM ('READ', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'PUBLISH');
+CREATE TYPE "followers_dev"."Permission" AS ENUM ('READ', 'CREATE', 'EDIT', 'DELETE', 'APPROVE');
 
 -- CreateEnum
 CREATE TYPE "followers_dev"."Module" AS ENUM ('ARTICLE', 'USER', 'COMMENT');
 
 -- CreateEnum
-CREATE TYPE "followers_dev"."ArticleStatus" AS ENUM ('DRAFT', 'ON_REVIEW', 'REJECTED', 'APPROVED', 'PUBLISHED', 'TAKE_DOWN');
+CREATE TYPE "followers_dev"."ArticleStatus" AS ENUM ('DRAFT', 'ON_REVIEW', 'REJECTED', 'PUBLISHED', 'TAKE_DOWN');
 
 -- CreateEnum
-CREATE TYPE "followers_dev"."ApprovalStatus" AS ENUM ('REJECTED', 'APPROVED', 'TAKE_DOWN');
+CREATE TYPE "followers_dev"."ApprovalStatus" AS ENUM ('REJECTED', 'PUBLISHED', 'TAKE_DOWN');
 
 -- CreateEnum
 CREATE TYPE "followers_dev"."ReactionType" AS ENUM ('like', 'dislike', 'love', 'clap');

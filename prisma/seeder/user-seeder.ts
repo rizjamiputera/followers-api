@@ -72,7 +72,6 @@ export async function UserSeed(prisma: PrismaClient) {
         'EDIT',
         'DELETE',
         'APPROVE',
-        'PUBLISH',
     ];
 
     // Create 5 operators
