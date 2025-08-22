@@ -20,7 +20,7 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import {
     ApprovalStatus,
     Article,
-    ArticleStatus,
+    ContentStatus,
     Module,
     Permission,
     Prisma,
@@ -125,7 +125,7 @@ export class ArticleController {
     ): Promise<Paginate<Article[]>> {
         return this.articleService.findAll(pagination, {
             ...filter,
-            status: ArticleStatus.PUBLISHED,
+            status: ContentStatus.PUBLISHED,
             published: true,
         });
     }
@@ -209,12 +209,12 @@ export class ArticleController {
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
-        if (currentData.status == ArticleStatus.DRAFT) {
+        if (currentData.status == ContentStatus.DRAFT) {
             return
         }
 
         const dataArticle: Prisma.ArticleUpdateInput = {
-            status: ArticleStatus.DRAFT,
+            status: ContentStatus.DRAFT,
             publishedAt: null,
         };
 
@@ -235,12 +235,12 @@ export class ArticleController {
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
-        if (currentData.status == ArticleStatus.ON_REVIEW) {
+        if (currentData.status == ContentStatus.ON_REVIEW) {
             return
         }
 
         const dataArticle: Prisma.ArticleUpdateInput = {
-            status: ArticleStatus.ON_REVIEW,
+            status: ContentStatus.ON_REVIEW,
             publishedAt: null,
         };
 
@@ -263,11 +263,11 @@ export class ArticleController {
         if (!currentData) throw new NotFoundException('Article is not found');
 
         const dataArticle: Prisma.ArticleUpdateInput = {
-            status: ArticleStatus.PUBLISHED,
+            status: ContentStatus.PUBLISHED,
             publishedAt: publishDto ? publishDto.publishedAt ?? null : null,
         };
 
-        const dataApproval: Prisma.ArticleApprovalCreateInput = {
+        const dataApproval: Prisma.ContentApprovalCreateInput = {
             article: { connect: { id } },
             status: ApprovalStatus.PUBLISHED,
             approver: { connect: { id: req.user.id } },
@@ -289,19 +289,19 @@ export class ArticleController {
         @Body(new ValidationPipe()) rejectArticleDto: RejectArticleDto,
     ) {
         const currentData = await this.articleService.findOne(id);
-        if (currentData.status == ArticleStatus.REJECTED) {
+        if (currentData.status == ContentStatus.REJECTED) {
             return
         }
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
         const dataArticle: Prisma.ArticleUpdateInput = {
-            status: ArticleStatus.REJECTED,
+            status: ContentStatus.REJECTED,
             publishedAt: null
         };
 
 
-        const dataApproval: Prisma.ArticleApprovalCreateInput = {
+        const dataApproval: Prisma.ContentApprovalCreateInput = {
             article: { connect: { id } },
             status: ApprovalStatus.REJECTED,
             note: rejectArticleDto ? rejectArticleDto.note ?? null : null,
@@ -321,17 +321,17 @@ export class ArticleController {
         @Body(new ValidationPipe()) rejectArticleDto: RejectArticleDto,
     ) {
         const currentData = await this.articleService.findOne(id);
-        if (currentData.status == ArticleStatus.TAKE_DOWN) {
+        if (currentData.status == ContentStatus.TAKE_DOWN) {
             return
         }
 
         // const { note } = rejectArticleDto;
 
         const dataArticle: Prisma.ArticleUpdateInput = {
-            status: ArticleStatus.TAKE_DOWN,
+            status: ContentStatus.TAKE_DOWN,
         };
 
-        const dataApproval: Prisma.ArticleApprovalCreateInput = {
+        const dataApproval: Prisma.ContentApprovalCreateInput = {
             article: { connect: { id } },
             status: ApprovalStatus.TAKE_DOWN,
             note: rejectArticleDto ? rejectArticleDto.note ?? null : null,

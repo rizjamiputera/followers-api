@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
     Article,
-    ArticleStatus,
-    ArticleTag,
+    ContentStatus,
+    ContentTag,
     Content,
     Prisma,
     ReactionType,
@@ -36,7 +36,7 @@ export class ArticleService {
     ) { }
 
     private transformData(data: Article & {
-        tags?: (ArticleTag & { tag: Tag })[]
+        tags?: (ContentTag & { tag: Tag })[]
         content?: Content
     }): Article {
         const tags = data.tags;
@@ -88,7 +88,7 @@ export class ArticleService {
 
         // Handle tags if provided
         let tagConnections:
-            | Prisma.ArticleTagCreateNestedManyWithoutArticleInput
+            | Prisma.ContentTagCreateNestedManyWithoutArticleInput
             | undefined;
 
         if (tags && tags.length > 0) {
@@ -156,7 +156,7 @@ export class ArticleService {
 
         if (authorId) whereConditions.push({ authorId });
         if (status) whereConditions.push({ status });
-        if (exclude_statuses) whereConditions.push({ status: { notIn: exclude_statuses as ArticleStatus[] } });
+        if (exclude_statuses) whereConditions.push({ status: { notIn: exclude_statuses as ContentStatus[] } });
         if (tags?.length > 0) {
             whereConditions.push({
                 tags: { some: { tag: { slug: { in: tags } } } },
@@ -164,7 +164,7 @@ export class ArticleService {
         }
         if (published) {
             whereConditions.push({
-                status: ArticleStatus.PUBLISHED,
+                status: ContentStatus.PUBLISHED,
                 publishedAt: { lte: new Date() },
             });
         }
@@ -204,7 +204,7 @@ export class ArticleService {
         const article = await this.prisma.article.findUnique({
             where: {
                 slug,
-                status: ArticleStatus.PUBLISHED,
+                status: ContentStatus.PUBLISHED,
                 publishedAt: { lte: new Date() },
                 deleted: false,
             },
@@ -336,7 +336,7 @@ export class ArticleService {
 
         // Handle tags update if provided
         let tagUpdate:
-            | Prisma.ArticleTagUpdateManyWithoutArticleNestedInput
+            | Prisma.ContentTagUpdateManyWithoutArticleNestedInput
             | undefined;
 
         if (tags !== undefined) {
@@ -383,7 +383,7 @@ export class ArticleService {
     async updateStatus(
         id: string,
         dataDto: Prisma.ArticleUpdateInput,
-        approvalDto?: Prisma.ArticleApprovalCreateInput,
+        approvalDto?: Prisma.ContentApprovalCreateInput,
     ): Promise<void> {
         const current = await this.findOne(id);
 
@@ -395,7 +395,7 @@ export class ArticleService {
         });
 
         if (approvalDto) {
-            await this.prisma.articleApproval.create({ data: approvalDto });
+            await this.prisma.contentApproval.create({ data: approvalDto });
         }
 
         return;
@@ -427,12 +427,12 @@ export class ArticleService {
         articleId: string,
         type: ReactionType,
     ): Promise<void> {
-        const data: Prisma.ArticleReactionCreateInput = {
+        const data: Prisma.ContentReactionCreateInput = {
             type,
             article: { connect: { id: articleId } },
             user: { connect: { id: userId } },
         };
-        await this.prisma.articleReaction.upsert({
+        await this.prisma.contentReaction.upsert({
             where: {
                 articleId_userId: { articleId, userId },
             },

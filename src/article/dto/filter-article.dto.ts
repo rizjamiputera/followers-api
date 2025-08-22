@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ArticleStatus } from '@prisma/client';
+import { ContentStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
     IsArray,
@@ -29,12 +29,12 @@ export class FilterArticleQueryDto {
 
     @ApiPropertyOptional({
         description: 'Filter by status',
-        enum: ArticleStatus,
-        enumName: 'ArticleStatus',
+        enum: ContentStatus,
+        enumName: 'ContentStatus',
     })
     @IsOptional()
-    @IsEnum(ArticleStatus)
-    status: ArticleStatus;
+    @IsEnum(ContentStatus)
+    status: ContentStatus;
 
     @ApiPropertyOptional({
         description: 'Exclude some statuses',
