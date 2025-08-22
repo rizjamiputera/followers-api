@@ -31,6 +31,7 @@ enum Permission {
 
 enum Module {
     ARTICLE
+    EVENT
     USER
     COMMENT
 }
@@ -170,6 +171,12 @@ model Article {
     @@map("article")
 }
 
+/**
+ * schedule
+ * location
+ * address
+ * Will Attendance
+ */
 model Event {
     id          String            @id @default(uuid())
     slug        String            @unique @db.VarChar(255)
@@ -179,6 +186,10 @@ model Event {
     image_md    String            @db.VarChar(255)
     content     Content           @relation(fields: [contentId], references: [id], onDelete: Restrict)
     contentId   String            @unique
+    location    String?
+    address     String?
+    start_at    DateTime
+    end_at      DateTime?
     photos      PhotoContent[]
     versions    ContentVersion[]
     isFeatured  Boolean           @default(false)
@@ -246,15 +257,15 @@ model PhotoContent {
 
 model ContentApproval {
     id         String         @id @default(uuid())
-    article    Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId  String
+    article    Article?       @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId  String?
+    event      Event?         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventId    String?
     approver   User           @relation("content_approvals", fields: [approverId], references: [id], onDelete: Restrict)
     approverId String
     status     ApprovalStatus @default(REJECTED)
     note       String?        @db.Text
     createdAt  DateTime       @default(now())
-    event      Event?         @relation(fields: [eventId], references: [id])
-    eventId    String?
 
     @@index([articleId])
     @@map("content_approval")
@@ -310,8 +321,8 @@ enum ReactionType {
 
 model Comment {
     id          String            @id @default(uuid())
-    article     Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId   String
+    article     Article?          @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId   String?
     event       Event?            @relation(fields: [eventId], references: [id])
     eventId     String?
     user        User              @relation("comment", fields: [userId], references: [id], onDelete: Restrict)

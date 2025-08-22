@@ -5,7 +5,7 @@ CREATE TYPE "followers_dev"."Role" AS ENUM ('SUPERADMIN', 'ADMIN', 'OPERATOR', '
 CREATE TYPE "followers_dev"."Permission" AS ENUM ('READ', 'CREATE', 'EDIT', 'DELETE', 'APPROVE');
 
 -- CreateEnum
-CREATE TYPE "followers_dev"."Module" AS ENUM ('ARTICLE', 'USER', 'COMMENT');
+CREATE TYPE "followers_dev"."Module" AS ENUM ('ARTICLE', 'EVENT', 'USER', 'COMMENT');
 
 -- CreateEnum
 CREATE TYPE "followers_dev"."ContentStatus" AS ENUM ('DRAFT', 'ON_REVIEW', 'REJECTED', 'PUBLISHED', 'TAKE_DOWN');
@@ -119,6 +119,10 @@ CREATE TABLE "followers_dev"."event" (
     "image" VARCHAR(255) NOT NULL,
     "image_md" VARCHAR(255) NOT NULL,
     "contentId" TEXT NOT NULL,
+    "location" TEXT,
+    "address" TEXT,
+    "start_at" TIMESTAMP(3) NOT NULL,
+    "end_at" TIMESTAMP(3),
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "status" "followers_dev"."ContentStatus" NOT NULL DEFAULT 'DRAFT',
     "publishedAt" TIMESTAMP(3),
@@ -171,12 +175,12 @@ CREATE TABLE "followers_dev"."photo_content" (
 -- CreateTable
 CREATE TABLE "followers_dev"."content_approval" (
     "id" TEXT NOT NULL,
-    "articleId" TEXT NOT NULL,
+    "articleId" TEXT,
+    "eventId" TEXT,
     "approverId" TEXT NOT NULL,
     "status" "followers_dev"."ApprovalStatus" NOT NULL DEFAULT 'REJECTED',
     "note" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "eventId" TEXT,
 
     CONSTRAINT "content_approval_pkey" PRIMARY KEY ("id")
 );
@@ -217,7 +221,7 @@ CREATE TABLE "followers_dev"."article_reaction" (
 -- CreateTable
 CREATE TABLE "followers_dev"."comment" (
     "id" TEXT NOT NULL,
-    "articleId" TEXT NOT NULL,
+    "articleId" TEXT,
     "eventId" TEXT,
     "userId" TEXT NOT NULL,
     "content" TEXT NOT NULL,
@@ -497,10 +501,10 @@ ALTER TABLE "followers_dev"."photo_content" ADD CONSTRAINT "photo_content_eventI
 ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."content_tag" ADD CONSTRAINT "content_tag_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;

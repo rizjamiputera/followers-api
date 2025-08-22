@@ -65,7 +65,12 @@ export async function UserSeed(prisma: PrismaClient) {
     }
 
     // MODULES & PERMISSIONS
-    const modules: Module[] = ['USER', 'ARTICLE', 'COMMENT'];
+    const modules: Module[] = [
+        'ARTICLE',
+        'EVENT',
+        'USER',
+        'COMMENT'
+    ];
     const permissions: Permission[] = [
         'READ',
         'CREATE',
