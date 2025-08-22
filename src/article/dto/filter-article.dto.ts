@@ -36,6 +36,20 @@ export class FilterArticleQueryDto {
     @IsEnum(ArticleStatus)
     status: ArticleStatus;
 
+    @ApiPropertyOptional({
+        description: 'Exclude some statuses',
+    })
+    @IsOptional()
+    @Transform(({ value }) => {
+        if (!value) return []; // Ensure undefined or empty input results in an empty array
+        return Array.isArray(value)
+            ? value
+            : value.split(',').map((v: string) => v.trim()); // Support both array and string input
+    })
+    @IsArray()
+    @IsString({ each: true }) // Ensures all items in the array are strings
+    exclude_statuses: string[] = [];
+
     @ApiPropertyOptional({ description: 'Filter with has claim data' })
     @IsOptional()
     @Transform(({ value }) => value == 'true')

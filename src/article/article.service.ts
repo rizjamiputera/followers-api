@@ -137,7 +137,7 @@ export class ArticleService {
     ): Promise<Paginate<Article[]>> {
         const { page, limit, sortBy, order, includes, deleted, search } =
             pagination;
-        const { authorId, tags, status, published } = filter;
+        const { authorId, tags, status, exclude_statuses, published } = filter;
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const searchCondition: Prisma.ArticleWhereInput = search
@@ -156,6 +156,7 @@ export class ArticleService {
 
         if (authorId) whereConditions.push({ authorId });
         if (status) whereConditions.push({ status });
+        if (exclude_statuses) whereConditions.push({ status: { notIn: exclude_statuses as ArticleStatus[] } });
         if (tags?.length > 0) {
             whereConditions.push({
                 tags: { some: { tag: { slug: { in: tags } } } },

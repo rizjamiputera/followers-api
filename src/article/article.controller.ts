@@ -92,7 +92,10 @@ export class ArticleController {
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterArticleQueryDto,
     ): Promise<Paginate<Article[]>> {
-        return this.articleService.findAll(pagination, filter);
+        return this.articleService.findAll(pagination, {
+            ...filter,
+            exclude_statuses: ['DRAFT']
+        });
     }
 
     @ApiBearerAuth()
