@@ -8,7 +8,7 @@ CREATE TYPE "followers_dev"."Permission" AS ENUM ('READ', 'CREATE', 'EDIT', 'DEL
 CREATE TYPE "followers_dev"."Module" AS ENUM ('ARTICLE', 'USER', 'COMMENT');
 
 -- CreateEnum
-CREATE TYPE "followers_dev"."ArticleStatus" AS ENUM ('DRAFT', 'ON_REVIEW', 'REJECTED', 'PUBLISHED', 'TAKE_DOWN');
+CREATE TYPE "followers_dev"."ContentStatus" AS ENUM ('DRAFT', 'ON_REVIEW', 'REJECTED', 'PUBLISHED', 'TAKE_DOWN');
 
 -- CreateEnum
 CREATE TYPE "followers_dev"."ApprovalStatus" AS ENUM ('REJECTED', 'PUBLISHED', 'TAKE_DOWN');
@@ -99,7 +99,7 @@ CREATE TABLE "followers_dev"."article" (
     "image_md" VARCHAR(255) NOT NULL,
     "contentId" TEXT NOT NULL,
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
-    "status" "followers_dev"."ArticleStatus" NOT NULL DEFAULT 'DRAFT',
+    "status" "followers_dev"."ContentStatus" NOT NULL DEFAULT 'DRAFT',
     "publishedAt" TIMESTAMP(3),
     "authorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -108,6 +108,27 @@ CREATE TABLE "followers_dev"."article" (
     "statsId" TEXT NOT NULL,
 
     CONSTRAINT "article_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "followers_dev"."event" (
+    "id" TEXT NOT NULL,
+    "slug" VARCHAR(255) NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "excerpt" VARCHAR(500) NOT NULL,
+    "image" VARCHAR(255) NOT NULL,
+    "image_md" VARCHAR(255) NOT NULL,
+    "contentId" TEXT NOT NULL,
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
+    "status" "followers_dev"."ContentStatus" NOT NULL DEFAULT 'DRAFT',
+    "publishedAt" TIMESTAMP(3),
+    "authorId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deleted" BOOLEAN NOT NULL DEFAULT false,
+    "statsId" TEXT NOT NULL,
+
+    CONSTRAINT "event_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -130,6 +151,7 @@ CREATE TABLE "followers_dev"."content_version" (
     "image_sm" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "articleId" TEXT NOT NULL,
+    "eventId" TEXT,
 
     CONSTRAINT "content_version_pkey" PRIMARY KEY ("id")
 );
@@ -141,20 +163,22 @@ CREATE TABLE "followers_dev"."photo_content" (
     "articleId" TEXT,
     "main_photo" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "eventId" TEXT,
 
     CONSTRAINT "photo_content_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "followers_dev"."article_approval" (
+CREATE TABLE "followers_dev"."content_approval" (
     "id" TEXT NOT NULL,
     "articleId" TEXT NOT NULL,
     "approverId" TEXT NOT NULL,
     "status" "followers_dev"."ApprovalStatus" NOT NULL DEFAULT 'REJECTED',
     "note" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "eventId" TEXT,
 
-    CONSTRAINT "article_approval_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "content_approval_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -169,18 +193,20 @@ CREATE TABLE "followers_dev"."tag" (
 );
 
 -- CreateTable
-CREATE TABLE "followers_dev"."article_tag" (
+CREATE TABLE "followers_dev"."content_tag" (
     "id" TEXT NOT NULL,
-    "articleId" TEXT NOT NULL,
+    "articleId" TEXT,
+    "eventId" TEXT,
     "tagId" TEXT NOT NULL,
 
-    CONSTRAINT "article_tag_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "content_tag_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "followers_dev"."article_reaction" (
     "id" TEXT NOT NULL,
-    "articleId" TEXT NOT NULL,
+    "articleId" TEXT,
+    "eventId" TEXT,
     "userId" TEXT NOT NULL,
     "type" "followers_dev"."ReactionType" NOT NULL DEFAULT 'like',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -192,6 +218,7 @@ CREATE TABLE "followers_dev"."article_reaction" (
 CREATE TABLE "followers_dev"."comment" (
     "id" TEXT NOT NULL,
     "articleId" TEXT NOT NULL,
+    "eventId" TEXT,
     "userId" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "parentId" TEXT,
@@ -233,6 +260,7 @@ CREATE TABLE "followers_dev"."article_read_stat" (
 CREATE TABLE "followers_dev"."visit" (
     "id" TEXT NOT NULL,
     "articleId" TEXT,
+    "eventId" TEXT,
     "visitorId" TEXT,
     "ipAddress" VARCHAR(45),
     "userAgent" VARCHAR(500),
@@ -349,10 +377,28 @@ CREATE INDEX "article_authorId_status_idx" ON "followers_dev"."article"("authorI
 CREATE INDEX "article_deleted_status_publishedAt_idx" ON "followers_dev"."article"("deleted", "status", "publishedAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "event_slug_key" ON "followers_dev"."event"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "event_contentId_key" ON "followers_dev"."event"("contentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "event_statsId_key" ON "followers_dev"."event"("statsId");
+
+-- CreateIndex
+CREATE INDEX "event_status_publishedAt_idx" ON "followers_dev"."event"("status", "publishedAt");
+
+-- CreateIndex
+CREATE INDEX "event_authorId_status_idx" ON "followers_dev"."event"("authorId", "status");
+
+-- CreateIndex
+CREATE INDEX "event_deleted_status_publishedAt_idx" ON "followers_dev"."event"("deleted", "status", "publishedAt");
+
+-- CreateIndex
 CREATE INDEX "content_version_articleId_idx" ON "followers_dev"."content_version"("articleId");
 
 -- CreateIndex
-CREATE INDEX "article_approval_articleId_idx" ON "followers_dev"."article_approval"("articleId");
+CREATE INDEX "content_approval_articleId_idx" ON "followers_dev"."content_approval"("articleId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "tag_name_key" ON "followers_dev"."tag"("name");
@@ -361,7 +407,7 @@ CREATE UNIQUE INDEX "tag_name_key" ON "followers_dev"."tag"("name");
 CREATE UNIQUE INDEX "tag_slug_key" ON "followers_dev"."tag"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "article_tag_articleId_tagId_key" ON "followers_dev"."article_tag"("articleId", "tagId");
+CREATE UNIQUE INDEX "content_tag_articleId_tagId_key" ON "followers_dev"."content_tag"("articleId", "tagId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "article_reaction_articleId_userId_key" ON "followers_dev"."article_reaction"("articleId", "userId");
@@ -427,31 +473,58 @@ ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_authorId_fkey" FOR
 ALTER TABLE "followers_dev"."article" ADD CONSTRAINT "article_statsId_fkey" FOREIGN KEY ("statsId") REFERENCES "followers_dev"."article_read_stat"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "followers_dev"."event" ADD CONSTRAINT "event_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "followers_dev"."content"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."event" ADD CONSTRAINT "event_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."event" ADD CONSTRAINT "event_statsId_fkey" FOREIGN KEY ("statsId") REFERENCES "followers_dev"."article_read_stat"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "followers_dev"."content_version" ADD CONSTRAINT "content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."content_version" ADD CONSTRAINT "content_version_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."photo_content" ADD CONSTRAINT "photo_content_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."article_approval" ADD CONSTRAINT "article_approval_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."photo_content" ADD CONSTRAINT "photo_content_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."article_approval" ADD CONSTRAINT "article_approval_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."article_tag" ADD CONSTRAINT "article_tag_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."article_tag" ADD CONSTRAINT "article_tag_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES "followers_dev"."tag"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."content_approval" ADD CONSTRAINT "content_approval_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."content_tag" ADD CONSTRAINT "content_tag_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."content_tag" ADD CONSTRAINT "content_tag_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."content_tag" ADD CONSTRAINT "content_tag_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES "followers_dev"."tag"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article_reaction" ADD CONSTRAINT "article_reaction_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."article_reaction" ADD CONSTRAINT "article_reaction_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."article_reaction" ADD CONSTRAINT "article_reaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -469,10 +542,13 @@ ALTER TABLE "followers_dev"."comment_reaction" ADD CONSTRAINT "comment_reaction_
 ALTER TABLE "followers_dev"."comment_reaction" ADD CONSTRAINT "comment_reaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_visitorId_fkey" FOREIGN KEY ("visitorId") REFERENCES "followers_dev"."visitor"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."visit" ADD CONSTRAINT "visit_visitorId_fkey" FOREIGN KEY ("visitorId") REFERENCES "followers_dev"."visitor"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."visitor" ADD CONSTRAINT "visitor_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE SET NULL ON UPDATE CASCADE;

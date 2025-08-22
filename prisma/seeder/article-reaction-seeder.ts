@@ -64,7 +64,7 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
             const reactionType = faker.helpers.arrayElement(articleReactionTypes);
 
             reactionPromises.push(
-                prisma.articleReaction.create({
+                prisma.contentReaction.create({
                     data: {
                         article: {
                             connect: { id: article.id },
@@ -296,13 +296,13 @@ export async function ArticleReactionSeed(prisma: PrismaClient) {
                 deleted: false,
             }
         });
-        const actualLikeCount = await prisma.articleReaction.count({
+        const actualLikeCount = await prisma.contentReaction.count({
             where: {
                 articleId: article.id,
                 type: ReactionType.like
             }
         });
-        const actualDislikeCount = await prisma.articleReaction.count({
+        const actualDislikeCount = await prisma.contentReaction.count({
             where: {
                 articleId: article.id,
                 type: ReactionType.dislike

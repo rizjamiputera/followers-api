@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { PrismaClient, User, ArticleStatus } from '@prisma/client';
+import { ContentStatus, PrismaClient, User } from '@prisma/client';
 
 export async function ArticleSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: Article');
@@ -87,7 +87,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
             const title = faker.lorem.sentence({ min: 4, max: 8 });
             const slug = faker.helpers.slugify(title).toLowerCase();
             const content = generateStructuredContent();
-            const status = faker.helpers.arrayElement<ArticleStatus>([
+            const status = faker.helpers.arrayElement<ContentStatus>([
                 'DRAFT',
                 'ON_REVIEW',
                 'PUBLISHED',
@@ -112,7 +112,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 });
 
                 // Create read stats first
-                const readStat = await prisma.articleStats.create({
+                const readStat = await prisma.contentStats.create({
                     data: {
                         readCount: faker.number.int({ min: 0, max: 1000 }),
                         lastReadAt: faker.helpers.maybe(
@@ -160,7 +160,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                     });
 
                     approvalPromises.push(
-                        prisma.articleApproval.create({
+                        prisma.contentApproval.create({
                             data: {
                                 article: {
                                     connect: { id: article.id },
@@ -189,7 +189,7 @@ export async function ArticleSeed(prisma: PrismaClient) {
                     max: 5,
                 });
                 const tagPromises = selectedTags.map((tag) =>
-                    prisma.articleTag.create({
+                    prisma.contentTag.create({
                         data: {
                             article: {
                                 connect: { id: article.id },

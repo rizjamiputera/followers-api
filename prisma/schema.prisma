@@ -51,8 +51,9 @@ model User {
     permissions      UserPermission[]
     ErrorLog         ErrorLog[]
     articles         Article[]         @relation("author_articles")
-    articleApprovals ArticleApproval[] @relation("article_approvals")
-    articlesReaction ArticleReaction[]
+    events           Event[]           @relation("author_events")
+    contentApprovals ContentApproval[] @relation("content_approvals")
+    articlesReaction ContentReaction[]
     articlesComments Comment[]         @relation("comment")
     commentReactions CommentReaction[]
     mentions         Comment[]         @relation("comment_mentions")
@@ -121,7 +122,7 @@ model ErrorLog {
 }
 
 // ARTICLES
-enum ArticleStatus {
+enum ContentStatus {
     DRAFT
     ON_REVIEW
     REJECTED
@@ -147,18 +148,18 @@ model Article {
     photos      PhotoContent[]
     versions    ContentVersion[]
     isFeatured  Boolean           @default(false)
-    status      ArticleStatus     @default(DRAFT)
+    status      ContentStatus     @default(DRAFT)
     publishedAt DateTime? // actual publish time
     author      User              @relation("author_articles", fields: [authorId], references: [id], onDelete: Restrict)
     authorId    String
-    approvals   ArticleApproval[]
-    tags        ArticleTag[]
+    approvals   ContentApproval[]
+    tags        ContentTag[]
     comments    Comment[]
-    reactions   ArticleReaction[]
+    reactions   ContentReaction[]
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
     deleted     Boolean           @default(false)
-    stats       ArticleStats      @relation(fields: [statsId], references: [id], onDelete: Restrict)
+    stats       ContentStats      @relation(fields: [statsId], references: [id], onDelete: Restrict)
     statsId     String            @unique
     visitors    Visit[]
     bookmarks   ArticleBookmark[]
@@ -169,12 +170,46 @@ model Article {
     @@map("article")
 }
 
+model Event {
+    id          String            @id @default(uuid())
+    slug        String            @unique @db.VarChar(255)
+    title       String            @db.VarChar(255)
+    excerpt     String            @db.VarChar(500)
+    image       String            @db.VarChar(255)
+    image_md    String            @db.VarChar(255)
+    content     Content           @relation(fields: [contentId], references: [id], onDelete: Restrict)
+    contentId   String            @unique
+    photos      PhotoContent[]
+    versions    ContentVersion[]
+    isFeatured  Boolean           @default(false)
+    status      ContentStatus     @default(DRAFT)
+    publishedAt DateTime? // actual publish time
+    author      User              @relation("author_events", fields: [authorId], references: [id], onDelete: Restrict)
+    authorId    String
+    approvals   ContentApproval[]
+    tags        ContentTag[]
+    comments    Comment[]
+    reactions   ContentReaction[]
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
+    deleted     Boolean           @default(false)
+    stats       ContentStats      @relation(fields: [statsId], references: [id], onDelete: Restrict)
+    statsId     String            @unique
+    visitors    Visit[]
+
+    @@index([status, publishedAt])
+    @@index([authorId, status])
+    @@index([deleted, status, publishedAt])
+    @@map("event")
+}
+
 model Content {
     id        String   @id @default(uuid())
     content   Json     @db.JsonB // structured content only
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     article   Article?
+    event     Event?
 
     @@map("content")
 }
@@ -189,6 +224,8 @@ model ContentVersion {
     createdAt DateTime @default(now())
     article   Article  @relation(fields: [articleId], references: [id])
     articleId String
+    event     Event?   @relation(fields: [eventId], references: [id])
+    eventId   String?
 
     @@index([articleId])
     @@map("content_version")
@@ -197,54 +234,62 @@ model ContentVersion {
 model PhotoContent {
     id         String   @id @default(uuid())
     path       String   @db.VarChar(255)
-    Article    Article? @relation(fields: [articleId], references: [id])
+    article    Article? @relation(fields: [articleId], references: [id])
     articleId  String?
     main_photo Boolean  @default(false)
     createdAt  DateTime @default(now())
+    event      Event?   @relation(fields: [eventId], references: [id])
+    eventId    String?
 
     @@map("photo_content")
 }
 
-model ArticleApproval {
+model ContentApproval {
     id         String         @id @default(uuid())
     article    Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
     articleId  String
-    approver   User           @relation("article_approvals", fields: [approverId], references: [id], onDelete: Restrict)
+    approver   User           @relation("content_approvals", fields: [approverId], references: [id], onDelete: Restrict)
     approverId String
     status     ApprovalStatus @default(REJECTED)
     note       String?        @db.Text
     createdAt  DateTime       @default(now())
+    event      Event?         @relation(fields: [eventId], references: [id])
+    eventId    String?
 
     @@index([articleId])
-    @@map("article_approval")
+    @@map("content_approval")
 }
 
 model Tag {
     id        String       @id @default(uuid())
     name      String       @unique @db.VarChar(100)
     slug      String       @unique @db.VarChar(100)
-    articles  ArticleTag[]
+    contents  ContentTag[]
     createdAt DateTime     @default(now())
     updatedAt DateTime     @updatedAt
 
     @@map("tag")
 }
 
-model ArticleTag {
-    id        String  @id @default(uuid())
-    article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId String
-    tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+model ContentTag {
+    id        String   @id @default(uuid())
+    article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId String?
+    event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventId   String?
+    tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
     tagId     String
 
     @@unique([articleId, tagId])
-    @@map("article_tag")
+    @@map("content_tag")
 }
 
-model ArticleReaction {
+model ContentReaction {
     id        String       @id @default(uuid())
-    article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId String
+    article   Article?     @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId String?
+    event     Event?       @relation(fields: [eventId], references: [id])
+    eventId   String?
     user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId    String
     // Instead of enum LIKE/DISLIKE, make it string for future emojis
@@ -267,6 +312,8 @@ model Comment {
     id          String            @id @default(uuid())
     article     Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
     articleId   String
+    event       Event?            @relation(fields: [eventId], references: [id])
+    eventId     String?
     user        User              @relation("comment", fields: [userId], references: [id], onDelete: Restrict)
     userId      String
     content     String            @db.Text
@@ -300,8 +347,8 @@ model CommentReaction {
     @@map("comment_reaction")
 }
 
-// ARTICLE STATS
-model ArticleStats {
+// Content STATS
+model ContentStats {
     id            String    @id @default(uuid())
     readCount     Int       @default(0)
     commentCount  Int       @default(0)
@@ -310,18 +357,22 @@ model ArticleStats {
     shareCount    Int       @default(0)
     bookmarkCount Int       @default(0)
     lastReadAt    DateTime?
-    Article       Article?
+    article       Article?
+    event         Event?
 
     @@map("article_read_stat")
 }
 
 model Visit {
     id        String   @id @default(uuid())
-    // onDelete SetNull: article can be deleted, but visits keep to keep analytics
-    article   Article? @relation(fields: [articleId], references: [id], onDelete: SetNull)
+    // onDelete NoAction: article can be deleted, but visits keep to keep analytics
+    article   Article? @relation(fields: [articleId], references: [id], onDelete: NoAction)
     articleId String?
-    // onDelete SetNull: visitor can be deleted, but visits keep record
-    visitor   Visitor? @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+    // onDelete NoAction: event can be deleted, but visits keep to keep analytics
+    event     Event?   @relation(fields: [eventId], references: [id], onDelete: NoAction)
+    eventId   String?
+    // onDelete NoAction: visitor can be deleted, but visits keep record
+    visitor   Visitor? @relation(fields: [visitorId], references: [id], onDelete: NoAction)
     visitorId String?
     ipAddress String?  @db.VarChar(45)
     userAgent String?  @db.VarChar(500)
