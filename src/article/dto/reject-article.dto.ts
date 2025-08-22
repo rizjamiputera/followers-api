@@ -5,5 +5,5 @@ export class RejectArticleDto {
     @ApiProperty({ description: 'Approval Note' })
     @IsOptional()
     @IsString()
-    note: string;
+    note?: string;
 }

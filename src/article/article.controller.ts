@@ -264,7 +264,7 @@ export class ArticleController {
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ArticleStatus.PUBLISHED,
-            publishedAt: publishDto.publishedAt ?? null,
+            publishedAt: publishDto ? publishDto.publishedAt ?? null : null,
         };
 
         const dataApproval: Prisma.ArticleApprovalCreateInput = {
@@ -295,8 +295,6 @@ export class ArticleController {
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
-        const { note } = rejectArticleDto;
-
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ArticleStatus.REJECTED,
             publishedAt: null
@@ -306,7 +304,7 @@ export class ArticleController {
         const dataApproval: Prisma.ArticleApprovalCreateInput = {
             article: { connect: { id } },
             status: ApprovalStatus.REJECTED,
-            note,
+            note: rejectArticleDto ? rejectArticleDto.note ?? null : null,
             approver: { connect: { id: req.user.id } },
         };
 
@@ -327,7 +325,7 @@ export class ArticleController {
             return
         }
 
-        const { note } = rejectArticleDto;
+        // const { note } = rejectArticleDto;
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ArticleStatus.TAKE_DOWN,
@@ -336,7 +334,7 @@ export class ArticleController {
         const dataApproval: Prisma.ArticleApprovalCreateInput = {
             article: { connect: { id } },
             status: ApprovalStatus.TAKE_DOWN,
-            note,
+            note: rejectArticleDto ? rejectArticleDto.note ?? null : null,
             approver: { connect: { id: req.user.id } },
         };
 
