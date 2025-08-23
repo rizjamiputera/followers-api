@@ -51,7 +51,7 @@ export class PhotoContentController {
     @ApiConsumes('multipart/form-data')
     @ApiBearerAuth()
     @UseInterceptors(FileInterceptor('photo'))
-    async uploadAvatar(
+    async uploadMainImage(
         @UploadedFile(
             new ParseFilePipe({
                 validators: [
@@ -63,11 +63,24 @@ export class PhotoContentController {
                 ],
             }),
         )
-        avatar: Express.Multer.File,
+        photo: Express.Multer.File,
     ) {
-        const { large, medium } = await this.appService.save_images(
-            avatar,
+        // const { large, medium } = await this.appService.save_images(
+        //     photo,
+        //     '/photo',
+        // );
+
+        const large = await this.appService.save_image(
+            photo,
             '/photo',
+            1200
+        );
+
+        const medium = await this.appService.save_image(
+            photo,
+            '/photo',
+            600,
+            'jpeg'
         );
 
         return this.photoContentService.createMany([large, medium]);

@@ -36,6 +36,7 @@ export class AppService {
         size: number,
         file: Express.Multer.File,
         filepath: string,
+        format = 'webp' // 👈 default to jpeg
     ) {
         // Ensure the directory exists before writing the file
         const dir = path.dirname(filepath);
@@ -47,17 +48,31 @@ export class AppService {
         // Skip resizing if the original image width is smaller than the target size
         if (metadata.width && metadata.width < size) {
             // Save original image as webp
-            const webpBuffer = await sharp(file.buffer)
-                .webp({ quality: 85 })
-                .toBuffer();
+            let image = sharp(file.buffer);
+
+            // Apply format conversion
+            if (format === 'jpeg') {
+                image = image.jpeg({ quality: 85 }) // adjust quality
+            } else if (format === 'webp') {
+                image = image.webp({ quality: 85 })
+            }
+
+            const webpBuffer = await image.toBuffer();
             await fs.writeFile(filepath, webpBuffer);
             return;
         }
 
-        const resizedBuffer = await sharp(file.buffer, { animated: true })
-            .resize(size)
-            .webp({ quality: 85 })
-            .toBuffer();
+        let image = sharp(file.buffer, { animated: true })
+            .resize(size);
+
+        // Apply format conversion
+        if (format === 'jpeg') {
+            image = image.jpeg({ quality: 85 }) // adjust quality
+        } else if (format === 'webp') {
+            image = image.webp({ quality: 85 })
+        }
+
+        const resizedBuffer = await image.toBuffer();
 
         // Save the resized image to disk
         await fs.writeFile(filepath, resizedBuffer);
@@ -67,12 +82,13 @@ export class AppService {
         file: Express.Multer.File,
         path_to_save: string = '',
         size: number = 1200,
+        format = 'webp' // 👈 default to jpeg
     ): Promise<string> {
         const suffix = this.getFileSuffix();
-        const filename = `${suffix}.webp`;
+        const filename = `${suffix}.${format}`;
         const filepath = path.join(`./public${path_to_save}/${filename}`);
         try {
-            await this.resizeImage(size, file, filepath);
+            await this.resizeImage(size, file, filepath, format);
             return `${path_to_save}/${filename}`;
         } catch (_e) {
             this.removeFile(filepath);
