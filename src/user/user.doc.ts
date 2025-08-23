@@ -13,8 +13,8 @@ import {
 } from 'src/app/doc/app.doc';
 import { CreateUserDto } from './dto/user-create.dto';
 import { ChangeUserPasswordDto } from './dto/user-change-password.dto';
-import { CreateUserPermissionDto } from './dto/user-create-permission.dto';
 import { CreateUserOperatorDto } from './dto/user-create-operator.dto';
+import { UserPermissionDto } from './dto/user-permission.dto';
 
 const NotFound = ApiResponse({
     status: 404,
@@ -285,7 +285,7 @@ export function AddUserPermissionDoc() {
             summary: 'Add permission to user. Permission: USER.EDIT',
         }),
         ApiBody({
-            type: CreateUserPermissionDto,
+            type: UserPermissionDto,
         }),
         Success204,
         Unauthorized,

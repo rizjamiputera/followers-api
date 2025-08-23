@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Module, Permission } from '@prisma/client';
 import { IsEnum, IsString } from 'class-validator';
 
-export class CreateUserPermissionDto {
+export class UserPermissionDto {
     @ApiProperty()
     @IsString()
     userId: string;

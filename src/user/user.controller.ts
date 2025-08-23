@@ -33,7 +33,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from 'src/app.service';
 import { UpdateUserDto } from './dto/user-update.dto';
 import { PermissionsRequired } from 'src/auth/guards/permissions/permission.decorator';
-import { CreateUserPermissionDto } from './dto/user-create-permission.dto';
+import { UserPermissionDto } from './dto/user-permission.dto';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { CreateUserOperatorDto } from './dto/user-create-operator.dto';
 import { UserService } from './user.service';
@@ -272,7 +272,7 @@ export class UserController {
     @DeleteUserDoc()
     @HttpCode(204)
     @PermissionsRequired(Module.USER, Permission.DELETE)
-    @Delete(':id')
+    @Delete('/remove/:id')
     remove(@Request() req: any, @Param('id') id: string) {
         const userId = req.user.id;
 
@@ -284,7 +284,7 @@ export class UserController {
     @HttpCode(204)
     @Post('add-permission')
     async addPermission(
-        @Body(new ValidationPipe()) dataDto: CreateUserPermissionDto,
+        @Body(new ValidationPipe()) dataDto: UserPermissionDto,
     ): Promise<void> {
         const { userId, ...dt } = dataDto;
 
@@ -306,9 +306,12 @@ export class UserController {
     @RemoveUserPermissionDoc()
     @PermissionsRequired(Module.USER, Permission.EDIT)
     @HttpCode(204)
-    @Delete('remove-permission/:id')
-    async removePermission(@Param('id') id: string): Promise<void> {
-        await this.userService.removePermission(id);
+    @Delete('remove-permission')
+    async removePermission(
+        @Body(new ValidationPipe()) dataDto: UserPermissionDto,
+    ): Promise<void> {
+        console.log("WOOEE")
+        await this.userService.removePermission(dataDto);
         return;
     }
 }

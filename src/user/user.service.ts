@@ -6,6 +6,7 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { AppService } from 'src/app.service';
 import { UserFilterQueryDto } from './dto/user-filter.dto';
+import { UserPermissionDto } from './dto/user-permission.dto';
 
 // Define reusable includes
 const VALID_INCLUDES = ['permissions'];
@@ -27,8 +28,7 @@ export class UserService {
         requester_role: Role,
         includes: string[] = [],
     ): Promise<Paginate<User[]>> {
-        const { page, limit, sortBy, order, deleted } = pagination;
-
+        const { search, page, limit, sortBy, order, deleted } = pagination;
         const { role, active } = filter;
 
         const include = this.app.getValidIncludes(
@@ -37,19 +37,34 @@ export class UserService {
             false,
         );
 
-        const skip = (page - 1) * limit;
-        const take = limit > 0 ? limit : undefined;
+        const searchCondition: Prisma.UserWhereInput = search
+            ? {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { email: { contains: search, mode: 'insensitive' } },
+                ],
+            }
+            : {};
+
+        const whereConditions: Prisma.UserWhereInput[] = [
+            searchCondition,
+            { deleted },
+        ];
+
+        if (role) whereConditions.push({ role });
+        if (active !== undefined) whereConditions.push({ active });
+
+        // exculude superadmin
+        if (requester_role != Role.SUPERADMIN) whereConditions.push({ role: { not: Role.SUPERADMIN } });
 
         const where: Prisma.UserWhereInput = {
-            AND: [
-                { deleted },
-                role ? { role } : {},
-                ...(active !== undefined ? [{ active }] : []),
-                requester_role == Role.ADMIN
-                    ? { role: { not: Role.SUPERADMIN } }
-                    : {},
-            ],
+            AND: whereConditions.filter(
+                (condition) => Object.keys(condition).length > 0,
+            ),
         };
+
+        const skip = (page - 1) * limit;
+        const take = limit > 0 ? limit : undefined;
 
         const [total, data] = await Promise.all([
             this.prisma.user.count({
@@ -65,7 +80,7 @@ export class UserService {
         ]);
 
         return {
-            data,
+            data: this.app.transformImageUrlsArray(data, ...transformImages),
             limit,
             total,
             page,
@@ -93,6 +108,12 @@ export class UserService {
         if (currentData.avatar != update.avatar) {
             this.app.removeFile(currentData.avatar);
             this.app.removeFile(currentData.avatar_md);
+        }
+
+        if (update.role == 'USER') {
+            await this.prisma.userPermission.deleteMany({
+                where: { userId: id }
+            })
         }
 
         return update;
@@ -145,7 +166,7 @@ export class UserService {
         return this.app.transformImageUrls(user, ...transformImages)
     }
 
-    findOne(
+    async findOne(
         id: string,
         requester_role: Role,
         includes: string[] = [],
@@ -156,7 +177,7 @@ export class UserService {
             false,
         );
 
-        return this.prisma.user.findFirst({
+        const user = await this.prisma.user.findFirst({
             where: {
                 AND: [
                     { id },
@@ -169,6 +190,8 @@ export class UserService {
             },
             include,
         });
+
+        return this.app.transformImageUrls(user, ...transformImages)
     }
 
     async findByEmail(email: string): Promise<User> {
@@ -205,8 +228,18 @@ export class UserService {
         });
     }
 
-    async removePermission(id: string): Promise<void> {
-        await this.prisma.userPermission.delete({ where: { id } });
+    async removePermission(dataDto: UserPermissionDto): Promise<void> {
+        console.log({ dataDto });
+        const { userId, module, permission } = dataDto;
+        await this.prisma.userPermission.delete({
+            where: {
+                userId_module_permission: {
+                    userId,
+                    module,
+                    permission
+                }
+            }
+        });
 
         return;
     }

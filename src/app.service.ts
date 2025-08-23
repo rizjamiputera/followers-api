@@ -249,6 +249,10 @@ export class AppService {
         return result;
     }
 
+    transformImageUrlsArray(data: any[], ...keys: string[]): any[] {
+        return data.map(dt => this.transformImageUrls(dt, ...keys));
+    }
+
     private getNestedValue(obj: any, path: string[]): any {
         return path.reduce((current, key) => {
             return current && current[key] !== undefined ? current[key] : null;
