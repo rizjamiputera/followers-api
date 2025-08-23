@@ -176,6 +176,7 @@ model Article {
  * location
  * address
  * Will Attendance
+ * Pemateri
  */
 model Event {
     id          String            @id @default(uuid())
@@ -233,8 +234,8 @@ model ContentVersion {
     image     String   @db.VarChar(255)
     image_sm  String   @db.VarChar(255)
     createdAt DateTime @default(now())
-    article   Article  @relation(fields: [articleId], references: [id])
-    articleId String
+    article   Article? @relation(fields: [articleId], references: [id])
+    articleId String?
     event     Event?   @relation(fields: [eventId], references: [id])
     eventId   String?
 
@@ -247,10 +248,10 @@ model PhotoContent {
     path       String   @db.VarChar(255)
     article    Article? @relation(fields: [articleId], references: [id])
     articleId  String?
-    main_photo Boolean  @default(false)
-    createdAt  DateTime @default(now())
     event      Event?   @relation(fields: [eventId], references: [id])
     eventId    String?
+    main_photo Boolean  @default(false)
+    createdAt  DateTime @default(now())
 
     @@map("photo_content")
 }
@@ -309,6 +310,7 @@ model ContentReaction {
     createdAt DateTime     @default(now())
 
     @@unique([articleId, userId]) // one reaction per user per article
+    @@unique([eventId, userId]) // one reaction per user per article
     @@map("article_reaction")
 }
 

@@ -451,7 +451,7 @@ export class ArticleService {
                 }
             },
             data: {
-                articleId: articleId,
+                articleId,
                 main_photo: true,
             }
         });

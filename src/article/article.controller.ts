@@ -100,7 +100,7 @@ export class ArticleController {
 
     @ApiBearerAuth()
     @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
-    @Get('my-article')
+    @Get('my-articles')
     findMyArticle(
         @Request() req: any,
         @Query(new ValidationPipe({ transform: true }))

@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { ArticleModule } from './article/article.module';
 import { CommentModule } from './comment/comment.module';
 import { PhotoContentModule } from './photo-content/photo-content.module';
+import { EventModule } from './event/event.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { PhotoContentModule } from './photo-content/photo-content.module';
         ArticleModule,
         PhotoContentModule,
         CommentModule,
+        EventModule,
     ],
     controllers: [AppController],
     providers: [
