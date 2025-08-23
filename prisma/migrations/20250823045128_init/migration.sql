@@ -154,7 +154,7 @@ CREATE TABLE "followers_dev"."content_version" (
     "image" VARCHAR(255) NOT NULL,
     "image_sm" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "articleId" TEXT NOT NULL,
+    "articleId" TEXT,
     "eventId" TEXT,
 
     CONSTRAINT "content_version_pkey" PRIMARY KEY ("id")
@@ -165,9 +165,9 @@ CREATE TABLE "followers_dev"."photo_content" (
     "id" TEXT NOT NULL,
     "path" VARCHAR(255) NOT NULL,
     "articleId" TEXT,
+    "eventId" TEXT,
     "main_photo" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "eventId" TEXT,
 
     CONSTRAINT "photo_content_pkey" PRIMARY KEY ("id")
 );
@@ -402,6 +402,9 @@ CREATE INDEX "event_deleted_status_publishedAt_idx" ON "followers_dev"."event"("
 CREATE INDEX "content_version_articleId_idx" ON "followers_dev"."content_version"("articleId");
 
 -- CreateIndex
+CREATE INDEX "content_version_eventId_idx" ON "followers_dev"."content_version"("eventId");
+
+-- CreateIndex
 CREATE INDEX "content_approval_articleId_idx" ON "followers_dev"."content_approval"("articleId");
 
 -- CreateIndex
@@ -415,6 +418,9 @@ CREATE UNIQUE INDEX "content_tag_articleId_tagId_key" ON "followers_dev"."conten
 
 -- CreateIndex
 CREATE UNIQUE INDEX "article_reaction_articleId_userId_key" ON "followers_dev"."article_reaction"("articleId", "userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "article_reaction_eventId_userId_key" ON "followers_dev"."article_reaction"("eventId", "userId");
 
 -- CreateIndex
 CREATE INDEX "comment_articleId_idx" ON "followers_dev"."comment"("articleId");
@@ -486,7 +492,7 @@ ALTER TABLE "followers_dev"."event" ADD CONSTRAINT "event_authorId_fkey" FOREIGN
 ALTER TABLE "followers_dev"."event" ADD CONSTRAINT "event_statsId_fkey" FOREIGN KEY ("statsId") REFERENCES "followers_dev"."article_read_stat"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."content_version" ADD CONSTRAINT "content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."content_version" ADD CONSTRAINT "content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."content_version" ADD CONSTRAINT "content_version_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;

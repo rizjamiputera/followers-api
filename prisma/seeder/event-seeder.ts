@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 
 import { ContentStatus, PrismaClient, User } from '@prisma/client';
-import dayjs from 'dayjs';
 
 export async function EventSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: Event');
@@ -106,6 +105,10 @@ export async function EventSeed(prisma: PrismaClient) {
                 from: publishedAt,
                 to: new Date(publishedAt.getTime() + 30 * 24 * 60 * 60 * 1000), // +30 days
             });
+            const end_at = faker.date.between({
+                from: start_at,
+                to: new Date(start_at.getTime() + 2 * 24 * 60 * 60 * 1000), // +2 days
+            });
 
             const eventPromise = (async () => {
                 const image = `/dummy/event/event${faker.number.int({ min: 1, max: 15 })}.webp`;
@@ -138,7 +141,10 @@ export async function EventSeed(prisma: PrismaClient) {
                         content: {
                             connect: { id: eventContent.id },
                         },
+                        location: faker.location.city(),
+                        address: faker.location.streetAddress(),
                         start_at,
+                        end_at: faker.datatype.boolean() ? end_at : start_at,
                         stats: {
                             connect: { id: readStat.id },
                         },
@@ -263,7 +269,7 @@ function generateStructuredContent() {
             // Add another random image
             faker.helpers.maybe(
                 () => {
-                    const src = `/dummy/event/event${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/event/event${faker.number.int({ min: 1, max: 13 })}.webp`
                     return {
                         type: 'image',
                         attrs: {
@@ -307,7 +313,7 @@ function generateStructuredContent() {
             // Add final image with different dimensions
             faker.helpers.maybe(
                 () => {
-                    const src = `/dummy/event/event${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/event/event${faker.number.int({ min: 1, max: 13 })}.webp`
                     return {
                         type: 'image',
                         attrs: {

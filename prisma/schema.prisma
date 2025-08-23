@@ -240,6 +240,7 @@ model ContentVersion {
     eventId   String?
 
     @@index([articleId])
+    @@index([eventId])
     @@map("content_version")
 }
 
