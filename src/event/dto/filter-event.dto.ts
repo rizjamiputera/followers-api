@@ -4,6 +4,7 @@ import { Transform } from 'class-transformer';
 import {
     IsArray,
     IsBoolean,
+    IsDate,
     IsEnum,
     IsOptional,
     IsString,
@@ -55,4 +56,13 @@ export class FilterEventQueryDto {
     @Transform(({ value }) => value == 'true')
     @IsBoolean()
     published?: boolean;
+
+    @ApiPropertyOptional({ description: 'Filter with start from' })
+    @IsOptional()
+    @Transform(({ value }) => {
+        if (!value) return undefined; // Ensure undefined or empty input results in an empty array
+        return new Date(value)
+    })
+    @IsDate()
+    start_from?: Date;
 }

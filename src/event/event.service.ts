@@ -114,7 +114,7 @@ export class EventService {
     ): Promise<Paginate<Event[]>> {
         const { page, limit, sortBy, order, includes, deleted, search } =
             pagination;
-        const { authorId, tags, status, exclude_statuses, published } = filter;
+        const { authorId, tags, status, exclude_statuses, published, start_from } = filter;
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const searchCondition: Prisma.EventWhereInput = search
@@ -142,7 +142,11 @@ export class EventService {
         if (published) {
             whereConditions.push({
                 status: ContentStatus.PUBLISHED,
-                start_at: { gte: new Date() },
+                ...(start_from
+                    ? { start_at: { gte: start_from } }
+                    : { start_at: { gte: new Date() } }
+                )
+                ,
             });
         }
 
