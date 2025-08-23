@@ -142,7 +142,7 @@ export class EventService {
         if (published) {
             whereConditions.push({
                 status: ContentStatus.PUBLISHED,
-                publishedAt: { lte: new Date() },
+                start_at: { gte: new Date() },
             });
         }
 
