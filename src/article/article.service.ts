@@ -473,9 +473,7 @@ export class ArticleService {
             if (!article) throw new NotFoundException('Article not found');
 
             let visitor = null;
-            console.log("visit")
             if (visit.fingerprint) {
-                console.log(visit.fingerprint);
                 visitor = await tx.visitor.upsert({
                     where: { fingerprint: visit.fingerprint },
                     update: {
@@ -489,7 +487,18 @@ export class ArticleService {
                 });
             }
 
-            // visit log
+            // check last visit within 5 minutes
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const recentVisit = await tx.visit.findFirst({
+                where: {
+                    articleId: article.id,
+                    visitorId: visitor?.id ?? undefined,
+                    visitedAt: { gte: fiveMinutesAgo },
+                },
+                orderBy: { visitedAt: 'desc' },
+            });
+
+            // Always log the visit (for analytics)
             await tx.visit.create({
                 data: {
                     articleId: article.id,
@@ -500,14 +509,16 @@ export class ArticleService {
                 },
             });
 
-            // increment readCount + update lastReadAt
-            await tx.contentStats.update({
-                where: { id: article.stats.id },
-                data: {
-                    readCount: { increment: 1 },
-                    lastReadAt: new Date(),
-                },
-            });
+            // Only increment if not visited in last 5 minutes
+            if (!recentVisit) {
+                await tx.contentStats.update({
+                    where: { id: article.stats.id },
+                    data: {
+                        readCount: { increment: 1 },
+                        lastReadAt: new Date(),
+                    },
+                });
+            }
 
             return;
         })
