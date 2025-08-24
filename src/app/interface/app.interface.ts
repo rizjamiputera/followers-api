@@ -17,5 +17,6 @@ export interface VisitPayload {
     referrer?: string;
     userId?: string | null;
     fingerprint?: string | null;
+    path: string;
 }
 

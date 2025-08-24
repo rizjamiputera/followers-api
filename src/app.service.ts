@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { promises as fs } from 'fs';
-import { SavedImage } from './app/interface/app.interface';
+import { SavedImage, VisitPayload } from './app/interface/app.interface';
 import * as path from 'path';
 import * as sharp from 'sharp';
+import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class AppService {
+
+    constructor(
+        private prisma: PrismaService,
+    ) { }
 
     async createPath(path: string) {
         try {
@@ -287,5 +292,38 @@ export class AppService {
         if (parent) {
             parent[lastKey] = value;
         }
+    }
+
+    // STATISTICS
+    async visit(visit: VisitPayload): Promise<void> {
+        return this.prisma.$transaction(async (tx) => {
+            let visitor = null;
+            if (visit.fingerprint) {
+                visitor = await tx.visitor.upsert({
+                    where: { fingerprint: visit.fingerprint },
+                    update: {
+                        lastVisitAt: new Date(),
+                        userId: visit.userId || undefined,
+                    },
+                    create: {
+                        fingerprint: visit.fingerprint,
+                        userId: visit.userId || undefined,
+                    },
+                });
+            }
+
+            // Always log the visit (for analytics)
+            await tx.visit.create({
+                data: {
+                    visitorId: visitor?.id,
+                    ipAddress: visit.ip,
+                    userAgent: visit.userAgent,
+                    referrer: visit.referrer,
+                    path: visit.path
+                }
+            });
+
+            return;
+        })
     }
 }

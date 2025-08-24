@@ -385,6 +385,8 @@ model Visit {
     // onDelete NoAction: event can be deleted, but visits keep to keep analytics
     event     Event?   @relation(fields: [eventId], references: [id], onDelete: NoAction)
     eventId   String?
+    // path   // e.g. "/", "/articles/123", "/events/abc", "/search?q=foo"
+    path      String   @db.VarChar(500)
     // onDelete NoAction: visitor can be deleted, but visits keep record
     visitor   Visitor? @relation(fields: [visitorId], references: [id], onDelete: NoAction)
     visitorId String?
@@ -394,6 +396,8 @@ model Visit {
     visitedAt DateTime @default(now())
 
     @@index([articleId, visitedAt])
+    @@index([eventId, visitedAt])
+    @@index([path, visitedAt])
     @@map("visit")
 }
 

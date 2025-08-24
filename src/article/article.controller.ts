@@ -362,6 +362,7 @@ export class ArticleController {
     visit(
         @Req() req,
         @Param('slug') slug: string,
+        @Body('path') path: string,
     ) {
 
         const visit: VisitPayload = {
@@ -370,6 +371,7 @@ export class ArticleController {
             referrer: req.headers['referer'] || null,
             userId: req.user?.id || null, // if auth use
             fingerprint: req.headers['x-fingerprint'] || null,
+            path
         }
 
         return this.articleService.visit(slug, visit);

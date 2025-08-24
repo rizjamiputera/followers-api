@@ -265,6 +265,7 @@ CREATE TABLE "followers_dev"."visit" (
     "id" TEXT NOT NULL,
     "articleId" TEXT,
     "eventId" TEXT,
+    "path" VARCHAR(500) NOT NULL,
     "visitorId" TEXT,
     "ipAddress" VARCHAR(45),
     "userAgent" VARCHAR(500),
@@ -430,6 +431,12 @@ CREATE UNIQUE INDEX "comment_reaction_commentId_userId_key" ON "followers_dev"."
 
 -- CreateIndex
 CREATE INDEX "visit_articleId_visitedAt_idx" ON "followers_dev"."visit"("articleId", "visitedAt");
+
+-- CreateIndex
+CREATE INDEX "visit_eventId_visitedAt_idx" ON "followers_dev"."visit"("eventId", "visitedAt");
+
+-- CreateIndex
+CREATE INDEX "visit_path_visitedAt_idx" ON "followers_dev"."visit"("path", "visitedAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "visitor_fingerprint_key" ON "followers_dev"."visitor"("fingerprint");

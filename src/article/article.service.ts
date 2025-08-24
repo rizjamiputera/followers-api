@@ -506,6 +506,7 @@ export class ArticleService {
                     ipAddress: visit.ip,
                     userAgent: visit.userAgent,
                     referrer: visit.referrer,
+                    path: visit.path
                 },
             });
 

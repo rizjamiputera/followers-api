@@ -1,7 +1,8 @@
-import { Controller, Get, NotFoundException, Param, Res } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post, Req, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from './auth/auth.metadata';
 import { promises as fs } from 'fs';
+import { VisitPayload } from './app/interface/app.interface';
 
 @Controller()
 export class AppController {
@@ -24,6 +25,7 @@ export class AppController {
             throw new NotFoundException('File not found');
         }
     }
+
     @Public()
     @Get('photo/*path')
     async getphotoPhoto(@Param('path') path: any, @Res() res) {
@@ -34,5 +36,25 @@ export class AppController {
         } catch (_error) {
             throw new NotFoundException('File not found');
         }
+    }
+
+    // STATISTICS
+    @Public()
+    @Post('visit')
+    visit(
+        @Req() req,
+        @Body('path') path: string,
+    ) {
+
+        const visit: VisitPayload = {
+            ip: req.ip,
+            userAgent: req.headers['user-agent'],
+            referrer: req.headers['referer'] || null,
+            userId: req.user?.id || null, // if auth use
+            fingerprint: req.headers['x-fingerprint'] || null,
+            path
+        }
+
+        return this.appService.visit(visit);
     }
 }
