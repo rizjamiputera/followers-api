@@ -63,7 +63,7 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
         const bookmarkUsers = faker.helpers.arrayElements(users, users.length);
         if (article != null)
             for (const user of bookmarkUsers) {
-                reactionPromises.push(
+                bookmarkPromises.push(
                     prisma.articleBookmark.create({
                         data: {
                             article: {
@@ -316,14 +316,6 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
             );
         }
 
-        // Count actual comments for this article
-        const actualCommentCount = await prisma.comment.count({
-            where: {
-                contentId: content.id,
-                deleted: false,
-            }
-        });
-
         if (article != null) {
             let actualLikeCount = await prisma.contentReaction.count({
                 where: {
@@ -343,7 +335,7 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                 data: {
                     stats: {
                         update: {
-                            commentCount: actualCommentCount,
+                            commentCount,
                             likeCount: actualLikeCount,
                             dislikeCount: actualDislikeCount,
                             shareCount: faker.number.int({ min: 5, max: 300 }),
@@ -374,7 +366,7 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                 data: {
                     stats: {
                         update: {
-                            commentCount: actualCommentCount,
+                            commentCount,
                             likeCount: actualLikeCount,
                             dislikeCount: actualDislikeCount,
                             shareCount: faker.number.int({ min: 5, max: 300 }),
@@ -389,6 +381,12 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
     // Execute reactions in batches to avoid connection pool exhaustion
     const BATCH_SIZE = 10;
     let reactionCount = 0;
+    for (let i = 0; i < bookmarkPromises.length; i += BATCH_SIZE) {
+        const batch = bookmarkPromises.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch);
+        reactionCount += batch.length;
+    }
+
     for (let i = 0; i < reactionPromises.length; i += BATCH_SIZE) {
         const batch = reactionPromises.slice(i, i + BATCH_SIZE);
         await Promise.all(batch);
