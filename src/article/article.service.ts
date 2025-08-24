@@ -461,6 +461,8 @@ export class ArticleService {
         };
 
         await this.prisma.$transaction(async (tx) => {
+            const { statsId } = await this.prisma.article.findUnique({ where: { id: articleId } });
+
             let decrementLike = false;
             let decrementDisLike = false;
             // if (type == 'like') {
@@ -491,7 +493,7 @@ export class ArticleService {
             });
 
             await tx.contentStats.update({
-                where: { articleId },
+                where: { id: statsId },
                 data: {
                     ...(type == 'like' && {
                         likeCount: { increment: 1 },

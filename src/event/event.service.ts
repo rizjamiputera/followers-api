@@ -434,6 +434,8 @@ export class EventService {
         };
 
         await this.prisma.$transaction(async (tx) => {
+            const { statsId } = await this.prisma.event.findUnique({ where: { id: eventId } });
+
             let decrementLike = false;
             let decrementDisLike = false;
             const react = await tx.contentReaction.findUnique({
@@ -463,7 +465,7 @@ export class EventService {
             });
 
             await tx.contentStats.update({
-                where: { eventId },
+                where: { id: statsId },
                 data: {
                     ...(type == 'like' && {
                         likeCount: { increment: 1 },

@@ -105,6 +105,7 @@ CREATE TABLE "followers"."article" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deleted" BOOLEAN NOT NULL DEFAULT false,
+    "statsId" TEXT NOT NULL,
 
     CONSTRAINT "article_pkey" PRIMARY KEY ("id")
 );
@@ -129,6 +130,7 @@ CREATE TABLE "followers"."event" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deleted" BOOLEAN NOT NULL DEFAULT false,
+    "statsId" TEXT NOT NULL,
 
     CONSTRAINT "event_pkey" PRIMARY KEY ("id")
 );
@@ -143,8 +145,6 @@ CREATE TABLE "followers"."content_stats" (
     "shareCount" INTEGER NOT NULL DEFAULT 0,
     "bookmarkCount" INTEGER NOT NULL DEFAULT 0,
     "lastReadAt" TIMESTAMP(3),
-    "articleId" TEXT,
-    "eventId" TEXT,
 
     CONSTRAINT "content_stats_pkey" PRIMARY KEY ("id")
 );
@@ -369,6 +369,9 @@ CREATE UNIQUE INDEX "article_slug_key" ON "followers"."article"("slug");
 CREATE UNIQUE INDEX "article_contentId_key" ON "followers"."article"("contentId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "article_statsId_key" ON "followers"."article"("statsId");
+
+-- CreateIndex
 CREATE INDEX "article_status_publishedAt_idx" ON "followers"."article"("status", "publishedAt");
 
 -- CreateIndex
@@ -384,6 +387,9 @@ CREATE UNIQUE INDEX "event_slug_key" ON "followers"."event"("slug");
 CREATE UNIQUE INDEX "event_contentId_key" ON "followers"."event"("contentId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "event_statsId_key" ON "followers"."event"("statsId");
+
+-- CreateIndex
 CREATE INDEX "event_status_publishedAt_idx" ON "followers"."event"("status", "publishedAt");
 
 -- CreateIndex
@@ -391,12 +397,6 @@ CREATE INDEX "event_authorId_status_idx" ON "followers"."event"("authorId", "sta
 
 -- CreateIndex
 CREATE INDEX "event_deleted_status_publishedAt_idx" ON "followers"."event"("deleted", "status", "publishedAt");
-
--- CreateIndex
-CREATE UNIQUE INDEX "content_stats_articleId_key" ON "followers"."content_stats"("articleId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "content_stats_eventId_key" ON "followers"."content_stats"("eventId");
 
 -- CreateIndex
 CREATE INDEX "content_version_articleId_idx" ON "followers"."content_version"("articleId");
@@ -495,16 +495,16 @@ ALTER TABLE "followers"."article" ADD CONSTRAINT "article_contentId_fkey" FOREIG
 ALTER TABLE "followers"."article" ADD CONSTRAINT "article_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "followers"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "followers"."article" ADD CONSTRAINT "article_statsId_fkey" FOREIGN KEY ("statsId") REFERENCES "followers"."content_stats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "followers"."event" ADD CONSTRAINT "event_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "followers"."content"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers"."event" ADD CONSTRAINT "event_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "followers"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers"."content_stats" ADD CONSTRAINT "content_stats_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "followers"."content_stats" ADD CONSTRAINT "content_stats_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "followers"."event" ADD CONSTRAINT "event_statsId_fkey" FOREIGN KEY ("statsId") REFERENCES "followers"."content_stats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers"."content_version" ADD CONSTRAINT "content_version_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers"."article"("id") ON DELETE SET NULL ON UPDATE CASCADE;

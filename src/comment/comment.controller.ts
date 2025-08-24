@@ -41,7 +41,7 @@ export class CommentController {
         @Body(new ValidationPipe()) dataDto: CreateCommentDto,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        const { contentId, parentId, mentionedId, comment } = dataDto;
+        const { contentId, statsId, parentId, mentionedId, comment } = dataDto;
         const data: Prisma.CommentCreateInput = {
             comment,
             user: { connect: { id: req.user.id } },
@@ -53,7 +53,8 @@ export class CommentController {
                 mentioned: { connect: { id: mentionedId } },
             }),
         };
-        return this.commentService.create(data, query.includes);
+
+        return this.commentService.create(data, contentId, statsId, query.includes);
     }
 
     @Public()

@@ -21,4 +21,9 @@ export class CreateCommentDto {
     @IsNotEmpty()
     @IsString()
     comment: string;
+
+    @ApiProperty({ description: 'Type: article / event stats id' })
+    @IsNotEmpty()
+    @IsString()
+    statsId: string;
 }

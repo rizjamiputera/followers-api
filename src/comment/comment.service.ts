@@ -16,13 +16,22 @@ export class CommentService {
         private app: AppService,
     ) { }
 
-    async create(data: Prisma.CommentCreateInput, includes: string[] = []): Promise<Comment> {
+    async create(data: Prisma.CommentCreateInput, contentId: string, statsId: string, includes: string[] = []): Promise<Comment> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
 
         const comment = await this.prisma.comment.create({
             data,
             include
         });
+
+        const commentCount = await this.prisma.comment.count({
+            where: { contentId }
+        })
+
+        await this.prisma.contentStats.update({
+            where: { id: statsId },
+            data: { commentCount }
+        })
 
         return this.app.transformImageUrls(comment, ...transformImages);
     }

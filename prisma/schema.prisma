@@ -159,7 +159,8 @@ model Article {
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
     deleted     Boolean           @default(false)
-    stats       ContentStats?
+    stats       ContentStats      @relation(fields: [statsId], references: [id])
+    statsId     String            @unique
     visitors    Visit[]
     bookmarks   ArticleBookmark[]
 
@@ -202,7 +203,8 @@ model Event {
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
     deleted     Boolean           @default(false)
-    stats       ContentStats?
+    stats       ContentStats      @relation(fields: [statsId], references: [id])
+    statsId     String            @unique
     visitors    Visit[]
 
     @@index([status, publishedAt])
@@ -221,10 +223,8 @@ model ContentStats {
     shareCount    Int       @default(0)
     bookmarkCount Int       @default(0)
     lastReadAt    DateTime?
-    article       Article?  @relation(fields: [articleId], references: [id])
-    articleId     String?   @unique
-    event         Event?    @relation(fields: [eventId], references: [id])
-    eventId       String?   @unique
+    event         Event?
+    article       Article?
 
     @@map("content_stats")
 }
