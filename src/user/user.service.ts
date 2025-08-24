@@ -94,7 +94,9 @@ export class UserService {
         id: string,
         data: Prisma.UserUpdateInput,
     ): Promise<User> {
-        const currentData = await this.findOne(id, updateByRole);
+        const currentData = await this.prisma.user.findUnique({
+            where: { id }
+        })
 
         if (!currentData) {
             throw new NotFoundException('User not found');
