@@ -36,6 +36,7 @@ import { PermissionsRequired } from 'src/auth/guards/permissions/permission.deco
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
 import { PublishArticleDto } from './dto/publish-article.dto';
+import { ArticleWithAuthReaction } from './article-interfaces';
 
 @ApiTags('Article')
 @Controller({
@@ -134,10 +135,11 @@ export class ArticleController {
     @Public()
     @Get('read/:slug')
     read(
+        @Request() req: any,
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
-    ) {
-        return this.articleService.read(slug, query.includes);
+    ): Promise<ArticleWithAuthReaction> {
+        return this.articleService.read(slug, query.includes, req?.user.id ?? null);
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.READ)

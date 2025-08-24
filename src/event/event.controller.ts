@@ -36,6 +36,7 @@ import { FilterEventQueryDto } from './dto/filter-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { PublishEventDto } from './dto/publish-event.dto';
 import { RejectEventDto } from './dto/reject-event.dto';
+import { EventWithAuthReaction } from './event-interface';
 
 @ApiTags('Event')
 @Controller({
@@ -134,10 +135,11 @@ export class EventController {
     @Public()
     @Get('read/:slug')
     read(
+        @Request() req: any,
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
-    ) {
-        return this.eventService.read(slug, query.includes);
+    ): Promise<EventWithAuthReaction> {
+        return this.eventService.read(slug, query.includes, req?.user.id ?? null);
     }
 
     @PermissionsRequired(Module.EVENT, Permission.READ)

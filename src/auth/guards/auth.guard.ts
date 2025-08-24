@@ -25,36 +25,75 @@ export class AuthGuard implements CanActivate {
             IS_PUBLIC_KEY,
             [context.getHandler(), context.getClass()],
         );
-        if (isPublic) return true;
 
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFromHeader(request);
-        if (!token) throw new UnauthorizedException();
 
-        // check is token in black listed
-        const isTokenBlackListed = this.authService.isTokenBlacklisted(token);
-        if (isTokenBlackListed) throw new UnauthorizedException();
+        if (token) {
+            // verify token if present
+            try {
+                const { sub, ...user } = await this.jwtService.verifyAsync(token, {
+                    secret: jwtConstants.secret,
+                });
 
-        try {
-            const { sub, ...user } = await this.jwtService.verifyAsync(token, {
-                secret: jwtConstants.secret,
-            });
+                user.id = sub;
+                request['user'] = user;
 
-            // 💡 We're assigning the payload to the request object here
-            // so that we can access it in our route handlers
-            user.id = sub;
-            request['user'] = user;
-            await this.authService.createAuth(
-                sub,
-                token,
-                dayjs(user.exp * 1000).toDate(),
-                request.path,
-                request.method,
-            );
-        } catch (_e) {
+                await this.authService.createAuth(
+                    sub,
+                    token,
+                    dayjs(user.exp * 1000).toDate(),
+                    request.path,
+                    request.method,
+                );
+            } catch (_e) {
+                // if token is invalid and route is public, we just ignore user
+                if (!isPublic) throw new UnauthorizedException();
+            }
+        } else if (!isPublic) {
+            // token missing on protected route
             throw new UnauthorizedException();
         }
+
+        // check token blacklist only if token exists
+        if (token) {
+            const isTokenBlackListed = await this.authService.isTokenBlacklisted(token);
+            if (isTokenBlackListed) throw new UnauthorizedException();
+        }
+
         return true;
+
+
+        // if (isPublic) return true;
+
+        // const request = context.switchToHttp().getRequest();
+        // const token = this.extractTokenFromHeader(request);
+        // if (!token) throw new UnauthorizedException();
+
+        // // check is token in black listed
+        // const isTokenBlackListed = this.authService.isTokenBlacklisted(token);
+        // if (isTokenBlackListed) throw new UnauthorizedException();
+
+        // try {
+        //     const { sub, ...user } = await this.jwtService.verifyAsync(token, {
+        //         secret: jwtConstants.secret,
+        //     });
+
+        //     // 💡 We're assigning the payload to the request object here
+        //     // so that we can access it in our route handlers
+        //     user.id = sub;
+        //     request['user'] = user;
+        //     await this.authService.createAuth(
+        //         sub,
+        //         token,
+        //         dayjs(user.exp * 1000).toDate(),
+        //         request.path,
+        //         request.method,
+        //     );
+        // } catch (_e) {
+        //     throw new UnauthorizedException();
+        // }
+        // return true;
     }
 
     private extractTokenFromHeader(request: Request): string | undefined {

@@ -7,6 +7,7 @@ import {
     Prisma,
     Tag,
     ReactionType,
+    ContentReaction,
 } from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
@@ -14,6 +15,7 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { PrismaService } from 'src/prisma.service';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
+import { ArticleWithAuthReaction } from './article-interfaces';
 
 const VALID_INCLUDES = [
     'content',
@@ -201,7 +203,7 @@ export class ArticleService {
         };
     }
 
-    async read(slug: string, includes: string[] = []): Promise<Article> {
+    async read(slug: string, includes: string[] = [], userId?: string): Promise<ArticleWithAuthReaction> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const article = await this.prisma.article.findUnique({
@@ -216,7 +218,29 @@ export class ArticleService {
 
         if (!article) throw new NotFoundException('Article is not found');
 
-        return this.transformData(article)
+        let auth_reaction: ContentReaction | null = null;
+        let authBookmark: boolean = false;
+
+        if (userId) {
+            auth_reaction = await this.prisma.contentReaction.findUnique({
+                where: {
+                    articleId_userId: {
+                        articleId: article.id,
+                        userId
+                    }
+                }
+            });
+
+            const bookmarked = await this.prisma.articleBookmark.findUnique({
+                where: { userId_articleId: { userId, articleId: article.id } }
+            })
+
+            if (bookmarked) authBookmark = true;
+        }
+
+        const transform = this.transformData(article);
+
+        return { ...transform, auth_reaction, authBookmark }
     }
 
     async findOne(id: string, includes: string[] = []): Promise<Article> {

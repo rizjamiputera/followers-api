@@ -1,11 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { AppService } from 'src/app.service';
-import { Content, ContentStatus, ContentTag, Event, Prisma, ReactionType, Tag } from '@prisma/client';
+import { Content, ContentReaction, ContentStatus, ContentTag, Event, Prisma, ReactionType, Tag } from '@prisma/client';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { FilterEventQueryDto } from './dto/filter-event.dto';
+import { EventWithAuthReaction } from './event-interface';
 
 const VALID_INCLUDES = [
     'content',
@@ -182,7 +183,7 @@ export class EventService {
         };
     }
 
-    async read(slug: string, includes: string[] = []): Promise<Event> {
+    async read(slug: string, includes: string[] = [], userId?: string): Promise<EventWithAuthReaction> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const event = await this.prisma.event.findUnique({
@@ -196,8 +197,23 @@ export class EventService {
         });
 
         if (!event) throw new NotFoundException('event is not found');
+        let auth_reaction: ContentReaction | null = null;
 
-        return this.transformData(event)
+        if (userId) {
+            auth_reaction = await this.prisma.contentReaction.findUnique({
+                where: {
+                    eventId_userId: {
+                        eventId: event.id,
+                        userId
+                    }
+                }
+            });
+
+        }
+
+        const transform = this.transformData(event);
+
+        return { ...transform, auth_reaction }
     }
 
     async findOne(id: string, includes: string[] = []): Promise<Event> {
