@@ -1,15 +1,31 @@
 import { faker } from '@faker-js/faker';
 
-import { PrismaClient, User, ReactionType, Event } from '@prisma/client';
+import { PrismaClient, User, Article, ReactionType, Content, Event } from '@prisma/client';
 
-export async function EventReactionSeed(prisma: PrismaClient) {
-    console.log('\nSeed Start: Event Reactions & Comments');
+interface ContentWithArticleOrEvent extends Content {
+    article?: Article
+    event?: Event
+}
 
-    // Get all published events
-    const events: Event[] = await prisma.event.findMany({
+export async function ContentReactionSeed(prisma: PrismaClient) {
+    console.log('\nSeed Start: Content Reactions & Comments');
+
+    // Get all published articles
+    const contents: ContentWithArticleOrEvent[] = await prisma.content.findMany({
         where: {
-            status: 'PUBLISHED',
+            OR: [
+                {
+                    article: { status: 'PUBLISHED' }
+                },
+                {
+                    event: { status: 'PUBLISHED' }
+                },
+            ]
         },
+        include: {
+            article: true,
+            event: true
+        }
     });
 
     // Get all users (excluding operators and admins to simulate real user engagement)
@@ -19,45 +35,73 @@ export async function EventReactionSeed(prisma: PrismaClient) {
         },
     });
 
-    if (events.length === 0 || users.length === 0) {
+    if (contents.length === 0 || users.length === 0) {
         console.log(
-            'No published events or users found. Please run event and user seeders first.',
+            'No published articles, events or users found. Please run article and user seeders first.',
         );
         return;
     }
 
-    const eventReactionTypes: ReactionType[] = ['like', 'dislike'];
-    const commentReactionTypes: ReactionType[] = ['like', 'dislike', 'love', 'clap'];
+    const contentReactionTypes: ReactionType[] = ['like', 'dislike'];
+    const commentReactionTypes: ReactionType[] = ['like', 'dislike'];
+    // const commentReactionTypes: ReactionType[] = ['like', 'dislike', 'love', 'clap'];
     const bookmarkPromises = [];
     const reactionPromises = [];
     const commentPromises = [];
 
-    // Create reactions and comments for each event
-    for (const event of events) {
-        // Create random reactions (30-80% of users react to each event)
+    // Create reactions and comments for each article
+    for (const content of contents) {
+        const { article, event } = content;
+        const publishedAt = article ? article.publishedAt : event.publishedAt;
+        // Create random reactions (30-80% of users react to each article)
         const reactionCount = faker.number.int({
             min: Math.floor(users.length * 0.3),
             max: Math.floor(users.length * 0.8),
         });
 
+        // bookmark
+        const bookmarkUsers = faker.helpers.arrayElements(users, users.length);
+        if (article != null)
+            for (const user of bookmarkUsers) {
+                reactionPromises.push(
+                    prisma.articleBookmark.create({
+                        data: {
+                            article: {
+                                connect: { id: article.id },
+                            },
+                            user: {
+                                connect: { id: user.id },
+                            },
+                        },
+                    }),
+                );
+            }
+
         // react
         const reactingUsers = faker.helpers.arrayElements(users, reactionCount);
 
         for (const user of reactingUsers) {
-            const reactionType = faker.helpers.arrayElement(eventReactionTypes);
+            const reactionType = faker.helpers.arrayElement(contentReactionTypes);
 
             reactionPromises.push(
                 prisma.contentReaction.create({
                     data: {
-                        event: {
-                            connect: { id: event.id },
-                        },
+                        ...(article && {
+                            article: {
+                                connect: { id: article.id },
+                            },
+                        }),
+                        ...(event && {
+                            event: {
+                                connect: { id: event.id },
+                            },
+                        }),
                         user: {
                             connect: { id: user.id },
                         },
                         type: reactionType,
                         createdAt: faker.date.between({
-                            from: event.publishedAt || event.createdAt,
+                            from: publishedAt,
                             to: new Date(),
                         }),
                     },
@@ -65,14 +109,14 @@ export async function EventReactionSeed(prisma: PrismaClient) {
             );
         }
 
-        // Create top-level comments (5-15 comments per event)
+        // Create top-level comments (5-15 comments per content)
         const commentCount = faker.number.int({ min: 5, max: 100 });
 
         for (let i = 0; i < commentCount; i++) {
             const commentingUsers = faker.helpers.arrayElement(users);
             // const user = commentingUsers[i];
             const commentCreatedAt = faker.date.between({
-                from: event.publishedAt || event.createdAt,
+                from: publishedAt,
                 to: new Date(),
             });
 
@@ -80,13 +124,13 @@ export async function EventReactionSeed(prisma: PrismaClient) {
                 prisma.comment
                     .create({
                         data: {
-                            event: {
-                                connect: { id: event.id },
+                            content: {
+                                connect: { id: content.id },
                             },
                             user: {
                                 connect: { id: commentingUsers.id },
                             },
-                            content: generateCommentContent(),
+                            comment: generateCommentContent(),
                             isEdited: faker.datatype.boolean(0.1), // 10% chance of being edited
                             createdAt: commentCreatedAt,
                             updatedAt: faker.datatype.boolean(0.1)
@@ -130,8 +174,8 @@ export async function EventReactionSeed(prisma: PrismaClient) {
                                     prisma.comment
                                         .create({
                                             data: {
-                                                event: {
-                                                    connect: { id: event.id },
+                                                content: {
+                                                    connect: { id: content.id },
                                                 },
                                                 user: {
                                                     connect: {
@@ -148,7 +192,7 @@ export async function EventReactionSeed(prisma: PrismaClient) {
                                                         },
                                                     }
                                                     : undefined,
-                                                content: generateReplyContent(
+                                                comment: generateReplyContent(
                                                     mentionedUser?.name,
                                                 ),
                                                 isEdited:
@@ -272,39 +316,74 @@ export async function EventReactionSeed(prisma: PrismaClient) {
             );
         }
 
-        // Count actual comments for this event
+        // Count actual comments for this article
         const actualCommentCount = await prisma.comment.count({
             where: {
-                eventId: event.id,
+                contentId: content.id,
                 deleted: false,
             }
         });
-        const actualLikeCount = await prisma.contentReaction.count({
-            where: {
-                eventId: event.id,
-                type: ReactionType.like
-            }
-        });
-        const actualDislikeCount = await prisma.contentReaction.count({
-            where: {
-                eventId: event.id,
-                type: ReactionType.dislike
-            }
-        });
 
-        await prisma.event.update({
-            where: { id: event.id },
-            data: {
-                stats: {
-                    update: {
-                        commentCount: actualCommentCount,
-                        likeCount: actualLikeCount,
-                        dislikeCount: actualDislikeCount,
-                        shareCount: faker.number.int({ min: 5, max: 300 }),
+        if (article != null) {
+            let actualLikeCount = await prisma.contentReaction.count({
+                where: {
+                    articleId: article.id,
+                    type: ReactionType.like
+                }
+            });
+            let actualDislikeCount = await prisma.contentReaction.count({
+                where: {
+                    articleId: article.id,
+                    type: ReactionType.dislike
+                }
+            });
+
+            await prisma.article.update({
+                where: { id: article.id },
+                data: {
+                    stats: {
+                        update: {
+                            commentCount: actualCommentCount,
+                            likeCount: actualLikeCount,
+                            dislikeCount: actualDislikeCount,
+                            shareCount: faker.number.int({ min: 5, max: 300 }),
+                            bookmarkCount: bookmarkUsers.length,
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
+
+        if (event != null) {
+            let actualLikeCount = await prisma.contentReaction.count({
+                where: {
+                    eventId: event.id,
+                    type: ReactionType.like
+                }
+            });
+            let actualDislikeCount = await prisma.contentReaction.count({
+                where: {
+                    eventId: event.id,
+                    type: ReactionType.dislike
+                }
+            });
+
+            await prisma.event.update({
+                where: { id: event.id },
+                data: {
+                    stats: {
+                        update: {
+                            commentCount: actualCommentCount,
+                            likeCount: actualLikeCount,
+                            dislikeCount: actualDislikeCount,
+                            shareCount: faker.number.int({ min: 5, max: 300 }),
+                            bookmarkCount: bookmarkUsers.length,
+                        }
+                    }
+                }
+            });
+        }
     }
 
     // Execute reactions in batches to avoid connection pool exhaustion
@@ -315,7 +394,7 @@ export async function EventReactionSeed(prisma: PrismaClient) {
         await Promise.all(batch);
         reactionCount += batch.length;
     }
-    console.log(`Created ${reactionCount} Event reactions`);
+    console.log(`Created ${reactionCount} content reactions`);
 
     // Execute comments in batches to avoid connection pool exhaustion
     let commentCount = 0;
@@ -332,13 +411,13 @@ export async function EventReactionSeed(prisma: PrismaClient) {
     const totalCommentReactions = await prisma.commentReaction.count();
     console.log(`Total comment reactions (loves): ${totalCommentReactions}`);
 
-    console.log('\nSeed End: Event Reactions & Comments');
+    console.log('\nSeed End: Content Reactions & Comments');
 }
 
 function generateCommentContent(): string {
     const commentTypes = [
         // Positive comments
-        () => `Great event! ${faker.lorem.sentence()}`,
+        () => `Great article! ${faker.lorem.sentence()}`,
         () => `This is really helpful. ${faker.lorem.sentences(2)}`,
         () => `Thanks for sharing this insight. ${faker.lorem.sentence()}`,
         () => `Excellent explanation! ${faker.lorem.sentence()}`,

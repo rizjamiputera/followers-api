@@ -235,10 +235,9 @@ CREATE TABLE "followers_dev"."article_reaction" (
 -- CreateTable
 CREATE TABLE "followers_dev"."comment" (
     "id" TEXT NOT NULL,
-    "articleId" TEXT,
-    "eventId" TEXT,
     "userId" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
+    "contentId" TEXT,
+    "comment" TEXT NOT NULL,
     "parentId" TEXT,
     "mentionedId" TEXT,
     "isEdited" BOOLEAN NOT NULL DEFAULT false,
@@ -430,7 +429,7 @@ CREATE UNIQUE INDEX "article_reaction_articleId_userId_key" ON "followers_dev"."
 CREATE UNIQUE INDEX "article_reaction_eventId_userId_key" ON "followers_dev"."article_reaction"("eventId", "userId");
 
 -- CreateIndex
-CREATE INDEX "comment_articleId_idx" ON "followers_dev"."comment"("articleId");
+CREATE INDEX "comment_contentId_idx" ON "followers_dev"."comment"("contentId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "comment_reaction_commentId_userId_key" ON "followers_dev"."comment_reaction"("commentId", "userId");
@@ -547,13 +546,10 @@ ALTER TABLE "followers_dev"."article_reaction" ADD CONSTRAINT "article_reaction_
 ALTER TABLE "followers_dev"."article_reaction" ADD CONSTRAINT "article_reaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "followers_dev"."article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "followers_dev"."event"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "followers_dev"."content"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "followers_dev"."comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;

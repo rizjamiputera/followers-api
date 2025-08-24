@@ -155,7 +155,6 @@ model Article {
     authorId    String
     approvals   ContentApproval[]
     tags        ContentTag[]
-    comments    Comment[]
     reactions   ContentReaction[]
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
@@ -199,7 +198,6 @@ model Event {
     authorId    String
     approvals   ContentApproval[]
     tags        ContentTag[]
-    comments    Comment[]
     reactions   ContentReaction[]
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
@@ -232,10 +230,11 @@ model ContentStats {
 }
 
 model Content {
-    id        String   @id @default(uuid())
-    content   Json     @db.JsonB // structured content only
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id        String    @id @default(uuid())
+    content   Json      @db.JsonB // structured content only
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    comments  Comment[]
     article   Article?
     event     Event?
 
@@ -342,13 +341,11 @@ enum ReactionType {
 
 model Comment {
     id          String            @id @default(uuid())
-    article     Article?          @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId   String?
-    event       Event?            @relation(fields: [eventId], references: [id])
-    eventId     String?
     user        User              @relation("comment", fields: [userId], references: [id], onDelete: Restrict)
     userId      String
-    content     String            @db.Text
+    content     Content?          @relation(fields: [contentId], references: [id])
+    contentId   String?
+    comment     String            @db.Text
     reactions   CommentReaction[]
     // Always points to top-level comment if it's a reply
     parent      Comment?          @relation("comment_replies", fields: [parentId], references: [id], onDelete: Cascade)
@@ -362,7 +359,7 @@ model Comment {
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
 
-    @@index([articleId])
+    @@index([contentId])
     @@map("comment")
 }
 
