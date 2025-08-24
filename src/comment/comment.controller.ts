@@ -21,6 +21,7 @@ import { Public } from 'src/auth/auth.metadata';
 import { FilterCommentQueryDto } from './dto/filter-comment.dto';
 import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
 import { UserService } from 'src/user/user.service';
+import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 
 @ApiTags('Comment')
 @Controller({
@@ -38,6 +39,7 @@ export class CommentController {
     create(
         @Request() req: any,
         @Body(new ValidationPipe()) dataDto: CreateCommentDto,
+        @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
         const { contentId, parentId, mentionedId, comment } = dataDto;
         const data: Prisma.CommentCreateInput = {
@@ -51,7 +53,7 @@ export class CommentController {
                 mentioned: { connect: { id: mentionedId } },
             }),
         };
-        return this.commentService.create(data);
+        return this.commentService.create(data, query.includes);
     }
 
     @Public()

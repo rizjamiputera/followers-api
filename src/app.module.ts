@@ -30,9 +30,9 @@ import { EventModule } from './event/event.module';
         ConfigModule.forRoot(), // to load .env file
         AuthModule,
         ArticleModule,
+        EventModule,
         PhotoContentModule,
         CommentModule,
-        EventModule,
     ],
     controllers: [AppController],
     providers: [

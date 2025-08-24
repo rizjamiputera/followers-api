@@ -16,8 +16,15 @@ export class CommentService {
         private app: AppService,
     ) { }
 
-    create(data: Prisma.CommentCreateInput): Promise<Comment> {
-        return this.prisma.comment.create({ data });
+    async create(data: Prisma.CommentCreateInput, includes: string[] = []): Promise<Comment> {
+        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
+
+        const comment = await this.prisma.comment.create({
+            data,
+            include
+        });
+
+        return this.app.transformImageUrls(comment, ...transformImages);
     }
 
     async findAll(
