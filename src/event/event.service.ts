@@ -3,7 +3,7 @@ import { PrismaService } from 'src/prisma.service';
 import { AppService } from 'src/app.service';
 import { Content, ContentStatus, ContentTag, Event, Prisma, ReactionType, Tag } from '@prisma/client';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
-import { Paginate } from 'src/app/interface/app.interface';
+import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { FilterEventQueryDto } from './dto/filter-event.dto';
 
@@ -442,4 +442,87 @@ export class EventService {
 
         return;
     }
+
+    // STATISTICS
+    async visit(slug: string, visit: VisitPayload): Promise<void> {
+        return this.prisma.$transaction(async (tx) => {
+            const event = await tx.event.findUnique({
+                where: { slug },
+                include: { stats: true }
+            });
+            if (!event) throw new NotFoundException('Event not found');
+
+            let visitor = null;
+            if (visit.fingerprint) {
+                visitor = await tx.visitor.upsert({
+                    where: { fingerprint: visit.fingerprint },
+                    update: {
+                        lastVisitAt: new Date(),
+                        userId: visit.userId || undefined,
+                    },
+                    create: {
+                        fingerprint: visit.fingerprint,
+                        userId: visit.userId || undefined,
+                    },
+                });
+            }
+
+            // check last visit within 5 minutes
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const recentVisit = await tx.visit.findFirst({
+                where: {
+                    eventId: event.id,
+                    visitorId: visitor?.id ?? undefined,
+                    visitedAt: { gte: fiveMinutesAgo },
+                },
+                orderBy: { visitedAt: 'desc' },
+            });
+
+            // Always log the visit (for analytics)
+            await tx.visit.create({
+                data: {
+                    eventId: event.id,
+                    visitorId: visitor?.id,
+                    ipAddress: visit.ip,
+                    userAgent: visit.userAgent,
+                    referrer: visit.referrer,
+                    path: visit.path
+                },
+            });
+
+            // Only increment if not visited in last 5 minutes
+            if (!recentVisit) {
+                await tx.contentStats.update({
+                    where: { id: event.stats.id },
+                    data: {
+                        readCount: { increment: 1 },
+                        lastReadAt: new Date(),
+                    },
+                });
+            }
+
+            return;
+        })
+    }
+
+    async share(eventId: string) {
+        return this.prisma.$transaction(async (tx) => {
+            const event = await tx.event.findUnique({
+                where: { id: eventId },
+                include: { stats: true },
+            });
+            if (!event) throw new NotFoundException('Event not found');
+
+            // increment stats
+            await tx.contentStats.update({
+                where: { id: event.stats.id },
+                data: {
+                    shareCount: { increment: 1 },
+                },
+            });
+
+            return
+        });
+    }
+
 }

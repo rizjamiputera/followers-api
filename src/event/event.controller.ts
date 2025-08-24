@@ -12,6 +12,7 @@ import {
     Request,
     ForbiddenException,
     NotFoundException,
+    Req,
 } from '@nestjs/common';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import {
@@ -22,7 +23,7 @@ import {
     Permission,
     Prisma,
 } from '@prisma/client';
-import { Paginate } from 'src/app/interface/app.interface';
+import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { Public } from 'src/auth/auth.metadata';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AppService } from 'src/app.service';
@@ -353,5 +354,34 @@ export class EventController {
         const { type } = reaction;
 
         return this.eventService.react(req.user.id, eventId, type);
+    }
+
+    // STATISTICS
+    @Public()
+    @Post('visit/:slug')
+    visit(
+        @Req() req,
+        @Param('slug') slug: string,
+        @Body('path') path: string,
+    ) {
+
+        const visit: VisitPayload = {
+            ip: req.ip,
+            userAgent: req.headers['user-agent'],
+            referrer: req.headers['referer'] || null,
+            userId: req.user?.id || null, // if auth use
+            fingerprint: req.headers['x-fingerprint'] || null,
+            path
+        }
+
+        return this.eventService.visit(slug, visit);
+    }
+
+    @Public()
+    @Post('share/:id')
+    share(
+        @Param('id') id: string,
+    ) {
+        return this.eventService.share(id);
     }
 }
