@@ -10,7 +10,7 @@ services:
         restart: always
         ports:
             - 5333:5000
-            - 5333:5555
+            - 5666:5555
         environment:
             PORT: 5000
             WEB_URI: https://followersbicara.com
