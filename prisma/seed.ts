@@ -13,7 +13,7 @@ async function main() {
         await UserSeed(prisma);
         await ArticleSeed(prisma);
         await EventSeed(prisma);
-        await ContentReactionSeed(prisma);
+        // await ContentReactionSeed(prisma);
     }
 }
 
