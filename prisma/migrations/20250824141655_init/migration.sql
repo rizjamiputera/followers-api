@@ -418,6 +418,12 @@ CREATE UNIQUE INDEX "tag_slug_key" ON "followers_dev"."tag"("slug");
 CREATE UNIQUE INDEX "content_tag_articleId_tagId_key" ON "followers_dev"."content_tag"("articleId", "tagId");
 
 -- CreateIndex
+CREATE INDEX "article_reaction_articleId_type_idx" ON "followers_dev"."article_reaction"("articleId", "type");
+
+-- CreateIndex
+CREATE INDEX "article_reaction_eventId_type_idx" ON "followers_dev"."article_reaction"("eventId", "type");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "article_reaction_articleId_userId_key" ON "followers_dev"."article_reaction"("articleId", "userId");
 
 -- CreateIndex

@@ -416,13 +416,52 @@ export class EventService {
             event: { connect: { id: eventId } },
             user: { connect: { id: userId } },
         };
-        await this.prisma.contentReaction.upsert({
-            where: {
-                eventId_userId: { eventId, userId },
-            },
-            update: data,
-            create: data,
-        });
+
+        await this.prisma.$transaction(async (tx) => {
+            let decrementLike = false;
+            let decrementDisLike = false;
+            const react = await tx.contentReaction.findUnique({
+                where: {
+                    eventId_userId: { eventId, userId },
+                },
+            });
+
+            if (react) {
+                // prevent double react
+                if (type == react.type) return
+
+                if (type == 'like') {
+                    decrementDisLike = true;
+                }
+                if (type == 'dislike') {
+                    decrementLike = true;
+                }
+            }
+
+            await tx.contentReaction.upsert({
+                where: {
+                    eventId_userId: { eventId, userId },
+                },
+                update: { type },
+                create: data,
+            });
+
+            await tx.contentStats.update({
+                where: { eventId },
+                data: {
+                    ...(type == 'like' && {
+                        likeCount: { increment: 1 },
+                        ...(decrementDisLike && { dislikeCount: { decrement: 1 } }),
+                    }),
+                    ...(type == 'dislike' && {
+                        dislikeCount: { increment: 1 },
+                        ...(decrementLike && { likeCount: { decrement: 1 } }),
+                    }),
+                },
+            });
+
+            return;
+        })
 
         return;
     }

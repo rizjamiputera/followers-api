@@ -5,8 +5,8 @@ import {
     ContentTag,
     Content,
     Prisma,
-    ReactionType,
     Tag,
+    ReactionType,
 } from '@prisma/client';
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
@@ -435,13 +435,53 @@ export class ArticleService {
             article: { connect: { id: articleId } },
             user: { connect: { id: userId } },
         };
-        await this.prisma.contentReaction.upsert({
-            where: {
-                articleId_userId: { articleId, userId },
-            },
-            update: data,
-            create: data,
-        });
+
+        await this.prisma.$transaction(async (tx) => {
+            let decrementLike = false;
+            let decrementDisLike = false;
+            // if (type == 'like') {
+            const react = await tx.contentReaction.findUnique({
+                where: {
+                    articleId_userId: { articleId, userId },
+                },
+            });
+
+            if (react) {
+                // prevent double react
+                if (type == react.type) return
+
+                if (type == 'like') {
+                    decrementDisLike = true;
+                }
+                if (type == 'dislike') {
+                    decrementLike = true;
+                }
+            }
+
+            await tx.contentReaction.upsert({
+                where: {
+                    articleId_userId: { articleId, userId },
+                },
+                update: { type },
+                create: data,
+            });
+
+            await tx.contentStats.update({
+                where: { articleId },
+                data: {
+                    ...(type == 'like' && {
+                        likeCount: { increment: 1 },
+                        ...(decrementDisLike && { dislikeCount: { decrement: 1 } }),
+                    }),
+                    ...(type == 'dislike' && {
+                        dislikeCount: { increment: 1 },
+                        ...(decrementLike && { likeCount: { decrement: 1 } }),
+                    }),
+                },
+            });
+
+            return;
+        })
 
         return;
     }

@@ -327,7 +327,9 @@ model ContentReaction {
     createdAt DateTime     @default(now())
 
     @@unique([articleId, userId]) // one reaction per user per article
-    @@unique([eventId, userId]) // one reaction per user per article
+    @@unique([eventId, userId]) // one reaction per user per event
+    @@index([articleId, type])
+    @@index([eventId, type])
     @@map("article_reaction")
 }
 
