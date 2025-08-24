@@ -19,7 +19,7 @@ services:
             NODE_ENV: production
             JWT_EXPIRATION: 180
             # for prisma
-            DATABASE_URL: postgresql://followersBicaraDong:_amburaduL@prod_followers_bicara_postgre:5532/postgres?schema=followers
+            DATABASE_URL: postgresql://followersBicaraDong:_amburaduL@prod_followers_bicara_postgre:5432/postgres?schema=followers
         volumes:
             - prod_volume_api_followers:/app/public
         networks:
@@ -31,8 +31,6 @@ services:
     prod_followers_bicara_postgre:
         container_name: prod_followers_bicara_postgre
         image: postgres:17.4
-        ports:
-            - 5532:5432
         environment:
             POSTGRES_USER: followersBicaraDong
             POSTGRES_PASSWORD: _amburaduL
