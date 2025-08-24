@@ -343,8 +343,8 @@ model Comment {
     id          String            @id @default(uuid())
     user        User              @relation("comment", fields: [userId], references: [id], onDelete: Restrict)
     userId      String
-    content     Content?          @relation(fields: [contentId], references: [id])
-    contentId   String?
+    content     Content           @relation(fields: [contentId], references: [id])
+    contentId   String
     comment     String            @db.Text
     reactions   CommentReaction[]
     // Always points to top-level comment if it's a reply

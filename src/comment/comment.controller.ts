@@ -14,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Module, Permission, Prisma, Role } from '@prisma/client';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
@@ -40,11 +39,11 @@ export class CommentController {
         @Request() req: any,
         @Body(new ValidationPipe()) dataDto: CreateCommentDto,
     ) {
-        const { articleId, parentId, mentionedId, content } = dataDto;
+        const { contentId, parentId, mentionedId, comment } = dataDto;
         const data: Prisma.CommentCreateInput = {
-            content,
+            comment,
             user: { connect: { id: req.user.id } },
-            article: { connect: { id: articleId } },
+            content: { connect: { id: contentId } },
             ...(parentId && {
                 parent: { connect: { id: parentId } },
             }),
@@ -80,9 +79,9 @@ export class CommentController {
     update(
         @Param('id') id: string,
         @Request() req: any,
-        @Body(new ValidationPipe()) dataDto: UpdateCommentDto,
+        @Body(new ValidationPipe()) comment: string,
     ) {
-        return this.commentService.update(id, req.user.id, dataDto.content);
+        return this.commentService.update(id, req.user.id, comment);
     }
 
     @ApiBearerAuth()

@@ -26,12 +26,14 @@ export class CommentService {
     ): Promise<Paginate<Comment[]>> {
         const { page, limit, sortBy, order, includes, deleted, search } =
             pagination;
-        const { articleId, parentId } = filter;
+        const { contentId, parentId } = filter;
+
+        console.log({ filter })
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const searchCondition: Prisma.CommentWhereInput = search
             ? {
-                OR: [{ content: { contains: search, mode: 'insensitive' } }],
+                OR: [{ comment: { contains: search, mode: 'insensitive' } }],
             }
             : {};
 
@@ -43,7 +45,7 @@ export class CommentService {
             },
         ];
 
-        if (articleId) whereConditions.push({ articleId });
+        if (contentId) whereConditions.push({ contentId });
 
         const where: Prisma.CommentWhereInput = {
             AND: whereConditions.filter(
@@ -103,7 +105,7 @@ export class CommentService {
     async update(
         id: string,
         updateBy: string,
-        content: string,
+        comment: string,
     ): Promise<Comment> {
         const currentData = await this.findOne(id);
 
@@ -116,7 +118,7 @@ export class CommentService {
         return this.prisma.comment.update({
             where: { id },
             data: {
-                content,
+                comment,
                 isEdited: true,
             },
         });

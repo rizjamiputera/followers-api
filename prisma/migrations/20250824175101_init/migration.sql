@@ -236,7 +236,7 @@ CREATE TABLE "followers_dev"."article_reaction" (
 CREATE TABLE "followers_dev"."comment" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "contentId" TEXT,
+    "contentId" TEXT NOT NULL,
     "comment" TEXT NOT NULL,
     "parentId" TEXT,
     "mentionedId" TEXT,
@@ -549,7 +549,7 @@ ALTER TABLE "followers_dev"."article_reaction" ADD CONSTRAINT "article_reaction_
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "followers_dev"."user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "followers_dev"."content"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_contentId_fkey" FOREIGN KEY ("contentId") REFERENCES "followers_dev"."content"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "followers_dev"."comment" ADD CONSTRAINT "comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "followers_dev"."comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
