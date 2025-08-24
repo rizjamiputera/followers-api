@@ -1,0 +1,55 @@
+# services / containers
+services:
+    # express app
+    prod-api-followers:
+        build:
+            context: .
+            dockerfile: Dockerfile-Production
+        container_name: prod-api-followers
+        image: prod-api-followers:1.0.0
+        restart: always
+        ports:
+            - 5333:5000
+            - 5333:5555
+        environment:
+            PORT: 5000
+            WEB_URI: https://followersbicara.com
+            API_URI: https://api.followersbicara.com
+            JWTSECRET: FOLLOWER_BICARA_FRUTTA_ID_2025
+            NODE_ENV: production
+            JWT_EXPIRATION: 180
+            # for prisma
+            DATABASE_URL: postgresql://followersBicaraDong:_amburaduL@prod_followers_bicara_postgre:5432/postgres?schema=followers
+        volumes:
+            - prod_volume_api_followers:/app/public
+        networks:
+            - prod_followers-bicara-network
+        depends_on:
+            - prod_followers_bicara_postgre
+
+    # postgre database
+    prod_followers_bicara_postgre:
+        container_name: prod_followers_bicara_postgre
+        image: postgres:17.4
+        ports:
+            - 5432:5432
+        environment:
+            POSTGRES_USER: followersBicaraDong
+            POSTGRES_PASSWORD: _amburaduL
+            POSTGRES_DB: postgres
+        volumes:
+            - prod_volume_postgre_followers:/var/lib/postgresql/data
+        networks:
+            - prod_followers-bicara-network
+# volumes
+volumes:
+    prod_volume_api_followers:
+        name: prod_volume_api_followers
+    prod_volume_postgre_followers:
+        name: prod_volume_postgre_followers
+
+# networks
+networks:
+    prod_followers-bicara-network:
+        name: prod_followers-bicara-network
+        driver: bridge
