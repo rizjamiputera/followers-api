@@ -19,7 +19,7 @@ services:
             NODE_ENV: development
             JWT_EXPIRATION: 180
             # for prisma
-            DATABASE_URL: postgresql://dev_user_followers:abracadabra@followers_dev_postgre:5432/postgres?schema=followers_dev
+            DATABASE_URL: postgresql://dev_user_followers:abracadabra@followers_dev_postgre:5432/postgres?schema=followers
         volumes:
             - dev_volume_api_followers:/app/public
         networks:
