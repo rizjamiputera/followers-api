@@ -139,7 +139,7 @@ export class ArticleController {
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ): Promise<ArticleWithAuthReaction> {
-        return this.articleService.read(slug, query.includes, req?.user.id ?? null);
+        return this.articleService.read(slug, query.includes, req.user?.id ?? null);
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.READ)

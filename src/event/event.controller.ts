@@ -139,7 +139,7 @@ export class EventController {
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ): Promise<EventWithAuthReaction> {
-        return this.eventService.read(slug, query.includes, req?.user.id ?? null);
+        return this.eventService.read(slug, query.includes, req.user?.id ?? null);
     }
 
     @PermissionsRequired(Module.EVENT, Permission.READ)
