@@ -315,67 +315,6 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                     }),
             );
         }
-
-        if (article != null) {
-            let actualLikeCount = await prisma.contentReaction.count({
-                where: {
-                    articleId: article.id,
-                    type: ReactionType.like
-                }
-            });
-            let actualDislikeCount = await prisma.contentReaction.count({
-                where: {
-                    articleId: article.id,
-                    type: ReactionType.dislike
-                }
-            });
-
-            await prisma.article.update({
-                where: { id: article.id },
-                data: {
-                    stats: {
-                        update: {
-                            commentCount,
-                            likeCount: actualLikeCount,
-                            dislikeCount: actualDislikeCount,
-                            shareCount: faker.number.int({ min: 5, max: 300 }),
-                            bookmarkCount: bookmarkUsers.length,
-                        }
-                    }
-                }
-            });
-        }
-
-
-        if (event != null) {
-            let actualLikeCount = await prisma.contentReaction.count({
-                where: {
-                    eventId: event.id,
-                    type: ReactionType.like
-                }
-            });
-            let actualDislikeCount = await prisma.contentReaction.count({
-                where: {
-                    eventId: event.id,
-                    type: ReactionType.dislike
-                }
-            });
-
-            await prisma.event.update({
-                where: { id: event.id },
-                data: {
-                    stats: {
-                        update: {
-                            commentCount,
-                            likeCount: actualLikeCount,
-                            dislikeCount: actualDislikeCount,
-                            shareCount: faker.number.int({ min: 5, max: 300 }),
-                            bookmarkCount: bookmarkUsers.length,
-                        }
-                    }
-                }
-            });
-        }
     }
 
     // Execute reactions in batches to avoid connection pool exhaustion
@@ -401,6 +340,70 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
         await Promise.all(batch);
         commentCount += batch.length;
     }
+
+
+    for (const content of contents) {
+
+        const commentCount = await prisma.comment.count({
+            where: { contentId: content.id }
+        })
+
+        let statsId = null;
+        let likeCount = 0;
+        let dislikeCount = 0;
+        if (content.article != null) {
+            statsId = content.article.statsId;
+            likeCount = await prisma.contentReaction.count({
+                where: {
+                    AND: [
+                        { articleId: content.article.id },
+                        { type: 'like' }
+                    ]
+                }
+            });
+            dislikeCount = await prisma.contentReaction.count({
+                where: {
+                    AND: [
+                        { articleId: content.article.id },
+                        { type: 'dislike' }
+                    ]
+                }
+            });
+        }
+
+        if (content.event != null) {
+            statsId = content.event.statsId;
+            likeCount = await prisma.contentReaction.count({
+                where: {
+                    AND: [
+                        { eventId: content.event.id },
+                        { type: 'like' }
+                    ]
+                }
+            });
+
+            dislikeCount = await prisma.contentReaction.count({
+                where: {
+                    AND: [
+                        { eventId: content.event.id },
+                        { type: 'dislike' }
+                    ]
+                }
+            });
+        }
+
+        if (statsId != null) {
+            await prisma.contentStats.update({
+                where: { id: statsId },
+                data: {
+                    commentCount,
+                    likeCount,
+                    dislikeCount
+                }
+            })
+        }
+    }
+
     console.log(
         `Created ${commentCount} comments with replies and comment reactions`,
     );
