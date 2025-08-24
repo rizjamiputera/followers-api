@@ -15,6 +15,7 @@ import { ArticleModule } from './article/article.module';
 import { CommentModule } from './comment/comment.module';
 import { PhotoContentModule } from './photo-content/photo-content.module';
 import { EventModule } from './event/event.module';
+import { ContentStatsModule } from './content-stats/content-stats.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { EventModule } from './event/event.module';
         EventModule,
         PhotoContentModule,
         CommentModule,
+        ContentStatsModule,
     ],
     controllers: [AppController],
     providers: [
