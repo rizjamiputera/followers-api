@@ -98,6 +98,9 @@ export class EventService {
             data: {
                 ...eventData,
                 ...(tagConnections && { tags: tagConnections }),
+                stats: {
+                    create: {}
+                }
             },
         });
 

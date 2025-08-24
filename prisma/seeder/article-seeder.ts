@@ -114,7 +114,8 @@ export async function ArticleSeed(prisma: PrismaClient) {
                 // Create read stats first
                 const readStat = await prisma.contentStats.create({
                     data: {
-                        readCount: faker.number.int({ min: 0, max: 1000 }),
+                        // readCount: faker.number.int({ min: 0, max: 1000 }),
+                        readCount: 0,
                         lastReadAt: faker.helpers.maybe(
                             () => faker.date.past(),
                             { probability: 0.8 },

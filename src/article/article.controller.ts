@@ -12,6 +12,7 @@ import {
     Request,
     ForbiddenException,
     NotFoundException,
+    Req,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -25,7 +26,7 @@ import {
     Permission,
     Prisma,
 } from '@prisma/client';
-import { Paginate } from 'src/app/interface/app.interface';
+import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
 import { Public } from 'src/auth/auth.metadata';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -353,5 +354,50 @@ export class ArticleController {
         const { type } = reaction;
 
         return this.articleService.react(req.user.id, articleId, type);
+    }
+
+    // STATISTICS
+    @Public()
+    @Post('visit/:slug')
+    visit(
+        @Req() req,
+        @Param('slug') slug: string,
+    ) {
+
+        const visit: VisitPayload = {
+            ip: req.ip,
+            userAgent: req.headers['user-agent'],
+            referrer: req.headers['referer'] || null,
+            userId: req.user?.id || null, // if auth use
+            fingerprint: req.headers['x-fingerprint'] || null,
+        }
+
+        return this.articleService.visit(slug, visit);
+    }
+
+    @Public()
+    @Post('share/:id')
+    share(
+        @Param('id') id: string,
+    ) {
+        return this.articleService.share(id);
+    }
+
+    @ApiBearerAuth()
+    @Post('bookmark/:id')
+    bookmark(
+        @Req() req,
+        @Param('id') id: string,
+    ) {
+        return this.articleService.bookmark(id, req.user.id);
+    }
+
+    @ApiBearerAuth()
+    @Post('unbookmark/:id')
+    unbookmark(
+        @Req() req,
+        @Param('id') id: string,
+    ) {
+        return this.articleService.unbookmark(id, req.user.id);
     }
 }

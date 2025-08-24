@@ -11,7 +11,7 @@ import {
 import { AppService } from 'src/app.service';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
-import { Paginate } from 'src/app/interface/app.interface';
+import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { PrismaService } from 'src/prisma.service';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
 
@@ -105,6 +105,9 @@ export class ArticleService {
             data: {
                 ...articleData,
                 ...(tagConnections && { tags: tagConnections }),
+                stats: {
+                    create: {}
+                }
             },
         });
 
@@ -458,4 +461,139 @@ export class ArticleService {
 
         return;
     }
+
+
+    // STATISTICS
+    async visit(slug: string, visit: VisitPayload): Promise<void> {
+        return this.prisma.$transaction(async (tx) => {
+            const article = await tx.article.findUnique({
+                where: { slug },
+                include: { stats: true }
+            });
+            if (!article) throw new NotFoundException('Article not found');
+
+            let visitor = null;
+            console.log("visit")
+            if (visit.fingerprint) {
+                console.log(visit.fingerprint);
+                visitor = await tx.visitor.upsert({
+                    where: { fingerprint: visit.fingerprint },
+                    update: {
+                        lastVisitAt: new Date(),
+                        userId: visit.userId || undefined,
+                    },
+                    create: {
+                        fingerprint: visit.fingerprint,
+                        userId: visit.userId || undefined,
+                    },
+                });
+            }
+
+            // visit log
+            await tx.visit.create({
+                data: {
+                    articleId: article.id,
+                    visitorId: visitor?.id,
+                    ipAddress: visit.ip,
+                    userAgent: visit.userAgent,
+                    referrer: visit.referrer,
+                },
+            });
+
+            // increment readCount + update lastReadAt
+            await tx.contentStats.update({
+                where: { id: article.stats.id },
+                data: {
+                    readCount: { increment: 1 },
+                    lastReadAt: new Date(),
+                },
+            });
+
+            return;
+        })
+    }
+
+    async share(articleId: string) {
+        return this.prisma.$transaction(async (tx) => {
+            const article = await tx.article.findUnique({
+                where: { id: articleId },
+                include: { stats: true },
+            });
+            if (!article) throw new NotFoundException('Article not found');
+
+            // increment stats
+            await tx.contentStats.update({
+                where: { id: article.stats.id },
+                data: {
+                    shareCount: { increment: 1 },
+                },
+            });
+
+            return
+        });
+    }
+
+    async bookmark(articleId: string, userId: string) {
+        return this.prisma.$transaction(async (tx) => {
+            const article = await tx.article.findUnique({
+                where: { id: articleId },
+                include: { stats: true },
+            });
+            if (!article) throw new NotFoundException('Article not found');
+
+            // create bookmark
+            await tx.articleBookmark.create({
+                data: {
+                    userId,
+                    articleId,
+                },
+            });
+
+            // increment stats
+            await tx.contentStats.update({
+                where: { id: article.stats.id },
+                data: {
+                    bookmarkCount: { increment: 1 },
+                },
+            });
+
+            return
+        });
+    }
+
+    async unbookmark(articleId: string, userId: string) {
+        return this.prisma.$transaction(async (tx) => {
+            const article = await tx.article.findUnique({
+                where: { id: articleId },
+                include: { stats: true },
+            });
+            if (!article) throw new NotFoundException('Article not found');
+
+            const bookmark = await tx.articleBookmark.findUnique({
+                where: {
+                    userId_articleId: {
+                        userId,
+                        articleId,
+                    },
+                },
+            });
+
+            if (!bookmark) throw new NotFoundException('Bookmark not found');
+
+            await tx.articleBookmark.delete({
+                where: { id: bookmark.id },
+            });
+
+            // decrement stats
+            await tx.contentStats.update({
+                where: { id: article.stats.id },
+                data: {
+                    bookmarkCount: { decrement: 1 },
+                },
+            });
+
+            return;
+        });
+    }
+
 }

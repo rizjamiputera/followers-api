@@ -160,8 +160,7 @@ model Article {
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
     deleted     Boolean           @default(false)
-    stats       ContentStats      @relation(fields: [statsId], references: [id], onDelete: Restrict)
-    statsId     String            @unique
+    stats       ContentStats?
     visitors    Visit[]
     bookmarks   ArticleBookmark[]
 
@@ -205,14 +204,31 @@ model Event {
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
     deleted     Boolean           @default(false)
-    stats       ContentStats      @relation(fields: [statsId], references: [id], onDelete: Restrict)
-    statsId     String            @unique
+    stats       ContentStats?
     visitors    Visit[]
 
     @@index([status, publishedAt])
     @@index([authorId, status])
     @@index([deleted, status, publishedAt])
     @@map("event")
+}
+
+// Content STATS
+model ContentStats {
+    id            String    @id @default(uuid())
+    readCount     Int       @default(0)
+    commentCount  Int       @default(0)
+    likeCount     Int       @default(0)
+    dislikeCount  Int       @default(0)
+    shareCount    Int       @default(0)
+    bookmarkCount Int       @default(0)
+    lastReadAt    DateTime?
+    article       Article?  @relation(fields: [articleId], references: [id])
+    articleId     String?   @unique
+    event         Event?    @relation(fields: [eventId], references: [id])
+    eventId       String?   @unique
+
+    @@map("content_stats")
 }
 
 model Content {
@@ -361,22 +377,6 @@ model CommentReaction {
     @@map("comment_reaction")
 }
 
-// Content STATS
-model ContentStats {
-    id            String    @id @default(uuid())
-    readCount     Int       @default(0)
-    commentCount  Int       @default(0)
-    likeCount     Int       @default(0)
-    dislikeCount  Int       @default(0)
-    shareCount    Int       @default(0)
-    bookmarkCount Int       @default(0)
-    lastReadAt    DateTime?
-    article       Article?
-    event         Event?
-
-    @@map("article_read_stat")
-}
-
 model Visit {
     id        String   @id @default(uuid())
     // onDelete NoAction: article can be deleted, but visits keep to keep analytics
@@ -413,11 +413,12 @@ model Visitor {
 
 model ArticleBookmark {
     id        String  @id @default(uuid())
-    user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-    userId    String?
+    user      User    @relation(fields: [userId], references: [id])
+    userId    String
     article   Article @relation(fields: [articleId], references: [id])
     articleId String
 
+    @@unique([userId, articleId])
     @@map("article_bookmark")
 }
 

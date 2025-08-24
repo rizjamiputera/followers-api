@@ -10,3 +10,12 @@ export interface SavedImage {
     large: string;
     medium: string;
 }
+
+export interface VisitPayload {
+    ip?: string;
+    userAgent?: string;
+    referrer?: string;
+    userId?: string | null;
+    fingerprint?: string | null;
+}
+
