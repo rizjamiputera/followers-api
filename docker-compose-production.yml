@@ -6,7 +6,7 @@ services:
             context: .
             dockerfile: Dockerfile-Production
         container_name: prod-api-followers
-        image: prod-api-followers:1.0.1
+        image: prod-api-followers:1.1.0
         restart: always
         ports:
             - 5333:5000
