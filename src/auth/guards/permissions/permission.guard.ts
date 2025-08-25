@@ -33,16 +33,32 @@ export class PermissionsGuard implements CanActivate {
             throw new UnauthorizedException();
         }
 
+        // ROLE IS GET FROM TOKEN, thats why it need to relogin
+        // now I get user data from db
+        const dataUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: {
+                permissions: {
+                    where: { module },
+                    select: { permission: true }
+                }
+            }
+        })
+
         // Allow superadmin and admin to access all modules
-        if ([Role.SUPERADMIN, Role.ADMIN].includes(user.role)) {
+        // if ([Role.SUPERADMIN, Role.ADMIN].includes(user.role)) {
+        //     return true;
+        // }
+        if (["SUPERADMIN", "ADMIN"].includes(dataUser.role)) {
             return true;
         }
 
         // Fetch user permissions from the database
-        const userPermissions = await this.prisma.userPermission.findMany({
-            where: { userId: user.id, module },
-            select: { permission: true },
-        });
+        // const userPermissions = await this.prisma.userPermission.findMany({
+        //     where: { userId: user.id, module },
+        //     select: { permission: true },
+        // });
+        const userPermissions = dataUser.permissions;
 
         const hasPermission = userPermissions.some(({ permission }) =>
             permissions.includes(permission),
