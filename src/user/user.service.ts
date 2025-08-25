@@ -94,6 +94,7 @@ export class UserService {
         id: string,
         data: Prisma.UserUpdateInput,
     ): Promise<User> {
+        // TODO prevent update role
         const currentData = await this.prisma.user.findUnique({
             where: { id }
         })

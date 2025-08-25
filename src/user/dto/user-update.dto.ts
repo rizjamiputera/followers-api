@@ -10,6 +10,7 @@ export class UpdateUserDto {
     name: string;
 
     @ApiProperty()
+    @IsOptional()
     @IsEnum(Role)
     role: Role;
 }
