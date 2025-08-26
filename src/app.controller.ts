@@ -1,8 +1,12 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post, Query, Req, Res, ValidationPipe } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from './auth/auth.metadata';
 import { promises as fs } from 'fs';
-import { VisitPayload } from './app/interface/app.interface';
+import { Paginate, VisitPayload } from './app/interface/app.interface';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { Roles } from './auth/guards/roles/roles.decorator';
+import { ErrorLog, Role } from '@prisma/client';
+import { PaginationIncludeQueryDto } from './app/dto/pagination-query.dto';
 
 @Controller()
 export class AppController {
@@ -68,5 +72,16 @@ export class AppController {
         }
 
         return this.appService.visit(visit);
+    }
+
+
+    @ApiBearerAuth()
+    @Roles(Role.SUPERADMIN)
+    @Get('error-logs')
+    getAllErrorLog(
+        @Query(new ValidationPipe({ transform: true }))
+        pagination: PaginationIncludeQueryDto,
+    ): Promise<Paginate<ErrorLog[]>> {
+        return this.appService.getAllErrorLog(pagination);
     }
 }

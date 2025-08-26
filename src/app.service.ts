@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { promises as fs } from 'fs';
-import { SavedImage, VisitPayload } from './app/interface/app.interface';
+import { Paginate, SavedImage, VisitPayload } from './app/interface/app.interface';
 import * as path from 'path';
 import * as sharp from 'sharp';
 import { PrismaService } from './prisma.service';
+import { ErrorLog, Prisma } from '@prisma/client';
+import { PaginationIncludeQueryDto, PaginationQueryDto } from './app/dto/pagination-query.dto';
+import { nestedOrderBy } from './app/decorator/nestedOrderBy';
 
 @Injectable()
 export class AppService {
@@ -325,5 +328,61 @@ export class AppService {
 
             return;
         })
+    }
+
+
+    async getAllErrorLog(
+        pagination: PaginationIncludeQueryDto,
+    ): Promise<Paginate<ErrorLog[]>> {
+        const { search, page, limit, sortBy, order, includes } =
+            pagination;
+
+        const searchCondition: Prisma.ErrorLogWhereInput = search
+            ? {
+                OR: [
+                    { id: isNaN(Number(search)) ? undefined : Number(search) }, // exact match
+                    { method: { contains: search, mode: 'insensitive' } },
+                    { path: { contains: search, mode: 'insensitive' } },
+                    { message: { contains: search, mode: 'insensitive' } },
+                    { user: { name: { contains: search, mode: 'insensitive' } } },
+                ],
+            }
+            : {};
+
+        const whereConditions: Prisma.ErrorLogWhereInput[] = [
+            searchCondition,
+        ];
+
+        const where: Prisma.ErrorLogWhereInput = {
+            AND: whereConditions.filter(
+                (condition) => Object.keys(condition).length > 0,
+            ),
+        };
+
+
+        const include = this.getValidIncludes(['user'], includes);
+
+        const skip = (page - 1) * limit;
+        const take = limit > 0 ? limit : undefined;
+
+        const [total, data] = await Promise.all([
+            this.prisma.errorLog.count({ where }),
+            this.prisma.errorLog.findMany({
+                where,
+                orderBy: nestedOrderBy(sortBy, order),
+                skip,
+                take,
+                include
+            }),
+        ]);
+
+        return {
+            data,
+            limit,
+            total,
+            page,
+            last_page:
+                limit > 0 ? (limit > 0 ? Math.ceil(total / limit) : 1) : 1,
+        };
     }
 }
