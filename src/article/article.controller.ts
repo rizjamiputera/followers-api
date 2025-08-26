@@ -47,7 +47,7 @@ export class ArticleController {
     constructor(
         private readonly articleService: ArticleService,
         private readonly appService: AppService,
-    ) {}
+    ) { }
 
     @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
     @ApiBearerAuth()
@@ -261,35 +261,6 @@ export class ArticleController {
 
     @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
     @ApiBearerAuth()
-    @Post('publish/:id')
-    @HttpCode(204)
-    async publish(
-        @Request() req: any,
-        @Param('id') id: string,
-        @Body(new ValidationPipe()) publishDto: PublishArticleDto,
-    ) {
-        const currentData = await this.articleService.findOne(id);
-
-        if (!currentData) throw new NotFoundException('Article is not found');
-
-        const dataArticle: Prisma.ArticleUpdateInput = {
-            status: ContentStatus.PUBLISHED,
-            publishedAt: publishDto ? (publishDto.publishedAt ?? null) : null,
-        };
-
-        const dataApproval: Prisma.ContentApprovalCreateInput = {
-            article: { connect: { id } },
-            status: ApprovalStatus.PUBLISHED,
-            approver: { connect: { id: req.user.id } },
-        };
-
-        await this.articleService.updateStatus(id, dataArticle, dataApproval);
-
-        return;
-    }
-
-    @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
-    @ApiBearerAuth()
     @Post('reject/:id')
     @HttpCode(204)
     async reject(
@@ -317,6 +288,66 @@ export class ArticleController {
         };
 
         return this.articleService.updateStatus(id, dataArticle, dataApproval);
+    }
+
+    @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
+    @ApiBearerAuth()
+    @Post('approve/:id')
+    @HttpCode(204)
+    async approve(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body(new ValidationPipe()) rejectArticleDto: RejectArticleDto,
+    ) {
+        const currentData = await this.articleService.findOne(id);
+        if (currentData.status == ContentStatus.APPROVED) {
+            return;
+        }
+
+        if (!currentData) throw new NotFoundException('Article is not found');
+
+        const dataArticle: Prisma.ArticleUpdateInput = {
+            status: ContentStatus.APPROVED,
+            publishedAt: null,
+        };
+
+        const dataApproval: Prisma.ContentApprovalCreateInput = {
+            article: { connect: { id } },
+            status: ApprovalStatus.APPROVED,
+            note: rejectArticleDto ? (rejectArticleDto.note ?? null) : null,
+            approver: { connect: { id: req.user.id } },
+        };
+
+        return this.articleService.updateStatus(id, dataArticle, dataApproval);
+    }
+
+    @PermissionsRequired(Module.ARTICLE, Permission.PUBLISH)
+    @ApiBearerAuth()
+    @Post('publish/:id')
+    @HttpCode(204)
+    async publish(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body(new ValidationPipe()) publishDto: PublishArticleDto,
+    ) {
+        const currentData = await this.articleService.findOne(id);
+
+        if (!currentData) throw new NotFoundException('Article is not found');
+
+        const dataArticle: Prisma.ArticleUpdateInput = {
+            status: ContentStatus.PUBLISHED,
+            publishedAt: publishDto ? (publishDto.publishedAt ?? null) : null,
+        };
+
+        const dataApproval: Prisma.ContentApprovalCreateInput = {
+            article: { connect: { id } },
+            status: ApprovalStatus.PUBLISHED,
+            approver: { connect: { id: req.user.id } },
+        };
+
+        await this.articleService.updateStatus(id, dataArticle, dataApproval);
+
+        return;
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)

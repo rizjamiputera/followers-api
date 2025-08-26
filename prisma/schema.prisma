@@ -26,7 +26,8 @@ enum Permission {
     CREATE
     EDIT
     DELETE
-    APPROVE // can approve, publish or take down article
+    APPROVE // can approve article
+    PUBLISH // can approve or take down article
 }
 
 enum Module {
@@ -126,6 +127,7 @@ model ErrorLog {
 enum ContentStatus {
     DRAFT
     ON_REVIEW
+    APPROVED
     REJECTED
     PUBLISHED
     TAKE_DOWN
@@ -133,6 +135,7 @@ enum ContentStatus {
 
 enum ApprovalStatus {
     REJECTED
+    APPROVED
     PUBLISHED
     TAKE_DOWN
 }

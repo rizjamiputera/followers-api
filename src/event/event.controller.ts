@@ -47,7 +47,7 @@ export class EventController {
     constructor(
         private readonly eventService: EventService,
         private readonly appService: AppService,
-    ) {}
+    ) { }
 
     @PermissionsRequired(Module.EVENT, Permission.CREATE)
     @ApiBearerAuth()
@@ -260,35 +260,6 @@ export class EventController {
 
     @PermissionsRequired(Module.EVENT, Permission.APPROVE)
     @ApiBearerAuth()
-    @Post('publish/:id')
-    @HttpCode(204)
-    async publish(
-        @Request() req: any,
-        @Param('id') id: string,
-        @Body(new ValidationPipe()) publishDto: PublishEventDto,
-    ) {
-        const currentData = await this.eventService.findOne(id);
-
-        if (!currentData) throw new NotFoundException('Event is not found');
-
-        const dataEvent: Prisma.EventUpdateInput = {
-            status: ContentStatus.PUBLISHED,
-            publishedAt: publishDto ? (publishDto.publishedAt ?? null) : null,
-        };
-
-        const dataApproval: Prisma.ContentApprovalCreateInput = {
-            event: { connect: { id } },
-            status: ApprovalStatus.PUBLISHED,
-            approver: { connect: { id: req.user.id } },
-        };
-
-        await this.eventService.updateStatus(id, dataEvent, dataApproval);
-
-        return;
-    }
-
-    @PermissionsRequired(Module.EVENT, Permission.APPROVE)
-    @ApiBearerAuth()
     @Post('reject/:id')
     @HttpCode(204)
     async reject(
@@ -316,6 +287,67 @@ export class EventController {
         };
 
         return this.eventService.updateStatus(id, dataEvent, dataApproval);
+    }
+
+    @PermissionsRequired(Module.EVENT, Permission.APPROVE)
+    @ApiBearerAuth()
+    @Post('approve/:id')
+    @HttpCode(204)
+    async approve(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body(new ValidationPipe()) rejectEventDto: RejectEventDto,
+    ) {
+        const currentData = await this.eventService.findOne(id);
+        if (currentData.status == ContentStatus.APPROVED) {
+            return;
+        }
+
+        if (!currentData) throw new NotFoundException('Event is not found');
+
+        const dataEvent: Prisma.EventUpdateInput = {
+            status: ContentStatus.APPROVED,
+            publishedAt: null,
+        };
+
+        const dataApproval: Prisma.ContentApprovalCreateInput = {
+            event: { connect: { id } },
+            status: ApprovalStatus.APPROVED,
+            note: rejectEventDto ? (rejectEventDto.note ?? null) : null,
+            approver: { connect: { id: req.user.id } },
+        };
+
+        return this.eventService.updateStatus(id, dataEvent, dataApproval);
+    }
+
+
+    @PermissionsRequired(Module.EVENT, Permission.PUBLISH)
+    @ApiBearerAuth()
+    @Post('publish/:id')
+    @HttpCode(204)
+    async publish(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body(new ValidationPipe()) publishDto: PublishEventDto,
+    ) {
+        const currentData = await this.eventService.findOne(id);
+
+        if (!currentData) throw new NotFoundException('Event is not found');
+
+        const dataEvent: Prisma.EventUpdateInput = {
+            status: ContentStatus.PUBLISHED,
+            publishedAt: publishDto ? (publishDto.publishedAt ?? null) : null,
+        };
+
+        const dataApproval: Prisma.ContentApprovalCreateInput = {
+            event: { connect: { id } },
+            status: ApprovalStatus.PUBLISHED,
+            approver: { connect: { id: req.user.id } },
+        };
+
+        await this.eventService.updateStatus(id, dataEvent, dataApproval);
+
+        return;
     }
 
     @PermissionsRequired(Module.EVENT, Permission.APPROVE)

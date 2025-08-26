@@ -90,7 +90,10 @@ export async function ArticleSeed(prisma: PrismaClient) {
             const status = faker.helpers.arrayElement<ContentStatus>([
                 'DRAFT',
                 'ON_REVIEW',
+                'APPROVED',
+                'REJECTED',
                 'PUBLISHED',
+                'TAKE_DOWN',
             ]);
 
             // Random schedule and publish dates

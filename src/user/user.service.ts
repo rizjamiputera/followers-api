@@ -16,7 +16,7 @@ export class UserService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) {}
+    ) { }
 
     create(data: Prisma.UserCreateInput) {
         return this.prisma.user.create({ data });
@@ -39,11 +39,11 @@ export class UserService {
 
         const searchCondition: Prisma.UserWhereInput = search
             ? {
-                  OR: [
-                      { name: { contains: search, mode: 'insensitive' } },
-                      { email: { contains: search, mode: 'insensitive' } },
-                  ],
-              }
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { email: { contains: search, mode: 'insensitive' } },
+                ],
+            }
             : {};
 
         const whereConditions: Prisma.UserWhereInput[] = [
@@ -188,8 +188,8 @@ export class UserService {
                     requester_role == Role.OPERATOR
                         ? { role: { notIn: [Role.SUPERADMIN, Role.ADMIN] } }
                         : requester_role == Role.ADMIN
-                          ? { role: { not: Role.SUPERADMIN } }
-                          : {},
+                            ? { role: { not: Role.SUPERADMIN } }
+                            : {},
                 ],
             },
             include,
@@ -204,6 +204,16 @@ export class UserService {
             where: { email },
         });
         return user;
+    }
+
+    async getPermission(userId: string, module?: Module) {
+        return this.prisma.userPermission.findMany({
+            where: {
+                userId,
+                ...(module && { module }),
+            },
+            select: { permission: true },
+        });
     }
 
     async addPermission(data: Prisma.UserPermissionCreateInput): Promise<void> {
@@ -222,27 +232,21 @@ export class UserService {
         return;
     }
 
-    async getPermission(userId: string, module?: Module) {
-        return this.prisma.userPermission.findMany({
-            where: {
-                userId,
-                ...(module && { module }),
-            },
-            select: { permission: true },
-        });
-    }
-
     async removePermission(dataDto: UserPermissionDto): Promise<void> {
         const { userId, module, permission } = dataDto;
-        await this.prisma.userPermission.delete({
-            where: {
-                userId_module_permission: {
-                    userId,
-                    module,
-                    permission,
+
+        try {
+            await this.prisma.userPermission.delete({
+                where: {
+                    userId_module_permission: {
+                        userId,
+                        module,
+                        permission,
+                    },
                 },
-            },
-        });
+            });
+        } catch (error) {
+        }
 
         return;
     }
