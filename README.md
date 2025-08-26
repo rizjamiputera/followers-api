@@ -71,3 +71,37 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+## BACKUP DB
+
+```sh
+# Run this on your server
+docker exec prod_followers_bicara_postgre \
+  pg_dump -U followersBicaraDong -d postgres > backup_postgres_followerbicara_$(date +"%Y%m%d").sql
+```
+
+## RESTORE DB
+
+```sh
+docker exec -i prod_followers_bicara_postgre \
+  psql -U followersBicaraDong -d postgres < backup_postgres_followerbicara_20250809.sql
+```
+
+## BACKUP FILES
+
+```sh
+docker run --rm \
+  -v prod_volume_api_followers:/source \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/public_files_followersbicara_$(date +"%Y%m%d").tar.gz -C /source .
+```
+
+## RESTORE FILES
+
+```sh
+docker run --rm \
+  -v prod_volume_api_followers:/target \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/public_files_followersbicara_20250809.tar.gz -C /target
+
+```
