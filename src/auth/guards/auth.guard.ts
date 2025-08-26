@@ -18,7 +18,7 @@ export class AuthGuard implements CanActivate {
         private jwtService: JwtService,
         private reflector: Reflector,
         private authService: AuthService,
-    ) { }
+    ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const isPublic = this.reflector.getAllAndOverride<boolean>(
@@ -32,9 +32,12 @@ export class AuthGuard implements CanActivate {
         if (token) {
             // verify token if present
             try {
-                const { sub, ...user } = await this.jwtService.verifyAsync(token, {
-                    secret: jwtConstants.secret,
-                });
+                const { sub, ...user } = await this.jwtService.verifyAsync(
+                    token,
+                    {
+                        secret: jwtConstants.secret,
+                    },
+                );
 
                 user.id = sub;
                 request['user'] = user;
@@ -57,12 +60,12 @@ export class AuthGuard implements CanActivate {
 
         // check token blacklist only if token exists
         if (token) {
-            const isTokenBlackListed = await this.authService.isTokenBlacklisted(token);
+            const isTokenBlackListed =
+                await this.authService.isTokenBlacklisted(token);
             if (isTokenBlackListed) throw new UnauthorizedException();
         }
 
         return true;
-
 
         // if (isPublic) return true;
 

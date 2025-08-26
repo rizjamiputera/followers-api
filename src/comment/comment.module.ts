@@ -9,4 +9,4 @@ import { UserService } from 'src/user/user.service';
     controllers: [CommentController],
     providers: [CommentService, UserService, PrismaService, AppService],
 })
-export class CommentModule { }
+export class CommentModule {}

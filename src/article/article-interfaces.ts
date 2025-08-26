@@ -1,6 +1,6 @@
-import { Article, ContentReaction } from "@prisma/client";
+import { Article, ContentReaction } from '@prisma/client';
 
 export type ArticleWithAuthReaction = Article & {
-    auth_reaction?: ContentReaction | null
-    authBookmark?: boolean
+    auth_reaction?: ContentReaction | null;
+    authBookmark?: boolean;
 };

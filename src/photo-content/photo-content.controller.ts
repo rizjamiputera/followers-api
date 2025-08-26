@@ -1,4 +1,12 @@
-import { Controller, Post, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    UseInterceptors,
+    UploadedFile,
+    ParseFilePipe,
+    MaxFileSizeValidator,
+    FileTypeValidator,
+} from '@nestjs/common';
 import { PhotoContentService } from './photo-content.service';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -15,7 +23,7 @@ export class PhotoContentController {
     constructor(
         private readonly photoContentService: PhotoContentService,
         private readonly appService: AppService,
-    ) { }
+    ) {}
 
     @Post()
     @ApiConsumes('multipart/form-data')
@@ -34,14 +42,10 @@ export class PhotoContentController {
         )
         photo: Express.Multer.File,
     ): Promise<PhotoContent> {
-        const path = await this.appService.save_image(
-            photo,
-            '/photo',
-            800
-        );
+        const path = await this.appService.save_image(photo, '/photo', 800);
 
         const data: Prisma.PhotoContentCreateInput = {
-            path
+            path,
         };
 
         return this.photoContentService.create(data);
@@ -70,21 +74,16 @@ export class PhotoContentController {
         //     '/photo',
         // );
 
-        const large = await this.appService.save_image(
-            photo,
-            '/photo',
-            1200
-        );
+        const large = await this.appService.save_image(photo, '/photo', 1200);
 
         const medium = await this.appService.save_image(
             photo,
             '/photo',
             600,
-            'jpeg'
+            'jpeg',
         );
 
         return this.photoContentService.createMany([large, medium]);
-
     }
 
     // @Get()

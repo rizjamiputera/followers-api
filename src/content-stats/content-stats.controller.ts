@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ContentStatsService } from './content-stats.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
@@ -9,12 +9,10 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
     version: '1',
 })
 export class ContentStatsController {
-    constructor(private readonly contentStatsService: ContentStatsService) { }
-
+    constructor(private readonly contentStatsService: ContentStatsService) {}
 
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.contentStatsService.findOne(id);
     }
-
 }

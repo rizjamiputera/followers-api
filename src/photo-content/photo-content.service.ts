@@ -10,28 +10,29 @@ export class PhotoContentService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) { }
+    ) {}
 
     async create(data: Prisma.PhotoContentCreateInput): Promise<PhotoContent> {
         const photo = await this.prisma.photoContent.create({
-            data
+            data,
         });
 
-        return this.app.transformImageUrls(photo, ...transformImages)
+        return this.app.transformImageUrls(photo, ...transformImages);
     }
 
     async createMany(paths: string[]): Promise<PhotoContent[]> {
         // });
         const photos = await Promise.all(
-            paths.map(path =>
+            paths.map((path) =>
                 this.prisma.photoContent.create({
-                    data: { path }
+                    data: { path },
                 }),
             ),
         );
 
-
-        return photos.map(photo => this.app.transformImageUrls(photo, ...transformImages));
+        return photos.map((photo) =>
+            this.app.transformImageUrls(photo, ...transformImages),
+        );
     }
 
     // findAll() {

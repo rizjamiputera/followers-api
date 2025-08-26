@@ -1,32 +1,41 @@
 import { faker } from '@faker-js/faker';
 
-import { PrismaClient, User, Article, ReactionType, Content, Event } from '@prisma/client';
+import {
+    PrismaClient,
+    User,
+    Article,
+    ReactionType,
+    Content,
+    Event,
+} from '@prisma/client';
 
 interface ContentWithArticleOrEvent extends Content {
-    article?: Article
-    event?: Event
+    article?: Article;
+    event?: Event;
 }
 
 export async function ContentReactionSeed(prisma: PrismaClient) {
     console.log('\nSeed Start: Content Reactions & Comments');
 
     // Get all published articles
-    const contents: ContentWithArticleOrEvent[] = await prisma.content.findMany({
-        where: {
-            OR: [
-                {
-                    article: { status: 'PUBLISHED' }
-                },
-                {
-                    event: { status: 'PUBLISHED' }
-                },
-            ]
+    const contents: ContentWithArticleOrEvent[] = await prisma.content.findMany(
+        {
+            where: {
+                OR: [
+                    {
+                        article: { status: 'PUBLISHED' },
+                    },
+                    {
+                        event: { status: 'PUBLISHED' },
+                    },
+                ],
+            },
+            include: {
+                article: true,
+                event: true,
+            },
         },
-        include: {
-            article: true,
-            event: true
-        }
-    });
+    );
 
     // Get all users (excluding operators and admins to simulate real user engagement)
     const users: User[] = await prisma.user.findMany({
@@ -81,7 +90,8 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
         const reactingUsers = faker.helpers.arrayElements(users, reactionCount);
 
         for (const user of reactingUsers) {
-            const reactionType = faker.helpers.arrayElement(contentReactionTypes);
+            const reactionType =
+                faker.helpers.arrayElement(contentReactionTypes);
 
             reactionPromises.push(
                 prisma.contentReaction.create({
@@ -135,9 +145,9 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                             createdAt: commentCreatedAt,
                             updatedAt: faker.datatype.boolean(0.1)
                                 ? faker.date.between({
-                                    from: commentCreatedAt,
-                                    to: new Date(),
-                                })
+                                      from: commentCreatedAt,
+                                      to: new Date(),
+                                  })
                                 : commentCreatedAt,
                         },
                     })
@@ -164,10 +174,10 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                                     faker.datatype.boolean(0.7);
                                 const mentionedUser = shouldMention
                                     ? faker.helpers.arrayElement(
-                                        users.filter(
-                                            (u) => u.id !== replyUser.id,
-                                        ),
-                                    )
+                                          users.filter(
+                                              (u) => u.id !== replyUser.id,
+                                          ),
+                                      )
                                     : null;
 
                                 replyPromises.push(
@@ -187,10 +197,10 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                                                 },
                                                 mentioned: mentionedUser
                                                     ? {
-                                                        connect: {
-                                                            id: mentionedUser.id,
-                                                        },
-                                                    }
+                                                          connect: {
+                                                              id: mentionedUser.id,
+                                                          },
+                                                      }
                                                     : undefined,
                                                 comment: generateReplyContent(
                                                     mentionedUser?.name,
@@ -203,9 +213,9 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                                                 updatedAt:
                                                     faker.datatype.boolean(0.05)
                                                         ? faker.date.between({
-                                                            from: replyCreatedAt,
-                                                            to: new Date(),
-                                                        })
+                                                              from: replyCreatedAt,
+                                                              to: new Date(),
+                                                          })
                                                         : replyCreatedAt,
                                             },
                                         })
@@ -231,17 +241,17 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                                                                 {
                                                                     data: {
                                                                         comment:
-                                                                        {
-                                                                            connect:
                                                                             {
-                                                                                id: reply.id,
+                                                                                connect:
+                                                                                    {
+                                                                                        id: reply.id,
+                                                                                    },
                                                                             },
-                                                                        },
                                                                         user: {
                                                                             connect:
-                                                                            {
-                                                                                id: lovingUser.id,
-                                                                            },
+                                                                                {
+                                                                                    id: lovingUser.id,
+                                                                                },
                                                                         },
                                                                         type: faker.helpers.arrayElement(
                                                                             commentReactionTypes,
@@ -270,7 +280,10 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
 
                             // Execute replies in batches
                             for (let k = 0; k < replyPromises.length; k += 5) {
-                                const replyBatch = replyPromises.slice(k, k + 5);
+                                const replyBatch = replyPromises.slice(
+                                    k,
+                                    k + 5,
+                                );
                                 await Promise.all(replyBatch);
                             }
                         }
@@ -341,12 +354,10 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
         commentCount += batch.length;
     }
 
-
     for (const content of contents) {
-
         const commentCount = await prisma.comment.count({
-            where: { contentId: content.id }
-        })
+            where: { contentId: content.id },
+        });
 
         let statsId = null;
         let likeCount = 0;
@@ -355,19 +366,16 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
             statsId = content.article.statsId;
             likeCount = await prisma.contentReaction.count({
                 where: {
-                    AND: [
-                        { articleId: content.article.id },
-                        { type: 'like' }
-                    ]
-                }
+                    AND: [{ articleId: content.article.id }, { type: 'like' }],
+                },
             });
             dislikeCount = await prisma.contentReaction.count({
                 where: {
                     AND: [
                         { articleId: content.article.id },
-                        { type: 'dislike' }
-                    ]
-                }
+                        { type: 'dislike' },
+                    ],
+                },
             });
         }
 
@@ -375,20 +383,14 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
             statsId = content.event.statsId;
             likeCount = await prisma.contentReaction.count({
                 where: {
-                    AND: [
-                        { eventId: content.event.id },
-                        { type: 'like' }
-                    ]
-                }
+                    AND: [{ eventId: content.event.id }, { type: 'like' }],
+                },
             });
 
             dislikeCount = await prisma.contentReaction.count({
                 where: {
-                    AND: [
-                        { eventId: content.event.id },
-                        { type: 'dislike' }
-                    ]
-                }
+                    AND: [{ eventId: content.event.id }, { type: 'dislike' }],
+                },
             });
         }
 
@@ -398,9 +400,9 @@ export async function ContentReactionSeed(prisma: PrismaClient) {
                 data: {
                     commentCount,
                     likeCount,
-                    dislikeCount
-                }
-            })
+                    dislikeCount,
+                },
+            });
         }
     }
 

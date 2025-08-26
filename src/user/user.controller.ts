@@ -63,7 +63,7 @@ export class UserController {
         private readonly userService: UserService,
         private readonly authService: AuthService,
         private readonly appService: AppService,
-    ) { }
+    ) {}
 
     @CreateSuperadminDoc()
     @Roles(Role.SUPERADMIN)
@@ -310,7 +310,6 @@ export class UserController {
     async removePermission(
         @Body(new ValidationPipe()) dataDto: UserPermissionDto,
     ): Promise<void> {
-        console.log("WOOEE")
         await this.userService.removePermission(dataDto);
         return;
     }

@@ -8,4 +8,4 @@ import { PrismaService } from 'src/prisma.service';
     controllers: [PhotoContentController],
     providers: [PhotoContentService, AppService, PrismaService],
 })
-export class PhotoContentModule { }
+export class PhotoContentModule {}

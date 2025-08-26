@@ -16,7 +16,7 @@ export class UserService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) { }
+    ) {}
 
     create(data: Prisma.UserCreateInput) {
         return this.prisma.user.create({ data });
@@ -39,11 +39,11 @@ export class UserService {
 
         const searchCondition: Prisma.UserWhereInput = search
             ? {
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { email: { contains: search, mode: 'insensitive' } },
-                ],
-            }
+                  OR: [
+                      { name: { contains: search, mode: 'insensitive' } },
+                      { email: { contains: search, mode: 'insensitive' } },
+                  ],
+              }
             : {};
 
         const whereConditions: Prisma.UserWhereInput[] = [
@@ -55,7 +55,8 @@ export class UserService {
         if (active !== undefined) whereConditions.push({ active });
 
         // exculude superadmin
-        if (requester_role != Role.SUPERADMIN) whereConditions.push({ role: { not: Role.SUPERADMIN } });
+        if (requester_role != Role.SUPERADMIN)
+            whereConditions.push({ role: { not: Role.SUPERADMIN } });
 
         const where: Prisma.UserWhereInput = {
             AND: whereConditions.filter(
@@ -96,8 +97,8 @@ export class UserService {
     ): Promise<User> {
         // TODO prevent update role
         const currentData = await this.prisma.user.findUnique({
-            where: { id }
-        })
+            where: { id },
+        });
 
         if (!currentData) {
             throw new NotFoundException('User not found');
@@ -115,8 +116,8 @@ export class UserService {
 
         if (update.role == 'USER') {
             await this.prisma.userPermission.deleteMany({
-                where: { userId: id }
-            })
+                where: { userId: id },
+            });
         }
 
         return update;
@@ -166,7 +167,7 @@ export class UserService {
             throw new NotFoundException('User tidak ditemukan');
         }
 
-        return this.app.transformImageUrls(user, ...transformImages)
+        return this.app.transformImageUrls(user, ...transformImages);
     }
 
     async findOne(
@@ -187,14 +188,14 @@ export class UserService {
                     requester_role == Role.OPERATOR
                         ? { role: { notIn: [Role.SUPERADMIN, Role.ADMIN] } }
                         : requester_role == Role.ADMIN
-                            ? { role: { not: Role.SUPERADMIN } }
-                            : {},
+                          ? { role: { not: Role.SUPERADMIN } }
+                          : {},
                 ],
             },
             include,
         });
 
-        return this.app.transformImageUrls(user, ...transformImages)
+        return this.app.transformImageUrls(user, ...transformImages);
     }
 
     async findByEmail(email: string): Promise<User> {
@@ -232,16 +233,15 @@ export class UserService {
     }
 
     async removePermission(dataDto: UserPermissionDto): Promise<void> {
-        console.log({ dataDto });
         const { userId, module, permission } = dataDto;
         await this.prisma.userPermission.delete({
             where: {
                 userId_module_permission: {
                     userId,
                     module,
-                    permission
-                }
-            }
+                    permission,
+                },
+            },
         });
 
         return;

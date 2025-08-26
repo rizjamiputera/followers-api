@@ -57,7 +57,6 @@ export class CreateEventDto {
     @IsBoolean()
     isFeatured?: boolean;
 
-
     @ApiPropertyOptional({
         description: 'Array of tag names to associate with the event',
         type: [String],

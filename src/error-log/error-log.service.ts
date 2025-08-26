@@ -15,7 +15,7 @@ export class ErrorLogService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) { }
+    ) {}
 
     async logError(errorData: {
         message: string;
@@ -49,16 +49,16 @@ export class ErrorLogService {
          */
         const searchCondition: Prisma.ErrorLogWhereInput = search
             ? {
-                OR: [
-                    ...(!isNaN(Number(search))
-                        ? [{ id: Number(search) }]
-                        : []),
-                    { message: { contains: search, mode: 'insensitive' } },
-                    { stack: { contains: search, mode: 'insensitive' } },
-                    { path: { contains: search, mode: 'insensitive' } },
-                    { method: { contains: search, mode: 'insensitive' } },
-                ],
-            }
+                  OR: [
+                      ...(!isNaN(Number(search))
+                          ? [{ id: Number(search) }]
+                          : []),
+                      { message: { contains: search, mode: 'insensitive' } },
+                      { stack: { contains: search, mode: 'insensitive' } },
+                      { path: { contains: search, mode: 'insensitive' } },
+                      { method: { contains: search, mode: 'insensitive' } },
+                  ],
+              }
             : {};
 
         const where: Prisma.ErrorLogWhereInput = {

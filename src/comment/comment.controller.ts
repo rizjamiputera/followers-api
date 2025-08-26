@@ -32,7 +32,7 @@ export class CommentController {
     constructor(
         private readonly commentService: CommentService,
         private readonly userService: UserService,
-    ) { }
+    ) {}
 
     @ApiBearerAuth()
     @Post()
@@ -54,7 +54,12 @@ export class CommentController {
             }),
         };
 
-        return this.commentService.create(data, contentId, statsId, query.includes);
+        return this.commentService.create(
+            data,
+            contentId,
+            statsId,
+            query.includes,
+        );
     }
 
     @Public()
@@ -66,7 +71,6 @@ export class CommentController {
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterCommentQueryDto,
     ) {
-
         // const authUserId = req.user?.id;
 
         return this.commentService.findAll(pagination, filter);

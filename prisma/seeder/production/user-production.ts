@@ -21,8 +21,5 @@ export async function UserProductionSeed(prisma: PrismaClient) {
         },
     });
 
-
-
-
     console.log(`Created 1 superadmin`);
 }

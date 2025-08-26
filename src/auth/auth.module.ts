@@ -21,4 +21,4 @@ import { AppService } from 'src/app.service';
     providers: [AuthService, PrismaService, UserService, AppService],
     exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -19,13 +19,16 @@ export class RegisterDto {
 
     @ApiProperty()
     @IsString()
-    @IsStrongPassword({
-        minLength: 8,
-        minLowercase: 1,
-        minUppercase: 1,
-        minNumbers: 0,
-        minSymbols: 0,
-    }, { message: 'Password terlalu lemah' })
+    @IsStrongPassword(
+        {
+            minLength: 8,
+            minLowercase: 1,
+            minUppercase: 1,
+            minNumbers: 0,
+            minSymbols: 0,
+        },
+        { message: 'Password terlalu lemah' },
+    )
     @Length(6, 100)
     password: string;
 

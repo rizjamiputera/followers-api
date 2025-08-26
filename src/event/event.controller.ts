@@ -47,7 +47,7 @@ export class EventController {
     constructor(
         private readonly eventService: EventService,
         private readonly appService: AppService,
-    ) { }
+    ) {}
 
     @PermissionsRequired(Module.EVENT, Permission.CREATE)
     @ApiBearerAuth()
@@ -63,7 +63,6 @@ export class EventController {
         @Request() req: any,
         @Body(new ValidationPipe()) createEventDto: CreateEventDto,
     ) {
-
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
         const { content, tags, image, image_md, ...eventDto } = createEventDto;
@@ -96,7 +95,7 @@ export class EventController {
     ): Promise<Paginate<Event[]>> {
         return this.eventService.findAll(pagination, {
             ...filter,
-            exclude_statuses: ['DRAFT']
+            exclude_statuses: ['DRAFT'],
         });
     }
 
@@ -110,10 +109,9 @@ export class EventController {
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterEventQueryDto,
     ): Promise<Paginate<Event[]>> {
-
         return this.eventService.findAll(pagination, {
             ...filter,
-            authorId: req.user.id
+            authorId: req.user.id,
         });
     }
 
@@ -139,7 +137,11 @@ export class EventController {
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ): Promise<EventWithAuthReaction> {
-        return this.eventService.read(slug, query.includes, req.user?.id ?? null);
+        return this.eventService.read(
+            slug,
+            query.includes,
+            req.user?.id ?? null,
+        );
     }
 
     @PermissionsRequired(Module.EVENT, Permission.READ)
@@ -169,7 +171,9 @@ export class EventController {
         if (!event) throw new NotFoundException('Event is not found');
 
         if (event.authorId != req.user.id) {
-            throw new ForbiddenException('Event hanya bisa di akses oleh penulisnya')
+            throw new ForbiddenException(
+                'Event hanya bisa di akses oleh penulisnya',
+            );
         }
 
         return event;
@@ -187,7 +191,10 @@ export class EventController {
 
         if (updateEventDto.image && updateEventDto.image_md) {
             updateEventDto.image = updateEventDto.image.replace(apiUri, '');
-            updateEventDto.image_md = updateEventDto.image_md.replace(apiUri, '');
+            updateEventDto.image_md = updateEventDto.image_md.replace(
+                apiUri,
+                '',
+            );
         }
         return this.eventService.update(req.user.id, id, updateEventDto);
     }
@@ -200,20 +207,22 @@ export class EventController {
         return this.eventService.remove(id);
     }
 
-    @PermissionsRequired(Module.EVENT, Permission.CREATE, Permission.EDIT, Permission.APPROVE)
+    @PermissionsRequired(
+        Module.EVENT,
+        Permission.CREATE,
+        Permission.EDIT,
+        Permission.APPROVE,
+    )
     @ApiBearerAuth()
     @Post('draft/:id')
     @HttpCode(204)
-    async draft(
-        @Request() req: any,
-        @Param('id') id: string,
-    ) {
+    async draft(@Request() req: any, @Param('id') id: string) {
         const currentData = await this.eventService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Event is not found');
 
         if (currentData.status == ContentStatus.DRAFT) {
-            return
+            return;
         }
 
         const dataEvent: Prisma.EventUpdateInput = {
@@ -223,23 +232,20 @@ export class EventController {
 
         await this.eventService.updateStatus(id, dataEvent);
 
-        return
+        return;
     }
 
     @PermissionsRequired(Module.EVENT, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Post('review/:id')
     @HttpCode(204)
-    async review(
-        @Request() req: any,
-        @Param('id') id: string,
-    ) {
+    async review(@Request() req: any, @Param('id') id: string) {
         const currentData = await this.eventService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Event is not found');
 
         if (currentData.status == ContentStatus.ON_REVIEW) {
-            return
+            return;
         }
 
         const dataEvent: Prisma.EventUpdateInput = {
@@ -249,7 +255,7 @@ export class EventController {
 
         await this.eventService.updateStatus(id, dataEvent);
 
-        return
+        return;
     }
 
     @PermissionsRequired(Module.EVENT, Permission.APPROVE)
@@ -267,7 +273,7 @@ export class EventController {
 
         const dataEvent: Prisma.EventUpdateInput = {
             status: ContentStatus.PUBLISHED,
-            publishedAt: publishDto ? publishDto.publishedAt ?? null : null,
+            publishedAt: publishDto ? (publishDto.publishedAt ?? null) : null,
         };
 
         const dataApproval: Prisma.ContentApprovalCreateInput = {
@@ -278,9 +284,8 @@ export class EventController {
 
         await this.eventService.updateStatus(id, dataEvent, dataApproval);
 
-        return
+        return;
     }
-
 
     @PermissionsRequired(Module.EVENT, Permission.APPROVE)
     @ApiBearerAuth()
@@ -293,21 +298,20 @@ export class EventController {
     ) {
         const currentData = await this.eventService.findOne(id);
         if (currentData.status == ContentStatus.REJECTED) {
-            return
+            return;
         }
 
         if (!currentData) throw new NotFoundException('Event is not found');
 
         const dataEvent: Prisma.EventUpdateInput = {
             status: ContentStatus.REJECTED,
-            publishedAt: null
+            publishedAt: null,
         };
-
 
         const dataApproval: Prisma.ContentApprovalCreateInput = {
             event: { connect: { id } },
             status: ApprovalStatus.REJECTED,
-            note: rejectEventDto ? rejectEventDto.note ?? null : null,
+            note: rejectEventDto ? (rejectEventDto.note ?? null) : null,
             approver: { connect: { id: req.user.id } },
         };
 
@@ -325,7 +329,7 @@ export class EventController {
     ) {
         const currentData = await this.eventService.findOne(id);
         if (currentData.status == ContentStatus.TAKE_DOWN) {
-            return
+            return;
         }
 
         // const { note } = rejectEventDto;
@@ -337,7 +341,7 @@ export class EventController {
         const dataApproval: Prisma.ContentApprovalCreateInput = {
             event: { connect: { id } },
             status: ApprovalStatus.TAKE_DOWN,
-            note: rejectEventDto ? rejectEventDto.note ?? null : null,
+            note: rejectEventDto ? (rejectEventDto.note ?? null) : null,
             approver: { connect: { id: req.user.id } },
         };
 
@@ -361,29 +365,22 @@ export class EventController {
     // STATISTICS
     @Public()
     @Post('visit/:slug')
-    visit(
-        @Req() req,
-        @Param('slug') slug: string,
-        @Body('path') path: string,
-    ) {
-
+    visit(@Req() req, @Param('slug') slug: string, @Body('path') path: string) {
         const visit: VisitPayload = {
             ip: req.ip,
             userAgent: req.headers['user-agent'],
             referrer: req.headers['referer'] || null,
             userId: req.user?.id || null, // if auth use
             fingerprint: req.headers['x-fingerprint'] || null,
-            path
-        }
+            path,
+        };
 
         return this.eventService.visit(slug, visit);
     }
 
     @Public()
     @Post('share/:id')
-    share(
-        @Param('id') id: string,
-    ) {
+    share(@Param('id') id: string) {
         return this.eventService.share(id);
     }
 }

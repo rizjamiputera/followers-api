@@ -48,7 +48,7 @@ export class AuthController {
         private readonly authService: AuthService,
         private readonly userService: UserService,
         private readonly appService: AppService,
-    ) { }
+    ) {}
 
     @Public()
     @LoginDoc()
@@ -65,14 +65,16 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     // @RegisterDoc()
     @Post('register')
-    async register(
-        @Body(new ValidationPipe()) dataDto: RegisterDto,
-    ) {
+    async register(@Body(new ValidationPipe()) dataDto: RegisterDto) {
         try {
             // validate new user
             await this.authService.validateNewUser(dataDto);
 
-            const { password, confirm_password: _confirm_password, ...data } = dataDto;
+            const {
+                password,
+                confirm_password: _confirm_password,
+                ...data
+            } = dataDto;
 
             const dataUser: Prisma.UserCreateInput = {
                 ...data,

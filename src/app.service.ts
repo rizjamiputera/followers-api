@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { promises as fs } from 'fs';
-import { Paginate, SavedImage, VisitPayload } from './app/interface/app.interface';
+import {
+    Paginate,
+    SavedImage,
+    VisitPayload,
+} from './app/interface/app.interface';
 import * as path from 'path';
 import * as sharp from 'sharp';
 import { PrismaService } from './prisma.service';
 import { ErrorLog, Prisma } from '@prisma/client';
-import { PaginationIncludeQueryDto, PaginationQueryDto } from './app/dto/pagination-query.dto';
+import { PaginationIncludeQueryDto } from './app/dto/pagination-query.dto';
 import { nestedOrderBy } from './app/decorator/nestedOrderBy';
 
 @Injectable()
 export class AppService {
-
-    constructor(
-        private prisma: PrismaService,
-    ) { }
+    constructor(private prisma: PrismaService) {}
 
     async createPath(path: string) {
         try {
@@ -29,7 +30,7 @@ export class AppService {
             if (file.includes('dummy')) return;
 
             await fs.rm('./public/' + file);
-        } catch (_e) { }
+        } catch (_e) {}
     }
 
     getFileExtention(file: Express.Multer.File): string {
@@ -44,7 +45,7 @@ export class AppService {
         size: number,
         file: Express.Multer.File,
         filepath: string,
-        format = 'webp' // 👈 default to jpeg
+        format = 'webp', // 👈 default to jpeg
     ) {
         // Ensure the directory exists before writing the file
         const dir = path.dirname(filepath);
@@ -60,9 +61,9 @@ export class AppService {
 
             // Apply format conversion
             if (format === 'jpeg') {
-                image = image.jpeg({ quality: 85 }) // adjust quality
+                image = image.jpeg({ quality: 85 }); // adjust quality
             } else if (format === 'webp') {
-                image = image.webp({ quality: 85 })
+                image = image.webp({ quality: 85 });
             }
 
             const webpBuffer = await image.toBuffer();
@@ -70,14 +71,13 @@ export class AppService {
             return;
         }
 
-        let image = sharp(file.buffer, { animated: true })
-            .resize(size);
+        let image = sharp(file.buffer, { animated: true }).resize(size);
 
         // Apply format conversion
         if (format === 'jpeg') {
-            image = image.jpeg({ quality: 85 }) // adjust quality
+            image = image.jpeg({ quality: 85 }); // adjust quality
         } else if (format === 'webp') {
-            image = image.webp({ quality: 85 })
+            image = image.webp({ quality: 85 });
         }
 
         const resizedBuffer = await image.toBuffer();
@@ -90,7 +90,7 @@ export class AppService {
         file: Express.Multer.File,
         path_to_save: string = '',
         size: number = 1200,
-        format = 'webp' // 👈 default to jpeg
+        format = 'webp', // 👈 default to jpeg
     ): Promise<string> {
         const suffix = this.getFileSuffix();
         const filename = `${suffix}.${format}`;
@@ -220,7 +220,7 @@ export class AppService {
 
         // Handle array data
         if (Array.isArray(data)) {
-            return data.map(item => this.transformImageUrls(item, ...keys));
+            return data.map((item) => this.transformImageUrls(item, ...keys));
         }
 
         // Handle primitive types
@@ -228,7 +228,7 @@ export class AppService {
 
         const result = { ...data };
 
-        keys.forEach(key => {
+        keys.forEach((key) => {
             if (key.includes('.')) {
                 // Handle nested keys like 'user.avatar' or 'replies.user.avatar'
                 const keyPath = key.split('.');
@@ -238,10 +238,17 @@ export class AppService {
                     const arrayKey = keyPath[0];
                     const nestedPath = keyPath.slice(1);
 
-                    result[arrayKey] = result[arrayKey].map(item => {
-                        const nestedValue = this.getNestedValue(item, nestedPath);
+                    result[arrayKey] = result[arrayKey].map((item) => {
+                        const nestedValue = this.getNestedValue(
+                            item,
+                            nestedPath,
+                        );
                         if (nestedValue && typeof nestedValue === 'string') {
-                            this.setNestedValue(item, nestedPath, `${apiUri}${nestedValue}`);
+                            this.setNestedValue(
+                                item,
+                                nestedPath,
+                                `${apiUri}${nestedValue}`,
+                            );
                         }
                         return item;
                     });
@@ -249,12 +256,22 @@ export class AppService {
                     const value = this.getNestedValue(result, keyPath);
                     if (value) {
                         if (typeof value === 'string') {
-                            this.setNestedValue(result, keyPath, `${apiUri}${value}`);
-                        } else if (Array.isArray(value)) {
-                            const transformedArray = value.map(item =>
-                                typeof item === 'string' ? `${apiUri}${item}` : item
+                            this.setNestedValue(
+                                result,
+                                keyPath,
+                                `${apiUri}${value}`,
                             );
-                            this.setNestedValue(result, keyPath, transformedArray);
+                        } else if (Array.isArray(value)) {
+                            const transformedArray = value.map((item) =>
+                                typeof item === 'string'
+                                    ? `${apiUri}${item}`
+                                    : item,
+                            );
+                            this.setNestedValue(
+                                result,
+                                keyPath,
+                                transformedArray,
+                            );
                         }
                     }
                 }
@@ -264,7 +281,9 @@ export class AppService {
                     if (typeof result[key] === 'string') {
                         result[key] = `${apiUri}${result[key]}`;
                     } else if (Array.isArray(result[key])) {
-                        result[key] = result[key].map(item => this.transformImageUrls(item, ...key));
+                        result[key] = result[key].map((item) =>
+                            this.transformImageUrls(item, ...key),
+                        );
                     }
                 }
             }
@@ -274,7 +293,7 @@ export class AppService {
     }
 
     transformImageUrlsArray(data: any[], ...keys: string[]): any[] {
-        return data.map(dt => this.transformImageUrls(dt, ...keys));
+        return data.map((dt) => this.transformImageUrls(dt, ...keys));
     }
 
     private getNestedValue(obj: any, path: string[]): any {
@@ -322,43 +341,46 @@ export class AppService {
                     ipAddress: visit.ip,
                     userAgent: visit.userAgent,
                     referrer: visit.referrer,
-                    path: visit.path
-                }
+                    path: visit.path,
+                },
             });
 
             return;
-        })
+        });
     }
-
 
     async getAllErrorLog(
         pagination: PaginationIncludeQueryDto,
     ): Promise<Paginate<ErrorLog[]>> {
-        const { search, page, limit, sortBy, order, includes } =
-            pagination;
+        const { search, page, limit, sortBy, order, includes } = pagination;
 
         const searchCondition: Prisma.ErrorLogWhereInput = search
             ? {
-                OR: [
-                    { id: isNaN(Number(search)) ? undefined : Number(search) }, // exact match
-                    { method: { contains: search, mode: 'insensitive' } },
-                    { path: { contains: search, mode: 'insensitive' } },
-                    { message: { contains: search, mode: 'insensitive' } },
-                    { user: { name: { contains: search, mode: 'insensitive' } } },
-                ],
-            }
+                  OR: [
+                      {
+                          id: isNaN(Number(search))
+                              ? undefined
+                              : Number(search),
+                      }, // exact match
+                      { method: { contains: search, mode: 'insensitive' } },
+                      { path: { contains: search, mode: 'insensitive' } },
+                      { message: { contains: search, mode: 'insensitive' } },
+                      {
+                          user: {
+                              name: { contains: search, mode: 'insensitive' },
+                          },
+                      },
+                  ],
+              }
             : {};
 
-        const whereConditions: Prisma.ErrorLogWhereInput[] = [
-            searchCondition,
-        ];
+        const whereConditions: Prisma.ErrorLogWhereInput[] = [searchCondition];
 
         const where: Prisma.ErrorLogWhereInput = {
             AND: whereConditions.filter(
                 (condition) => Object.keys(condition).length > 0,
             ),
         };
-
 
         const include = this.getValidIncludes(['user'], includes);
 
@@ -372,7 +394,7 @@ export class AppService {
                 orderBy: nestedOrderBy(sortBy, order),
                 skip,
                 take,
-                include
+                include,
             }),
         ]);
 

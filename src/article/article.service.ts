@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import {
     Article,
     ContentStatus,
@@ -28,48 +32,57 @@ const VALID_INCLUDES = [
     'author',
     'stats',
 ];
-const transformImages = ['image', 'image_md', 'author.avatar', 'author.avatar_md'];
+const transformImages = [
+    'image',
+    'image_md',
+    'author.avatar',
+    'author.avatar_md',
+];
 
 @Injectable()
 export class ArticleService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) { }
+    ) {}
 
-    private transformData(data: Article & {
-        tags?: (ContentTag & { tag: Tag })[]
-        content?: Content
-    }): Article {
+    private transformData(
+        data: Article & {
+            tags?: (ContentTag & { tag: Tag })[];
+            content?: Content;
+        },
+    ): Article {
         const tags = data.tags;
         delete data.tags;
 
         const article = {
             ...data,
             ...(tags && {
-                tags: tags.map(t => t.tag)
-            })
-        }
+                tags: tags.map((t) => t.tag),
+            }),
+        };
 
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
         if (article.content) {
-            article.content.content['content'] = article.content.content['content'].map((c: any) => ({
+            article.content.content['content'] = article.content.content[
+                'content'
+            ].map((c: any) => ({
                 ...c,
                 ...(c.type == 'image' && {
                     attrs: {
                         ...c.attrs,
-                        src: apiUri + c.attrs.src
-                    }
-                })
-            }))
+                        src: apiUri + c.attrs.src,
+                    },
+                }),
+            }));
         }
 
-        return this.app.transformImageUrls(article, ...transformImages)
+        return this.app.transformImageUrls(article, ...transformImages);
     }
 
     private transformDataArray(data: Article[]): Article[] {
-        return data.map(article => this.transformData(article));
+        return data.map((article) => this.transformData(article));
     }
 
     async is_slug_available(slug: string) {
@@ -108,8 +121,8 @@ export class ArticleService {
                 ...articleData,
                 ...(tagConnections && { tags: tagConnections }),
                 stats: {
-                    create: {}
-                }
+                    create: {},
+                },
             },
         });
 
@@ -119,7 +132,10 @@ export class ArticleService {
         //     create.image_md
         // ]
         if (create.image && create.image_md) {
-            await this.assignMainPhoto(create.id, [create.image, create.image_md])
+            await this.assignMainPhoto(create.id, [
+                create.image,
+                create.image_md,
+            ]);
         }
         // await this.prisma.photoContent.updateMany({
         //     where: {
@@ -147,11 +163,11 @@ export class ArticleService {
 
         const searchCondition: Prisma.ArticleWhereInput = search
             ? {
-                OR: [
-                    { title: { contains: search, mode: 'insensitive' } },
-                    { excerpt: { contains: search, mode: 'insensitive' } },
-                ],
-            }
+                  OR: [
+                      { title: { contains: search, mode: 'insensitive' } },
+                      { excerpt: { contains: search, mode: 'insensitive' } },
+                  ],
+              }
             : {};
 
         const whereConditions: Prisma.ArticleWhereInput[] = [
@@ -161,7 +177,10 @@ export class ArticleService {
 
         if (authorId) whereConditions.push({ authorId });
         if (status) whereConditions.push({ status });
-        if (exclude_statuses) whereConditions.push({ status: { notIn: exclude_statuses as ContentStatus[] } });
+        if (exclude_statuses)
+            whereConditions.push({
+                status: { notIn: exclude_statuses as ContentStatus[] },
+            });
         if (tags?.length > 0) {
             whereConditions.push({
                 tags: { some: { tag: { slug: { in: tags } } } },
@@ -203,7 +222,11 @@ export class ArticleService {
         };
     }
 
-    async read(slug: string, includes: string[] = [], userId?: string): Promise<ArticleWithAuthReaction> {
+    async read(
+        slug: string,
+        includes: string[] = [],
+        userId?: string,
+    ): Promise<ArticleWithAuthReaction> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const article = await this.prisma.article.findUnique({
@@ -226,21 +249,21 @@ export class ArticleService {
                 where: {
                     articleId_userId: {
                         articleId: article.id,
-                        userId
-                    }
-                }
+                        userId,
+                    },
+                },
             });
 
             const bookmarked = await this.prisma.articleBookmark.findUnique({
-                where: { userId_articleId: { userId, articleId: article.id } }
-            })
+                where: { userId_articleId: { userId, articleId: article.id } },
+            });
 
             if (bookmarked) authBookmark = true;
         }
 
         const transform = this.transformData(article);
 
-        return { ...transform, auth_reaction, authBookmark }
+        return { ...transform, auth_reaction, authBookmark };
     }
 
     async findOne(id: string, includes: string[] = []): Promise<Article> {
@@ -254,7 +277,7 @@ export class ArticleService {
             include,
         });
 
-        return this.transformData(article)
+        return this.transformData(article);
     }
 
     async update(
@@ -286,8 +309,10 @@ export class ArticleService {
             articleData.excerpt !== current.excerpt ||
             articleData.image !== current.image ||
             articleData.image_md !== current.image_md ||
-            (content && current.content &&
-                (JSON.stringify(content) !== JSON.stringify(current.content.content)));
+            (content &&
+                current.content &&
+                JSON.stringify(content) !==
+                    JSON.stringify(current.content.content));
 
         // Create version if content changed
         if (contentChanged && current.content) {
@@ -312,12 +337,14 @@ export class ArticleService {
                     articleId: id,
                     main_photo: true,
                 },
-                data: { articleId: null }
+                data: { articleId: null },
             });
 
-            await this.assignMainPhoto(id, [articleData.image as string, articleData.image_md as string])
+            await this.assignMainPhoto(id, [
+                articleData.image as string,
+                articleData.image_md as string,
+            ]);
         }
-
 
         // Update content if provided and changed
         if (content && current.contentId && contentChanged) {
@@ -328,9 +355,9 @@ export class ArticleService {
                 ...(c.type == 'image' && {
                     attrs: {
                         ...c.attrs,
-                        src: c.attrs.src.replace(apiUri, '')
-                    }
-                })
+                        src: c.attrs.src.replace(apiUri, ''),
+                    },
+                }),
             }));
 
             await this.prisma.content.update({
@@ -344,21 +371,23 @@ export class ArticleService {
                     articleId: id,
                     main_photo: false,
                 },
-                data: { articleId: null }
-            })
+                data: { articleId: null },
+            });
 
-            const photoPaths = content.content.filter((c: any) => c.type == 'image').map((c: any) => c.attrs.src);
+            const photoPaths = content.content
+                .filter((c: any) => c.type == 'image')
+                .map((c: any) => c.attrs.src);
             // assign photo to article
             await this.prisma.photoContent.updateMany({
                 where: {
                     path: {
-                        in: photoPaths
-                    }
+                        in: photoPaths,
+                    },
                 },
                 data: {
-                    articleId: id
-                }
-            })
+                    articleId: id,
+                },
+            });
         }
 
         // Handle tags update if provided
@@ -418,7 +447,7 @@ export class ArticleService {
 
         await this.prisma.article.update({
             where: { id },
-            data: dataDto
+            data: dataDto,
         });
 
         if (approvalDto) {
@@ -461,7 +490,9 @@ export class ArticleService {
         };
 
         await this.prisma.$transaction(async (tx) => {
-            const { statsId } = await this.prisma.article.findUnique({ where: { id: articleId } });
+            const { statsId } = await this.prisma.article.findUnique({
+                where: { id: articleId },
+            });
 
             let decrementLike = false;
             let decrementDisLike = false;
@@ -474,7 +505,7 @@ export class ArticleService {
 
             if (react) {
                 // prevent double react
-                if (type == react.type) return
+                if (type == react.type) return;
 
                 if (type == 'like') {
                     decrementDisLike = true;
@@ -497,7 +528,9 @@ export class ArticleService {
                 data: {
                     ...(type == 'like' && {
                         likeCount: { increment: 1 },
-                        ...(decrementDisLike && { dislikeCount: { decrement: 1 } }),
+                        ...(decrementDisLike && {
+                            dislikeCount: { decrement: 1 },
+                        }),
                     }),
                     ...(type == 'dislike' && {
                         dislikeCount: { increment: 1 },
@@ -507,34 +540,36 @@ export class ArticleService {
             });
 
             return;
-        })
-
-        return;
-    }
-
-    private async assignMainPhoto(articleId: string, photoPaths: string[]): Promise<void> {
-        await this.prisma.photoContent.updateMany({
-            where: {
-                path: {
-                    in: photoPaths
-                }
-            },
-            data: {
-                articleId,
-                main_photo: true,
-            }
         });
 
         return;
     }
 
+    private async assignMainPhoto(
+        articleId: string,
+        photoPaths: string[],
+    ): Promise<void> {
+        await this.prisma.photoContent.updateMany({
+            where: {
+                path: {
+                    in: photoPaths,
+                },
+            },
+            data: {
+                articleId,
+                main_photo: true,
+            },
+        });
+
+        return;
+    }
 
     // STATISTICS
     async visit(slug: string, visit: VisitPayload): Promise<void> {
         return this.prisma.$transaction(async (tx) => {
             const article = await tx.article.findUnique({
                 where: { slug },
-                include: { stats: true }
+                include: { stats: true },
             });
             if (!article) throw new NotFoundException('Article not found');
 
@@ -572,7 +607,7 @@ export class ArticleService {
                     ipAddress: visit.ip,
                     userAgent: visit.userAgent,
                     referrer: visit.referrer,
-                    path: visit.path
+                    path: visit.path,
                 },
             });
 
@@ -588,7 +623,7 @@ export class ArticleService {
             }
 
             return;
-        })
+        });
     }
 
     async share(articleId: string) {
@@ -607,7 +642,7 @@ export class ArticleService {
                 },
             });
 
-            return
+            return;
         });
     }
 
@@ -635,7 +670,7 @@ export class ArticleService {
                 },
             });
 
-            return
+            return;
         });
     }
 
@@ -673,5 +708,4 @@ export class ArticleService {
             return;
         });
     }
-
 }

@@ -61,7 +61,7 @@ export class FilterEventQueryDto {
     @IsOptional()
     @Transform(({ value }) => {
         if (!value) return undefined; // Ensure undefined or empty input results in an empty array
-        return new Date(value)
+        return new Date(value);
     })
     @IsDate()
     start_from?: Date;

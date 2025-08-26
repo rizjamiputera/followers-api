@@ -8,4 +8,4 @@ import { AppService } from 'src/app.service';
     controllers: [ArticleController],
     providers: [ArticleService, PrismaService, AppService],
 })
-export class ArticleModule { }
+export class ArticleModule {}

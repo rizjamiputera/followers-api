@@ -8,30 +8,44 @@ import { FilterCommentQueryDto } from './dto/filter-comment.dto';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 
 const VALID_INCLUDES = ['user', 'replies', 'reactions'];
-const transformImages = ['user.avatar', 'user.avatar_md', 'replies.user.avatar', 'replies.user.avatar_md'];
+const transformImages = [
+    'user.avatar',
+    'user.avatar_md',
+    'replies.user.avatar',
+    'replies.user.avatar_md',
+];
 @Injectable()
 export class CommentService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) { }
+    ) {}
 
-    async create(data: Prisma.CommentCreateInput, contentId: string, statsId: string, includes: string[] = []): Promise<Comment> {
-        const include = this.app.getValidIncludes(VALID_INCLUDES, includes, false);
+    async create(
+        data: Prisma.CommentCreateInput,
+        contentId: string,
+        statsId: string,
+        includes: string[] = [],
+    ): Promise<Comment> {
+        const include = this.app.getValidIncludes(
+            VALID_INCLUDES,
+            includes,
+            false,
+        );
 
         const comment = await this.prisma.comment.create({
             data,
-            include
+            include,
         });
 
         const commentCount = await this.prisma.comment.count({
-            where: { contentId }
-        })
+            where: { contentId },
+        });
 
         await this.prisma.contentStats.update({
             where: { id: statsId },
-            data: { commentCount }
-        })
+            data: { commentCount },
+        });
 
         return this.app.transformImageUrls(comment, ...transformImages);
     }
@@ -44,20 +58,19 @@ export class CommentService {
             pagination;
         const { contentId, parentId } = filter;
 
-        console.log({ filter })
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const searchCondition: Prisma.CommentWhereInput = search
             ? {
-                OR: [{ comment: { contains: search, mode: 'insensitive' } }],
-            }
+                  OR: [{ comment: { contains: search, mode: 'insensitive' } }],
+              }
             : {};
 
         const whereConditions: Prisma.CommentWhereInput[] = [
             searchCondition,
             {
                 parentId: parentId ? parentId : null,
-                deleted
+                deleted,
             },
         ];
 
@@ -85,14 +98,16 @@ export class CommentService {
                     ...(parentId && {
                         mentioned: true,
                     }),
-                    ...(include.replies ? {
-                        replies: {
-                            include: {
-                                user: true,
-                                mentioned: true
-                            }
-                        }
-                    } : {})
+                    ...(include.replies
+                        ? {
+                              replies: {
+                                  include: {
+                                      user: true,
+                                      mentioned: true,
+                                  },
+                              },
+                          }
+                        : {}),
                 },
             }),
         ]);

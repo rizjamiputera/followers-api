@@ -19,4 +19,3 @@ export interface VisitPayload {
     fingerprint?: string | null;
     path: string;
 }
-

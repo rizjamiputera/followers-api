@@ -1,4 +1,15 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, Query, Req, Res, ValidationPipe } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    NotFoundException,
+    Param,
+    Post,
+    Query,
+    Req,
+    Res,
+    ValidationPipe,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from './auth/auth.metadata';
 import { promises as fs } from 'fs';
@@ -10,7 +21,7 @@ import { PaginationIncludeQueryDto } from './app/dto/pagination-query.dto';
 
 @Controller()
 export class AppController {
-    constructor(private readonly appService: AppService) { }
+    constructor(private readonly appService: AppService) {}
 
     @Public()
     @Get()
@@ -21,7 +32,7 @@ export class AppController {
     @Public()
     @Get('dummy/*path')
     async getDummyPhoto(@Param('path') path: any, @Res() res) {
-        const filePath = path.join('/')
+        const filePath = path.join('/');
         try {
             await fs.access(`./public/dummy/${filePath}`);
             res.sendFile(filePath, { root: './public/dummy' });
@@ -33,7 +44,7 @@ export class AppController {
     @Public()
     @Get('avatar/*path')
     async getAvatar(@Param('path') path: any, @Res() res) {
-        const filePath = path.join('/')
+        const filePath = path.join('/');
         try {
             await fs.access(`./public/avatar/${filePath}`);
             res.sendFile(filePath, { root: './public/avatar' });
@@ -45,7 +56,7 @@ export class AppController {
     @Public()
     @Get('photo/*path')
     async getPhoto(@Param('path') path: any, @Res() res) {
-        const filePath = path.join('/')
+        const filePath = path.join('/');
         try {
             await fs.access(`./public/photo/${filePath}`);
             res.sendFile(filePath, { root: './public/photo' });
@@ -57,23 +68,18 @@ export class AppController {
     // STATISTICS
     @Public()
     @Post('visit')
-    visit(
-        @Req() req,
-        @Body('path') path: string,
-    ) {
-
+    visit(@Req() req, @Body('path') path: string) {
         const visit: VisitPayload = {
             ip: req.ip,
             userAgent: req.headers['user-agent'],
             referrer: req.headers['referer'] || null,
             userId: req.user?.id || null, // if auth use
             fingerprint: req.headers['x-fingerprint'] || null,
-            path
-        }
+            path,
+        };
 
         return this.appService.visit(visit);
     }
-
 
     @ApiBearerAuth()
     @Roles(Role.SUPERADMIN)

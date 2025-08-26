@@ -16,7 +16,7 @@ import { ErrorLog, Role } from '@prisma/client';
     version: '1',
 })
 export class ErrorLogController {
-    constructor(private errorLogService: ErrorLogService) { }
+    constructor(private errorLogService: ErrorLogService) {}
 
     @GetAllErrorLogsDoc()
     @Get()

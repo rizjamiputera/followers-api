@@ -63,4 +63,4 @@ import { ContentStatsModule } from './content-stats/content-stats.module';
         },
     ],
 })
-export class AppModule { }
+export class AppModule {}

@@ -234,7 +234,7 @@ function generateStructuredContent() {
             // Add random image after first paragraph
             faker.helpers.maybe(
                 () => {
-                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`;
                     return {
                         type: 'image',
                         attrs: {
@@ -242,7 +242,7 @@ function generateStructuredContent() {
                             alt: faker.lorem.words(3),
                             title: faker.lorem.sentence(),
                         },
-                    }
+                    };
                 },
                 { probability: 0.8 },
             ),
@@ -258,7 +258,7 @@ function generateStructuredContent() {
             // Add another random image
             faker.helpers.maybe(
                 () => {
-                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`;
                     return {
                         type: 'image',
                         attrs: {
@@ -267,7 +267,7 @@ function generateStructuredContent() {
                             title: faker.lorem.sentence(),
                             caption: faker.lorem.sentence(),
                         },
-                    }
+                    };
                 },
                 { probability: 0.6 },
             ),
@@ -302,7 +302,7 @@ function generateStructuredContent() {
             // Add final image with different dimensions
             faker.helpers.maybe(
                 () => {
-                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`
+                    const src = `/dummy/article/article${faker.number.int({ min: 1, max: 13 })}.jpg`;
                     return {
                         type: 'image',
                         attrs: {
@@ -313,7 +313,7 @@ function generateStructuredContent() {
                             width: 1200,
                             height: 600,
                         },
-                    }
+                    };
                 },
                 { probability: 0.7 },
             ),

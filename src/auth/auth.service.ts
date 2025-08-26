@@ -25,7 +25,7 @@ export class AuthService {
         private jwtService: JwtService,
         private userService: UserService,
         private app: AppService,
-    ) { }
+    ) {}
 
     // collect expired tokens in blacklist
     private blacklistedTokens: Set<string> = new Set();
@@ -64,7 +64,7 @@ export class AuthService {
             user.role,
         );
 
-        user = this.app.transformImageUrls(user, ...transformImages)
+        user = this.app.transformImageUrls(user, ...transformImages);
         return { access_token, exp, user };
     }
 

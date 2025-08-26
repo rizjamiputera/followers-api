@@ -19,12 +19,12 @@ export async function UserSeed(prisma: PrismaClient) {
         '/dummy/avatar/avatar9.webp',
         '/dummy/avatar/avatar10.jpg',
         '/dummy/avatar/avatar11.webp',
-    ]
+    ];
 
     const promises = [];
     // Create 1 superadmin
     const superadmin_avatar = faker.helpers.arrayElement(avatars);
-    console.log({ superadmin_avatar })
+    console.log({ superadmin_avatar });
     promises.push(
         prisma.user.create({
             data: {
@@ -45,7 +45,7 @@ export async function UserSeed(prisma: PrismaClient) {
     // Create 20 regular users
     for (let i = 1; i <= 20; i++) {
         const superadmin_user = faker.helpers.arrayElement(avatars);
-        console.log({ superadmin_user })
+        console.log({ superadmin_user });
         promises.push(
             prisma.user.create({
                 data: {
@@ -65,12 +65,7 @@ export async function UserSeed(prisma: PrismaClient) {
     }
 
     // MODULES & PERMISSIONS
-    const modules: Module[] = [
-        'ARTICLE',
-        'EVENT',
-        'USER',
-        'COMMENT'
-    ];
+    const modules: Module[] = ['ARTICLE', 'EVENT', 'USER', 'COMMENT'];
     const permissions: Permission[] = [
         'READ',
         'CREATE',
@@ -83,8 +78,9 @@ export async function UserSeed(prisma: PrismaClient) {
     const roles: Role[] = ['OPERATOR', 'ADMIN'];
     roles.forEach((role) => {
         for (let i = 1; i <= 15; i++) {
-            const superadmin_operator_admin = faker.helpers.arrayElement(avatars);
-            console.log({ superadmin_operator_admin })
+            const superadmin_operator_admin =
+                faker.helpers.arrayElement(avatars);
+            console.log({ superadmin_operator_admin });
             promises.push(
                 prisma.user.create({
                     data: {

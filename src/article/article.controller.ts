@@ -47,7 +47,7 @@ export class ArticleController {
     constructor(
         private readonly articleService: ArticleService,
         private readonly appService: AppService,
-    ) { }
+    ) {}
 
     @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
     @ApiBearerAuth()
@@ -63,10 +63,10 @@ export class ArticleController {
         @Request() req: any,
         @Body(new ValidationPipe()) createArticleDto: CreateArticleDto,
     ) {
-
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
-        const { content, tags, image, image_md, ...articleDto } = createArticleDto;
+        const { content, tags, image, image_md, ...articleDto } =
+            createArticleDto;
         const data: Prisma.ArticleCreateInput & { tags?: string[] } = {
             ...articleDto,
             ...(image && {
@@ -96,7 +96,7 @@ export class ArticleController {
     ): Promise<Paginate<Article[]>> {
         return this.articleService.findAll(pagination, {
             ...filter,
-            exclude_statuses: ['DRAFT']
+            exclude_statuses: ['DRAFT'],
         });
     }
 
@@ -110,10 +110,9 @@ export class ArticleController {
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterArticleQueryDto,
     ): Promise<Paginate<Article[]>> {
-
         return this.articleService.findAll(pagination, {
             ...filter,
-            authorId: req.user.id
+            authorId: req.user.id,
         });
     }
 
@@ -139,7 +138,11 @@ export class ArticleController {
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ): Promise<ArticleWithAuthReaction> {
-        return this.articleService.read(slug, query.includes, req.user?.id ?? null);
+        return this.articleService.read(
+            slug,
+            query.includes,
+            req.user?.id ?? null,
+        );
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.READ)
@@ -169,7 +172,9 @@ export class ArticleController {
         if (!article) throw new NotFoundException('Article is not found');
 
         if (article.authorId != req.user.id) {
-            throw new ForbiddenException('Article hanya bisa di akses oleh penulisnya')
+            throw new ForbiddenException(
+                'Article hanya bisa di akses oleh penulisnya',
+            );
         }
 
         return article;
@@ -187,7 +192,10 @@ export class ArticleController {
 
         if (updateArticleDto.image && updateArticleDto.image_md) {
             updateArticleDto.image = updateArticleDto.image.replace(apiUri, '');
-            updateArticleDto.image_md = updateArticleDto.image_md.replace(apiUri, '');
+            updateArticleDto.image_md = updateArticleDto.image_md.replace(
+                apiUri,
+                '',
+            );
         }
         return this.articleService.update(req.user.id, id, updateArticleDto);
     }
@@ -200,20 +208,22 @@ export class ArticleController {
         return this.articleService.remove(id);
     }
 
-    @PermissionsRequired(Module.ARTICLE, Permission.CREATE, Permission.EDIT, Permission.APPROVE)
+    @PermissionsRequired(
+        Module.ARTICLE,
+        Permission.CREATE,
+        Permission.EDIT,
+        Permission.APPROVE,
+    )
     @ApiBearerAuth()
     @Post('draft/:id')
     @HttpCode(204)
-    async draft(
-        @Request() req: any,
-        @Param('id') id: string,
-    ) {
+    async draft(@Request() req: any, @Param('id') id: string) {
         const currentData = await this.articleService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
         if (currentData.status == ContentStatus.DRAFT) {
-            return
+            return;
         }
 
         const dataArticle: Prisma.ArticleUpdateInput = {
@@ -223,23 +233,20 @@ export class ArticleController {
 
         await this.articleService.updateStatus(id, dataArticle);
 
-        return
+        return;
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Post('review/:id')
     @HttpCode(204)
-    async review(
-        @Request() req: any,
-        @Param('id') id: string,
-    ) {
+    async review(@Request() req: any, @Param('id') id: string) {
         const currentData = await this.articleService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
         if (currentData.status == ContentStatus.ON_REVIEW) {
-            return
+            return;
         }
 
         const dataArticle: Prisma.ArticleUpdateInput = {
@@ -249,7 +256,7 @@ export class ArticleController {
 
         await this.articleService.updateStatus(id, dataArticle);
 
-        return
+        return;
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
@@ -267,7 +274,7 @@ export class ArticleController {
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ContentStatus.PUBLISHED,
-            publishedAt: publishDto ? publishDto.publishedAt ?? null : null,
+            publishedAt: publishDto ? (publishDto.publishedAt ?? null) : null,
         };
 
         const dataApproval: Prisma.ContentApprovalCreateInput = {
@@ -278,9 +285,8 @@ export class ArticleController {
 
         await this.articleService.updateStatus(id, dataArticle, dataApproval);
 
-        return
+        return;
     }
-
 
     @PermissionsRequired(Module.ARTICLE, Permission.APPROVE)
     @ApiBearerAuth()
@@ -293,21 +299,20 @@ export class ArticleController {
     ) {
         const currentData = await this.articleService.findOne(id);
         if (currentData.status == ContentStatus.REJECTED) {
-            return
+            return;
         }
 
         if (!currentData) throw new NotFoundException('Article is not found');
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ContentStatus.REJECTED,
-            publishedAt: null
+            publishedAt: null,
         };
-
 
         const dataApproval: Prisma.ContentApprovalCreateInput = {
             article: { connect: { id } },
             status: ApprovalStatus.REJECTED,
-            note: rejectArticleDto ? rejectArticleDto.note ?? null : null,
+            note: rejectArticleDto ? (rejectArticleDto.note ?? null) : null,
             approver: { connect: { id: req.user.id } },
         };
 
@@ -325,7 +330,7 @@ export class ArticleController {
     ) {
         const currentData = await this.articleService.findOne(id);
         if (currentData.status == ContentStatus.TAKE_DOWN) {
-            return
+            return;
         }
 
         // const { note } = rejectArticleDto;
@@ -337,7 +342,7 @@ export class ArticleController {
         const dataApproval: Prisma.ContentApprovalCreateInput = {
             article: { connect: { id } },
             status: ApprovalStatus.TAKE_DOWN,
-            note: rejectArticleDto ? rejectArticleDto.note ?? null : null,
+            note: rejectArticleDto ? (rejectArticleDto.note ?? null) : null,
             approver: { connect: { id: req.user.id } },
         };
 
@@ -361,47 +366,34 @@ export class ArticleController {
     // STATISTICS
     @Public()
     @Post('visit/:slug')
-    visit(
-        @Req() req,
-        @Param('slug') slug: string,
-        @Body('path') path: string,
-    ) {
-
+    visit(@Req() req, @Param('slug') slug: string, @Body('path') path: string) {
         const visit: VisitPayload = {
             ip: req.ip,
             userAgent: req.headers['user-agent'],
             referrer: req.headers['referer'] || null,
             userId: req.user?.id || null, // if auth use
             fingerprint: req.headers['x-fingerprint'] || null,
-            path
-        }
+            path,
+        };
 
         return this.articleService.visit(slug, visit);
     }
 
     @Public()
     @Post('share/:id')
-    share(
-        @Param('id') id: string,
-    ) {
+    share(@Param('id') id: string) {
         return this.articleService.share(id);
     }
 
     @ApiBearerAuth()
     @Post('bookmark/:id')
-    bookmark(
-        @Req() req,
-        @Param('id') id: string,
-    ) {
+    bookmark(@Req() req, @Param('id') id: string) {
         return this.articleService.bookmark(id, req.user.id);
     }
 
     @ApiBearerAuth()
     @Post('unbookmark/:id')
-    unbookmark(
-        @Req() req,
-        @Param('id') id: string,
-    ) {
+    unbookmark(@Req() req, @Param('id') id: string) {
         return this.articleService.unbookmark(id, req.user.id);
     }
 }

@@ -7,7 +7,8 @@ import {
 
 @ValidatorConstraint({ async: false })
 export class IsPhoneNumberIndonesiaConstraint
-    implements ValidatorConstraintInterface {
+    implements ValidatorConstraintInterface
+{
     validate(phoneNumber: string) {
         if (!phoneNumber || phoneNumber === '') {
             return true; // Allow empty/null values for optional fields
