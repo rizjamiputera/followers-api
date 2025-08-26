@@ -33,6 +33,9 @@ async function bootstrap() {
     await appService.createPath('./public/avatar');
     await appService.createPath('./public/photo');
 
+    // Tell Express to trust X-Forwarded-* headers
+    app.getHttpAdapter().getInstance().set('trust proxy', true);
+
     // RUN APP
     const port = process.env.PORT ?? 5555;
     await app.listen(port);
