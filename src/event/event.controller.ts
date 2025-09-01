@@ -13,6 +13,7 @@ import {
     ForbiddenException,
     NotFoundException,
     Req,
+    BadRequestException,
 } from '@nestjs/common';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import {
@@ -330,6 +331,7 @@ export class EventController {
         const currentData = await this.eventService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Event is not found');
+        if (!currentData.image) throw new BadRequestException('Event tanpa foto tidak dapat di publish')
 
         const dataEvent: Prisma.EventUpdateInput = {
             status: ContentStatus.PUBLISHED,

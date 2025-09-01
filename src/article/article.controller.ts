@@ -13,6 +13,7 @@ import {
     ForbiddenException,
     NotFoundException,
     Req,
+    BadRequestException,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -332,6 +333,7 @@ export class ArticleController {
         const currentData = await this.articleService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Article is not found');
+        if (!currentData.image) throw new BadRequestException('Artikel tanpa foto tidak dapat di publish')
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ContentStatus.PUBLISHED,
