@@ -1,6 +1,6 @@
 {
     "name": "followers-bicara-api",
-    "version": "0.0.1",
+    "version": "1.2.0",
     "description": "Follower Bicara - Backend",
     "author": "Uda Putera <rizjamiputera@gmail.com>",
     "private": true,
