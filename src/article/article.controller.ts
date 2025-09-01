@@ -89,15 +89,14 @@ export class ArticleController {
     // @PermissionsRequired(Module.DRIVERS, Permission.READ)
     @Get()
     findAll(
+        @Request() req: any,
         @Query(new ValidationPipe({ transform: true }))
         pagination: PaginationDeletedIncludeQueryDto,
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterArticleQueryDto,
     ): Promise<Paginate<Article[]>> {
-        return this.articleService.findAll(pagination, {
-            ...filter,
-            exclude_statuses: ['DRAFT'],
-        });
+        console.log({ user: req.user })
+        return this.articleService.findAll(pagination, filter);
     }
 
     @ApiBearerAuth()

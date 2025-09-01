@@ -93,10 +93,7 @@ export class EventController {
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterEventQueryDto,
     ): Promise<Paginate<Event[]>> {
-        return this.eventService.findAll(pagination, {
-            ...filter,
-            exclude_statuses: ['DRAFT'],
-        });
+        return this.eventService.findAll(pagination, filter);
     }
 
     @ApiBearerAuth()
