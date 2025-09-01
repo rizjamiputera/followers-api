@@ -145,8 +145,8 @@ model Article {
     slug        String            @unique @db.VarChar(255)
     title       String            @db.VarChar(255)
     excerpt     String            @db.VarChar(500)
-    image       String            @db.VarChar(255)
-    image_md    String            @db.VarChar(255)
+    image       String?           @db.VarChar(255)
+    image_md    String?           @db.VarChar(255)
     content     Content           @relation(fields: [contentId], references: [id], onDelete: Restrict)
     contentId   String            @unique
     photos      PhotoContent[]
@@ -185,8 +185,8 @@ model Event {
     slug        String            @unique @db.VarChar(255)
     title       String            @db.VarChar(255)
     excerpt     String            @db.VarChar(500)
-    image       String            @db.VarChar(255)
-    image_md    String            @db.VarChar(255)
+    image       String?           @db.VarChar(255)
+    image_md    String?           @db.VarChar(255)
     content     Content           @relation(fields: [contentId], references: [id], onDelete: Restrict)
     contentId   String            @unique
     location    String?
@@ -249,8 +249,8 @@ model ContentVersion {
     title     String   @db.VarChar(255)
     excerpt   String?  @db.VarChar(500)
     content   Json     @db.JsonB // structured content
-    image     String   @db.VarChar(255)
-    image_sm  String   @db.VarChar(255)
+    image     String?  @db.VarChar(255)
+    image_sm  String?  @db.VarChar(255)
     createdAt DateTime @default(now())
     article   Article? @relation(fields: [articleId], references: [id])
     articleId String?
