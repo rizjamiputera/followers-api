@@ -20,17 +20,17 @@ services:
             NODE_ENV: development
             JWT_EXPIRATION: 180
             # for prisma
-            DATABASE_URL: postgresql://dev_user_followers:abracadabra@followers_dev_postgre:5432/postgres?schema=followers
+            DATABASE_URL: postgresql://dev_user_followers:abracadabra@followers-dev-postgre:5432/postgres?schema=followers
         volumes:
-            - dev_volume_api_followers:/app/public
+            - dev-volume-api-followers:/app/public
         networks:
-            - dev_followers-bicara-network
+            - dev-followers-bicara-network
         depends_on:
-            - followers_dev_postgre
+            - followers-dev-postgre
 
     # postgre database
-    followers_dev_postgre:
-        container_name: followers_dev_postgre
+    followers-dev-postgre:
+        container_name: followers-dev-postgre
         image: postgres:17.4
         ports:
             - 5432:5432
@@ -41,16 +41,16 @@ services:
         volumes:
             - volume_postgre_dev_followers:/var/lib/postgresql/data
         networks:
-            - dev_followers-bicara-network
+            - dev-followers-bicara-network
 # volumes
 volumes:
-    dev_volume_api_followers:
-        name: dev_volume_api_followers
+    dev-volume-api-followers:
+        name: dev-volume-api-followers
     volume_postgre_dev_followers:
         name: volume_postgre_dev_followers
 
 # networks
 networks:
-    dev_followers-bicara-network:
-        name: dev_followers-bicara-network
+    dev-followers-bicara-network:
+        name: dev-followers-bicara-network
         driver: bridge
