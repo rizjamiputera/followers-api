@@ -1,0 +1,43 @@
+name: Deploy to Production
+
+on:
+    push:
+        branches:
+            - main # run only when pushing to main
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up SSH
+              uses: webfactory/ssh-agent@v0.7.0
+              with:
+                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            - name: Deploy via SSH
+              run: |
+                  ssh -o StrictHostKeyChecking=no deploy@${{ secrets.VPS_HOST }} "
+                    cd /opt/followers/followers-api && \
+                    git config --global --add safe.directory /opt/followers/followers-api && \
+
+                    git fetch origin && \
+                    git checkout main && \
+
+                    git reset --hard origin/main && \
+
+                    GITHUB_SHA=\$(git rev-parse HEAD) && \
+                    IMAGE_TAG=prod-api-followers:\$(echo \$GITHUB_SHA | cut -c1-7) && \
+
+                    echo Building image = \$IMAGE_TAG && \
+
+                    docker compose -f docker-compose-production.yml build --no-cache && \
+                    docker tag prod-api-followers:latest \$IMAGE_TAG && \
+                    docker compose -f docker-compose-production.yml down && \
+                    docker compose -f docker-compose-production.yml up -d && \
+
+                    docker image prune -f --filter \"until=168h\"
+                  "
