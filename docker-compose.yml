@@ -1,12 +1,13 @@
 # services / containers
 services:
     # express app
-    dev_api_followers:
+    dev-api-followers:
         build:
             context: .
             dockerfile: Dockerfile
-        container_name: dev_api_followers
-        image: dev_api_followers:1.2.0
+        container_name: dev-api-followers
+        # image: dev-api-followers:1.1.4
+        image: dev-api-followers:latest
         restart: always
         ports:
             - 5111:5000

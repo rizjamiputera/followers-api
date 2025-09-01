@@ -1,0 +1,43 @@
+name: Deploy to Dev
+
+on:
+    push:
+        branches:
+            - dev # run only when pushing to dev
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up SSH
+              uses: webfactory/ssh-agent@v0.7.0
+              with:
+                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            - name: Deploy via SSH
+              run: |
+                  ssh -o StrictHostKeyChecking=no deploy@${{ secrets.VPS_HOST }} "
+                    cd /opt/followers/followers-api && \
+                    git config --global --add safe.directory /opt/followers/followers-api && \
+
+                    git fetch origin && \
+                    git checkout dev && \
+
+                    git reset --hard origin/dev && \
+
+                    GITHUB_SHA=\$(git rev-parse HEAD) && \
+                    IMAGE_TAG=dev-api-followers:\$(echo \$GITHUB_SHA | cut -c1-7) && \
+
+                    echo Building image = \$IMAGE_TAG && \
+
+                    docker compose build --no-cache && \
+                    docker tag dev-api-followers:latest \$IMAGE_TAG && \
+                    docker compose down && \
+                    docker compose up -d && \
+
+                    docker image prune -f --filter \"until=168h\"
+                  "
