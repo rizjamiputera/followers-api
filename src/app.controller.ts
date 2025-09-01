@@ -14,19 +14,57 @@ import { AppService } from './app.service';
 import { Public } from './auth/auth.metadata';
 import { promises as fs } from 'fs';
 import { Paginate, VisitPayload } from './app/interface/app.interface';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from './auth/guards/roles/roles.decorator';
 import { ErrorLog, Role } from '@prisma/client';
 import { PaginationIncludeQueryDto } from './app/dto/pagination-query.dto';
+import * as path from 'path';
 
 @Controller()
 export class AppController {
-    constructor(private readonly appService: AppService) {}
+    constructor(private readonly appService: AppService) { }
 
     @Public()
     @Get()
     root(@Res() res) {
         res.status(302).redirect('/api');
+    }
+
+    @Public()
+    @Get('version')
+    @ApiTags('System')
+    getVersion() {
+        const packageJsonPath = path.join(process.cwd(), 'package.json');
+        const packageJson = require(packageJsonPath);
+        return {
+            version: packageJson.version,
+            name: packageJson.name,
+            timestamp: new Date().toISOString(),
+        };
+    }
+
+    @Public()
+    @Get('health')
+    @ApiTags('System')
+    healthCheck() {
+        const packageJsonPath = path.join(process.cwd(), 'package.json');
+        const packageJson = require(packageJsonPath);
+
+        const uptimeSeconds = process.uptime();
+        const days = Math.floor(uptimeSeconds / (24 * 60 * 60));
+        const hours = Math.floor((uptimeSeconds % (24 * 60 * 60)) / (60 * 60));
+        const minutes = Math.floor((uptimeSeconds % (60 * 60)) / 60);
+        const seconds = Math.floor(uptimeSeconds % 60);
+
+        const uptimeReadable = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+        return {
+            status: 'ok',
+            version: packageJson.version,
+            uptime: uptimeReadable,
+            uptimeSeconds: Math.floor(uptimeSeconds),
+            timestamp: new Date().toISOString(),
+        };
     }
 
     @Public()

@@ -13,6 +13,7 @@ import {
     ForbiddenException,
     NotFoundException,
     Req,
+    BadRequestException,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -158,7 +159,7 @@ export class ArticleController {
         return article;
     }
 
-    @PermissionsRequired(Module.ARTICLE, Permission.READ, Permission.CREATE)
+    @PermissionsRequired(Module.ARTICLE, Permission.READ, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Get('my/:id')
     async readMyArticle(
@@ -170,7 +171,7 @@ export class ArticleController {
 
         if (!article) throw new NotFoundException('Article is not found');
 
-        if (article.authorId != req.user.id) {
+        if (article.authorId != req.user.id && req.user.role == 'USER') {
             throw new ForbiddenException(
                 'Article hanya bisa di akses oleh penulisnya',
             );
@@ -182,11 +183,20 @@ export class ArticleController {
     @PermissionsRequired(Module.ARTICLE, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Patch(':id')
-    update(
+    async update(
         @Request() req: any,
         @Param('id') id: string,
         @Body(new ValidationPipe()) updateArticleDto: UpdateArticleDto,
     ) {
+        const article = await this.articleService.findOne(id);
+        if (!article) throw new NotFoundException('Article is not found');
+
+        if (article.authorId != req.user.id && req.user.role == 'USER') {
+            throw new ForbiddenException(
+                'Article hanya bisa di akses oleh penulisnya',
+            );
+        }
+
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
         if (updateArticleDto.image && updateArticleDto.image_md) {
@@ -196,7 +206,7 @@ export class ArticleController {
                 '',
             );
         }
-        return this.articleService.update(req.user.id, id, updateArticleDto);
+        return this.articleService.update(id, updateArticleDto);
     }
 
     @PermissionsRequired(Module.ARTICLE, Permission.DELETE)
@@ -332,6 +342,7 @@ export class ArticleController {
         const currentData = await this.articleService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Article is not found');
+        if (!currentData.image) throw new BadRequestException('Artikel tanpa foto tidak dapat di publish')
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ContentStatus.PUBLISHED,

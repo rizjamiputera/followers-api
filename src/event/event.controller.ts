@@ -13,6 +13,7 @@ import {
     ForbiddenException,
     NotFoundException,
     Req,
+    BadRequestException,
 } from '@nestjs/common';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import {
@@ -155,7 +156,7 @@ export class EventController {
         return event;
     }
 
-    @PermissionsRequired(Module.EVENT, Permission.READ, Permission.CREATE)
+    @PermissionsRequired(Module.EVENT, Permission.READ, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Get('my/:id')
     async readMyEvent(
@@ -167,7 +168,7 @@ export class EventController {
 
         if (!event) throw new NotFoundException('Event is not found');
 
-        if (event.authorId != req.user.id) {
+        if (event.authorId != req.user.id && req.user.role == 'USER') {
             throw new ForbiddenException(
                 'Event hanya bisa di akses oleh penulisnya',
             );
@@ -179,11 +180,19 @@ export class EventController {
     @PermissionsRequired(Module.EVENT, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Patch(':id')
-    update(
+    async update(
         @Request() req: any,
         @Param('id') id: string,
         @Body(new ValidationPipe()) updateEventDto: UpdateEventDto,
     ) {
+        const event = await this.eventService.findOne(id);
+
+        if (event.authorId != req.user.id && req.user.role == 'USER') {
+            throw new ForbiddenException(
+                'Event hanya bisa di akses oleh penulisnya',
+            );
+        }
+
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
         if (updateEventDto.image && updateEventDto.image_md) {
@@ -193,7 +202,7 @@ export class EventController {
                 '',
             );
         }
-        return this.eventService.update(req.user.id, id, updateEventDto);
+        return this.eventService.update(id, updateEventDto);
     }
 
     @PermissionsRequired(Module.EVENT, Permission.DELETE)
@@ -330,6 +339,7 @@ export class EventController {
         const currentData = await this.eventService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Event is not found');
+        if (!currentData.image) throw new BadRequestException('Event tanpa foto tidak dapat di publish')
 
         const dataEvent: Prisma.EventUpdateInput = {
             status: ContentStatus.PUBLISHED,

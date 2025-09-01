@@ -24,13 +24,14 @@ jobs:
                     cd /opt/followers/followers-api && \
                     git config --global --add safe.directory /opt/followers/followers-api && \
 
-                    git fetch origin && \
+                    git fetch origin --tags && \
                     git checkout main && \
 
                     git reset --hard origin/main && \
 
-                    GITHUB_SHA=\$(git rev-parse HEAD) && \
-                    IMAGE_TAG=prod-api-followers:\$(echo \$GITHUB_SHA | cut -c1-7) && \
+                    from package.json using grep and sed
+                    VERSION=\$(grep -o '\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"' package.json | sed 's/.*\"\([^\"]*\)\"/\1/') && \
+                    IMAGE_TAG=prod-api-followers:\$VERSION && \
 
                     echo Building image = \$IMAGE_TAG && \
 
