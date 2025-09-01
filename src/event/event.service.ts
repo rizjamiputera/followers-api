@@ -44,7 +44,7 @@ export class EventService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) {}
+    ) { }
 
     private transformData(
         data: Event & {
@@ -154,11 +154,11 @@ export class EventService {
 
         const searchCondition: Prisma.EventWhereInput = search
             ? {
-                  OR: [
-                      { title: { contains: search, mode: 'insensitive' } },
-                      { excerpt: { contains: search, mode: 'insensitive' } },
-                  ],
-              }
+                OR: [
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { excerpt: { contains: search, mode: 'insensitive' } },
+                ],
+            }
             : {};
 
         const whereConditions: Prisma.EventWhereInput[] = [
@@ -266,7 +266,6 @@ export class EventService {
     }
 
     async update(
-        changedBy: string,
         id: string,
         data: Prisma.EventUpdateInput & {
             content?: any;
@@ -279,11 +278,11 @@ export class EventService {
 
         if (!current) throw new NotFoundException('Event is not found');
 
-        if (current.authorId !== changedBy) {
-            throw new ForbiddenException(
-                'Only the author can update this event',
-            );
-        }
+        // if (current.authorId !== changedBy) {
+        //     throw new ForbiddenException(
+        //         'Only the author can update this event',
+        //     );
+        // }
 
         // Separate content body and tags from event data
         const { content, tags, ...eventData } = data;
@@ -297,7 +296,7 @@ export class EventService {
             (content &&
                 current.content &&
                 JSON.stringify(content) !==
-                    JSON.stringify(current.content.content));
+                JSON.stringify(current.content.content));
 
         // Create version if content changed
         if (contentChanged && current.content) {

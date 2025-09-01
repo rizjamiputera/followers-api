@@ -44,7 +44,7 @@ export class ArticleService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) {}
+    ) { }
 
     private transformData(
         data: Article & {
@@ -163,11 +163,11 @@ export class ArticleService {
 
         const searchCondition: Prisma.ArticleWhereInput = search
             ? {
-                  OR: [
-                      { title: { contains: search, mode: 'insensitive' } },
-                      { excerpt: { contains: search, mode: 'insensitive' } },
-                  ],
-              }
+                OR: [
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { excerpt: { contains: search, mode: 'insensitive' } },
+                ],
+            }
             : {};
 
         const whereConditions: Prisma.ArticleWhereInput[] = [
@@ -281,7 +281,6 @@ export class ArticleService {
     }
 
     async update(
-        changedBy: string,
         id: string,
         data: Prisma.ArticleUpdateInput & {
             content?: any;
@@ -294,11 +293,11 @@ export class ArticleService {
 
         if (!current) throw new NotFoundException('Article is not found');
 
-        if (current.authorId !== changedBy) {
-            throw new ForbiddenException(
-                'Only the author can update this article',
-            );
-        }
+        // if (current.authorId !== changedBy) {
+        //     throw new ForbiddenException(
+        //         'Only the author can update this article',
+        //     );
+        // }
 
         // Separate content body and tags from article data
         const { content, tags, ...articleData } = data;
@@ -312,7 +311,7 @@ export class ArticleService {
             (content &&
                 current.content &&
                 JSON.stringify(content) !==
-                    JSON.stringify(current.content.content));
+                JSON.stringify(current.content.content));
 
         // Create version if content changed
         if (contentChanged && current.content) {
