@@ -7,5 +7,6 @@ import { AppService } from 'src/app.service';
 @Module({
     controllers: [ArticleController],
     providers: [ArticleService, PrismaService, AppService],
+    exports: [ArticleService],
 })
 export class ArticleModule {}

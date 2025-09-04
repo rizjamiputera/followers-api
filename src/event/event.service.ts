@@ -1543,4 +1543,64 @@ export class EventService {
             </html>
         `;
     }
+
+    // FEATURED EVENTS MANAGEMENT
+    // async getFeaturedEvents(limit: number = 5): Promise<EventWithRegistrationCount[]> {
+    async getFeaturedEvents(limit: number = 5): Promise<Event[]> {
+        const events = await this.prisma.event.findMany({
+            where: {
+                isFeatured: true,
+                status: 'PUBLISHED',
+                deleted: false,
+            },
+            include: {
+                // author: true,
+                // content: true,
+                tags: {
+                    include: {
+                        tag: true,
+                    },
+                },
+                // stats: true,
+                // reactions: true,
+                // registrations: true,
+            },
+            orderBy: {
+                publishedAt: 'desc',
+            },
+            take: limit,
+        });
+
+        // return events;
+
+        // const eventsWithCount = events.map((event) => {
+        //     const registeredCount = event.registrations?.length || 0;
+        //     const { registrations, ...eventWithoutRegistrations } = event;
+
+        //     return {
+        //         ...eventWithoutRegistrations,
+        //         registeredCount,
+        //     };
+        // });
+
+        return events.map((event) =>
+            this.app.transformImageUrls(event, ...transformImages),
+        );
+    }
+
+    async setFeatured(id: string, isFeatured: boolean): Promise<Event> {
+        const event = await this.findOne(id);
+        if (!event) {
+            throw new NotFoundException('Event not found');
+        }
+
+        if (event.status !== 'PUBLISHED') {
+            throw new BadRequestException('Only published events can be featured');
+        }
+
+        return this.prisma.event.update({
+            where: { id },
+            data: { isFeatured },
+        });
+    }
 }

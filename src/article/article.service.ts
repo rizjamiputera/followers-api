@@ -1,5 +1,5 @@
 import {
-    ForbiddenException,
+    BadRequestException,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
@@ -705,6 +705,52 @@ export class ArticleService {
             });
 
             return;
+        });
+    }
+
+    // FEATURED ARTICLES MANAGEMENT
+    async getFeaturedArticles(limit: number = 5): Promise<Article[]> {
+        const articles = await this.prisma.article.findMany({
+            where: {
+                isFeatured: true,
+                status: 'PUBLISHED',
+                deleted: false,
+            },
+            include: {
+                author: true,
+                // content: true,
+                tags: {
+                    include: {
+                        tag: true,
+                    },
+                },
+                // stats: true,
+                reactions: true,
+            },
+            orderBy: {
+                publishedAt: 'desc',
+            },
+            take: limit,
+        });
+
+        return articles.map((article) =>
+            this.app.transformImageUrls(article, ...transformImages),
+        );
+    }
+
+    async setFeatured(id: string, isFeatured: boolean): Promise<Article> {
+        const article = await this.findOne(id);
+        if (!article) {
+            throw new NotFoundException('Article not found');
+        }
+
+        if (article.status !== 'PUBLISHED') {
+            throw new BadRequestException('Only published articles can be featured');
+        }
+
+        return this.prisma.article.update({
+            where: { id },
+            data: { isFeatured },
         });
     }
 }
