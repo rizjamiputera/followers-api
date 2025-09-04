@@ -29,7 +29,7 @@ jobs:
 
                     git reset --hard origin/main && \
 
-                    from package.json using grep and sed
+                    # extract version from package.json using grep and sed
                     VERSION=\$(grep -o '\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"' package.json | sed 's/.*\"\([^\"]*\)\"/\1/') && \
                     IMAGE_TAG=prod-api-followers:\$VERSION && \
 
