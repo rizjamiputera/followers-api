@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { UserSeed } from './seeder/user-seeder';
 import { ArticleSeed } from './seeder/article-seeder';
 import { EventSeed } from './seeder/event-seeder';
+import { EventRegistrationSeed } from './seeder/event-registration-seeder';
 import { UserProductionSeed } from './seeder/production/user-production';
 const prisma = new PrismaClient();
 
@@ -11,7 +12,8 @@ async function main() {
     } else {
         await UserSeed(prisma);
         await ArticleSeed(prisma);
-        await EventSeed(prisma);
+        // await EventSeed(prisma);
+        // await EventRegistrationSeed(prisma);
         // await ContentReactionSeed(prisma);
     }
 }
