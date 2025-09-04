@@ -16,6 +16,8 @@ import { CommentModule } from './comment/comment.module';
 import { PhotoContentModule } from './photo-content/photo-content.module';
 import { EventModule } from './event/event.module';
 import { ContentStatsModule } from './content-stats/content-stats.module';
+import { HomePageModule } from './home-page/home-page.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
     imports: [
@@ -35,6 +37,8 @@ import { ContentStatsModule } from './content-stats/content-stats.module';
         PhotoContentModule,
         CommentModule,
         ContentStatsModule,
+        HomePageModule,
+        DashboardModule,
     ],
     controllers: [AppController],
     providers: [
