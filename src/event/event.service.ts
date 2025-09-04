@@ -807,6 +807,7 @@ export class EventService {
         const configData: Prisma.EventRegistrationConfigCreateInput = {
             event: { connect: { id: eventId } },
             isEnabled: configDto.isEnabled,
+            label: configDto.label || 'Registrasi',
             participantLimit: configDto.participantLimit,
             registrationStart: configDto.registrationStart ? new Date(configDto.registrationStart) : null,
             registrationEnd: configDto.registrationEnd ? new Date(configDto.registrationEnd) : null,
@@ -834,6 +835,7 @@ export class EventService {
 
         const updateData: Prisma.EventRegistrationConfigUpdateInput = {
             ...(configDto.isEnabled !== undefined && { isEnabled: configDto.isEnabled }),
+            ...(configDto.label !== undefined && { label: configDto.label }),
             ...(configDto.participantLimit !== undefined && { participantLimit: configDto.participantLimit }),
             ...(configDto.registrationStart && { registrationStart: new Date(configDto.registrationStart) }),
             ...(configDto.registrationEnd && { registrationEnd: new Date(configDto.registrationEnd) }),

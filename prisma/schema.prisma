@@ -582,6 +582,7 @@ model EventRegistrationConfig {
     event                Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
     eventId              String    @unique
     isEnabled            Boolean   @default(false)
+    label                String    @default("Registrasi") // custom label for registration form
     participantLimit     Int?      // null means unlimited
     registrationStart    DateTime? // null means open immediately when published
     registrationEnd      DateTime? // null means open until event starts
