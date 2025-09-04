@@ -67,6 +67,7 @@ model User {
     ratingsGiven     UserRating[]      @relation("RatingsGiven")
     ratingsReceived  UserRating[]      @relation("RatingsReceived")
     articleBookmarks ArticleBookmark[]
+    eventRegistrations EventRegistration[]
 
     @@index([email])
     @@map("user")
@@ -209,6 +210,8 @@ model Event {
     stats       ContentStats      @relation(fields: [statsId], references: [id])
     statsId     String            @unique
     visitors    Visit[]
+    registrationConfig EventRegistrationConfig?
+    registrations      EventRegistration[]
 
     @@index([status, publishedAt])
     @@index([authorId, status])
@@ -553,4 +556,61 @@ model UserRating {
     @@unique([userId, raterId])
     @@index([userId, rating])
     @@map("writer_rating")
+}
+
+// EVENT REGISTRATION SYSTEM
+enum RegistrationStatus {
+    PENDING
+    CONFIRMED  
+    CANCELLED
+}
+
+enum FormFieldType {
+    TEXT
+    EMAIL
+    PHONE
+    NUMBER
+    TEXTAREA
+    SELECT
+    CHECKBOX
+    RADIO
+    DATE
+}
+
+model EventRegistrationConfig {
+    id                   String    @id @default(uuid())
+    event                Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventId              String    @unique
+    isEnabled            Boolean   @default(false)
+    participantLimit     Int?      // null means unlimited
+    registrationStart    DateTime? // null means open immediately when published
+    registrationEnd      DateTime? // null means open until event starts
+    formFields           Json      @db.JsonB // flexible form field definitions
+    requireApproval      Boolean   @default(false) // if true, registrations need manual approval
+    confirmationMessage  String?   @db.Text // custom message shown after registration
+    createdAt            DateTime  @default(now())
+    updatedAt            DateTime  @updatedAt
+
+    @@map("event_registration_config")
+}
+
+model EventRegistration {
+    id               String             @id @default(uuid())
+    event            Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventId          String
+    user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId           String
+    formData         Json               @db.JsonB // user's form responses
+    status           RegistrationStatus @default(PENDING)
+    registeredAt     DateTime           @default(now())
+    confirmedAt      DateTime?
+    cancelledAt      DateTime?
+    cancellationNote String?            @db.Text
+    createdAt        DateTime           @default(now())
+    updatedAt        DateTime           @updatedAt
+
+    @@unique([eventId, userId]) // one registration per user per event
+    @@index([eventId, status])
+    @@index([userId, status])
+    @@map("event_registration")
 }

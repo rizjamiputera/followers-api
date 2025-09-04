@@ -33,13 +33,17 @@
         "@nestjs/swagger": "^11.2.0",
         "@nestjs/throttler": "^6.4.0",
         "@prisma/client": "^6.13.0",
+        "@types/puppeteer": "^5.4.7",
+        "@types/xlsx": "^0.0.35",
         "bcrypt": "^6.0.0",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.2",
         "dayjs": "^1.11.13",
+        "puppeteer": "^24.18.0",
         "reflect-metadata": "^0.2.2",
         "rxjs": "^7.8.2",
-        "sharp": "^0.34.3"
+        "sharp": "^0.34.3",
+        "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.1",
