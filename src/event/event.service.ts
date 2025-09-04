@@ -807,6 +807,7 @@ export class EventService {
         const configData: Prisma.EventRegistrationConfigCreateInput = {
             event: { connect: { id: eventId } },
             isEnabled: configDto.isEnabled,
+            label: configDto.label || 'Registrasi',
             participantLimit: configDto.participantLimit,
             registrationStart: configDto.registrationStart ? new Date(configDto.registrationStart) : null,
             registrationEnd: configDto.registrationEnd ? new Date(configDto.registrationEnd) : null,
@@ -834,6 +835,7 @@ export class EventService {
 
         const updateData: Prisma.EventRegistrationConfigUpdateInput = {
             ...(configDto.isEnabled !== undefined && { isEnabled: configDto.isEnabled }),
+            ...(configDto.label !== undefined && { label: configDto.label }),
             ...(configDto.participantLimit !== undefined && { participantLimit: configDto.participantLimit }),
             ...(configDto.registrationStart && { registrationStart: new Date(configDto.registrationStart) }),
             ...(configDto.registrationEnd && { registrationEnd: new Date(configDto.registrationEnd) }),
@@ -1540,5 +1542,65 @@ export class EventService {
             </body>
             </html>
         `;
+    }
+
+    // FEATURED EVENTS MANAGEMENT
+    // async getFeaturedEvents(limit: number = 5): Promise<EventWithRegistrationCount[]> {
+    async getFeaturedEvents(limit: number = 5): Promise<Event[]> {
+        const events = await this.prisma.event.findMany({
+            where: {
+                isFeatured: true,
+                status: 'PUBLISHED',
+                deleted: false,
+            },
+            include: {
+                // author: true,
+                // content: true,
+                tags: {
+                    include: {
+                        tag: true,
+                    },
+                },
+                // stats: true,
+                // reactions: true,
+                // registrations: true,
+            },
+            orderBy: {
+                publishedAt: 'desc',
+            },
+            take: limit,
+        });
+
+        // return events;
+
+        // const eventsWithCount = events.map((event) => {
+        //     const registeredCount = event.registrations?.length || 0;
+        //     const { registrations, ...eventWithoutRegistrations } = event;
+
+        //     return {
+        //         ...eventWithoutRegistrations,
+        //         registeredCount,
+        //     };
+        // });
+
+        return events.map((event) =>
+            this.app.transformImageUrls(event, ...transformImages),
+        );
+    }
+
+    async setFeatured(id: string, isFeatured: boolean): Promise<Event> {
+        const event = await this.findOne(id);
+        if (!event) {
+            throw new NotFoundException('Event not found');
+        }
+
+        if (event.status !== 'PUBLISHED') {
+            throw new BadRequestException('Only published events can be featured');
+        }
+
+        return this.prisma.event.update({
+            where: { id },
+            data: { isFeatured },
+        });
     }
 }

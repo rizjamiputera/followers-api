@@ -12,8 +12,8 @@ async function main() {
     } else {
         await UserSeed(prisma);
         await ArticleSeed(prisma);
-        // await EventSeed(prisma);
-        // await EventRegistrationSeed(prisma);
+        await EventSeed(prisma);
+        await EventRegistrationSeed(prisma);
         // await ContentReactionSeed(prisma);
     }
 }

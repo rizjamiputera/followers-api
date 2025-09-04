@@ -34,14 +34,14 @@ export class FormFieldDto {
     @IsNotEmpty()
     label: string;
 
-    @ApiProperty({ 
-        enum: FormFieldType, 
+    @ApiProperty({
+        enum: FormFieldType,
         description: 'Type of form field'
     })
     @IsNotEmpty()
     type: FormFieldType;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Whether this field is required',
         default: false
     })
@@ -49,7 +49,7 @@ export class FormFieldDto {
     @IsOptional()
     required?: boolean = false;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Placeholder text for the field',
         required: false
     })
@@ -57,7 +57,7 @@ export class FormFieldDto {
     @IsOptional()
     placeholder?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Help text for the field',
         required: false
     })
@@ -65,7 +65,7 @@ export class FormFieldDto {
     @IsOptional()
     helpText?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Options for SELECT, CHECKBOX, or RADIO fields',
         required: false,
         type: [String]
@@ -75,7 +75,7 @@ export class FormFieldDto {
     @IsOptional()
     options?: string[];
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Validation rules (e.g., min/max length, pattern)',
         required: false
     })
@@ -88,7 +88,16 @@ export class CreateRegistrationConfigDto {
     @IsBoolean()
     isEnabled: boolean;
 
-    @ApiProperty({ 
+    @ApiProperty({
+        description: 'Custom label for registration form',
+        default: 'Registrasi',
+        required: false
+    })
+    @IsString()
+    @IsOptional()
+    label?: string;
+
+    @ApiProperty({
         description: 'Maximum number of participants (null for unlimited)',
         required: false
     })
@@ -97,7 +106,7 @@ export class CreateRegistrationConfigDto {
     @Transform(({ value }) => value === null ? null : parseInt(value))
     participantLimit?: number | null;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Registration start date (ISO string)',
         required: false
     })
@@ -105,7 +114,7 @@ export class CreateRegistrationConfigDto {
     @IsOptional()
     registrationStart?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Registration end date (ISO string)',
         required: false
     })
@@ -113,7 +122,7 @@ export class CreateRegistrationConfigDto {
     @IsOptional()
     registrationEnd?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Form fields configuration',
         type: [FormFieldDto]
     })
@@ -122,7 +131,7 @@ export class CreateRegistrationConfigDto {
     @Type(() => FormFieldDto)
     formFields: FormFieldDto[];
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Whether registrations require manual approval',
         default: false
     })
@@ -130,7 +139,7 @@ export class CreateRegistrationConfigDto {
     @IsOptional()
     requireApproval?: boolean = false;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Custom confirmation message after registration',
         required: false
     })
@@ -140,7 +149,7 @@ export class CreateRegistrationConfigDto {
 }
 
 export class UpdateRegistrationConfigDto {
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Enable registration for this event',
         required: false
     })
@@ -148,7 +157,15 @@ export class UpdateRegistrationConfigDto {
     @IsOptional()
     isEnabled?: boolean;
 
-    @ApiProperty({ 
+    @ApiProperty({
+        description: 'Custom label for registration form',
+        required: false
+    })
+    @IsString()
+    @IsOptional()
+    label?: string;
+
+    @ApiProperty({
         description: 'Maximum number of participants (null for unlimited)',
         required: false
     })
@@ -157,7 +174,7 @@ export class UpdateRegistrationConfigDto {
     @Transform(({ value }) => value === null ? null : parseInt(value))
     participantLimit?: number | null;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Registration start date (ISO string)',
         required: false
     })
@@ -165,7 +182,7 @@ export class UpdateRegistrationConfigDto {
     @IsOptional()
     registrationStart?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Registration end date (ISO string)',
         required: false
     })
@@ -173,7 +190,7 @@ export class UpdateRegistrationConfigDto {
     @IsOptional()
     registrationEnd?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Form fields configuration',
         type: [FormFieldDto],
         required: false
@@ -184,7 +201,7 @@ export class UpdateRegistrationConfigDto {
     @IsOptional()
     formFields?: FormFieldDto[];
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Whether registrations require manual approval',
         required: false
     })
@@ -192,7 +209,7 @@ export class UpdateRegistrationConfigDto {
     @IsOptional()
     requireApproval?: boolean;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Custom confirmation message after registration',
         required: false
     })

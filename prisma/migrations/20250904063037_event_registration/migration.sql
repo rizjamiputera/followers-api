@@ -9,6 +9,7 @@ CREATE TABLE "followers"."event_registration_config" (
     "id" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "isEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "label" TEXT NOT NULL DEFAULT 'Registrasi',
     "participantLimit" INTEGER,
     "registrationStart" TIMESTAMP(3),
     "registrationEnd" TIMESTAMP(3),
