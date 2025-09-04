@@ -16,7 +16,7 @@ import { Module, Permission } from '@prisma/client';
 @ApiTags('Home Page')
 @Controller({ path: 'home-page', version: '1' })
 export class HomePageController {
-    constructor(private readonly homePageService: HomePageService) {}
+    constructor(private readonly homePageService: HomePageService) { }
 
     // PUBLIC ENDPOINTS FOR HOMEPAGE DATA
     @Public()
