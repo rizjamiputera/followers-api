@@ -4,6 +4,7 @@
 /build
 /public/*
 !/public/dummy
+/backups
 
 # Logs
 logs
