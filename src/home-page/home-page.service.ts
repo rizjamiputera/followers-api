@@ -36,10 +36,28 @@ export class HomePageService {
 
     // COMBINED HOMEPAGE DATA
     async getHomepageData() {
-        const [featuredArticles, featuredEvents] = await Promise.all([
+        const [featuredArticles, allFeaturedEvents] = await Promise.all([
             this.getFeaturedArticles(5),
             this.getFeaturedEvents(5),
         ]);
+
+        // Filter out events that have already passed
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+
+        const featuredEvents = allFeaturedEvents.filter(event => {
+            // If event has end_at, use it for comparison
+            if (event.end_at) {
+                const eventEndDate = new Date(event.end_at);
+                eventEndDate.setHours(0, 0, 0, 0);
+                return eventEndDate >= today; // Include if end date is today or future
+            }
+
+            // If no end_at, use start_at for comparison
+            const eventStartDate = new Date(event.start_at);
+            eventStartDate.setHours(0, 0, 0, 0);
+            return eventStartDate >= today; // Include if start date is today or future
+        });
 
         return {
             featuredArticles,
