@@ -14,6 +14,8 @@ import {
     NotFoundException,
     Req,
     BadRequestException,
+    Res,
+    Header,
 } from '@nestjs/common';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import {
@@ -38,6 +40,8 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { PublishEventDto } from './dto/publish-event.dto';
 import { RejectEventDto } from './dto/reject-event.dto';
 import { EventWithAuthReaction } from './event-interface';
+import { CreateRegistrationConfigDto, UpdateRegistrationConfigDto } from './dto/registration-config.dto';
+import { RegisterForEventDto, UpdateRegistrationDto, ConfirmRegistrationDto, CancelRegistrationDto, RegistrationFilterDto } from './dto/event-registration.dto';
 
 @ApiTags('Event')
 @Controller({
@@ -66,7 +70,7 @@ export class EventController {
     ) {
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
-        const { content, tags, image, image_md, ...eventDto } = createEventDto;
+        const { content, tags, image, image_md, image_portrait, image_portrait_md, ...eventDto } = createEventDto;
         const data: Prisma.EventCreateInput & { tags?: string[] } = {
             ...eventDto,
             ...(image && {
@@ -74,6 +78,12 @@ export class EventController {
             }),
             ...(image_md && {
                 image_md: image_md.replace(apiUri, ''),
+            }),
+            ...(image_portrait && {
+                image_portrait: image_portrait.replace(apiUri, ''),
+            }),
+            ...(image_portrait_md && {
+                image_portrait_md: image_portrait_md.replace(apiUri, ''),
             }),
             content: { create: { content: content } },
             author: { connect: { id: req.user.id } },
@@ -144,7 +154,7 @@ export class EventController {
 
     @PermissionsRequired(Module.EVENT, Permission.READ)
     @ApiBearerAuth()
-    @Get(':id')
+    @Get('admin/:id')
     async findOne(
         @Param('id') id: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
@@ -156,6 +166,20 @@ export class EventController {
         return event;
     }
 
+    // @Public()
+    // @Get(':id')
+    // findOnePublic(
+    //     @Request() req: any,
+    //     @Param('id') id: string,
+    //     @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
+    // ): Promise<EventWithAuthReaction> {
+    //     return this.eventService.findOneWithUserContext(
+    //         id,
+    //         req.user?.id ?? null,
+    //         query.includes,
+    //     );
+    // }
+
     @PermissionsRequired(Module.EVENT, Permission.READ, Permission.CREATE, Permission.EDIT)
     @ApiBearerAuth()
     @Get('my/:id')
@@ -164,7 +188,7 @@ export class EventController {
         @Param('id') id: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        const event = await this.eventService.findOne(id, query.includes);
+        const event = await this.eventService.findOneWithUserContext(id, req.user.id, query.includes);
 
         if (!event) throw new NotFoundException('Event is not found');
 
@@ -197,11 +221,14 @@ export class EventController {
 
         if (updateEventDto.image && updateEventDto.image_md) {
             updateEventDto.image = updateEventDto.image.replace(apiUri, '');
-            updateEventDto.image_md = updateEventDto.image_md.replace(
-                apiUri,
-                '',
-            );
+            updateEventDto.image_md = updateEventDto.image_md.replace(apiUri, '');
         }
+
+        if (updateEventDto.image_portrait && updateEventDto.image_portrait_md) {
+            updateEventDto.image_portrait = updateEventDto.image_portrait.replace(apiUri, '');
+            updateEventDto.image_portrait_md = updateEventDto.image_portrait_md.replace(apiUri, '');
+        }
+
         return this.eventService.update(id, updateEventDto);
     }
 
@@ -421,5 +448,140 @@ export class EventController {
     @Post('share/:id')
     share(@Param('id') id: string) {
         return this.eventService.share(id);
+    }
+
+    // EVENT REGISTRATION ENDPOINTS
+
+    // Registration Config Management (Event Authors/Admins)
+    @PermissionsRequired(Module.EVENT, Permission.CREATE, Permission.EDIT)
+    @ApiBearerAuth()
+    @Post(':id/registration-config')
+    async createRegistrationConfig(
+        @Request() req: any,
+        @Param('id') eventId: string,
+        @Body(new ValidationPipe()) configDto: CreateRegistrationConfigDto,
+    ) {
+        const event = await this.eventService.findOne(eventId);
+        if (event.authorId !== req.user.id && req.user.role === 'USER') {
+            throw new ForbiddenException('Only event author can configure registration');
+        }
+        return this.eventService.createRegistrationConfig(eventId, configDto);
+    }
+
+    @PermissionsRequired(Module.EVENT, Permission.CREATE, Permission.EDIT)
+    @ApiBearerAuth()
+    @Patch(':id/registration-config')
+    async updateRegistrationConfig(
+        @Request() req: any,
+        @Param('id') eventId: string,
+        @Body(new ValidationPipe()) configDto: UpdateRegistrationConfigDto,
+    ) {
+        const event = await this.eventService.findOne(eventId);
+        if (event.authorId !== req.user.id && req.user.role === 'USER') {
+            throw new ForbiddenException('Only event author can configure registration');
+        }
+        return this.eventService.updateRegistrationConfig(eventId, configDto);
+    }
+
+    @Public()
+    @Get(':id/registration-config')
+    async getRegistrationConfig(@Param('id') eventId: string) {
+        return this.eventService.getRegistrationConfig(eventId);
+    }
+
+    // User Registration
+    @ApiBearerAuth()
+    @Post(':id/register')
+    @HttpCode(201)
+    async registerForEvent(
+        @Request() req: any,
+        @Param('id') eventId: string,
+        @Body(new ValidationPipe()) registrationDto: RegisterForEventDto,
+    ) {
+        return this.eventService.registerForEvent(eventId, req.user.id, registrationDto);
+    }
+
+    @ApiBearerAuth()
+    @Patch('/registration/:registrationId')
+    async updateRegistration(
+        @Request() req: any,
+        @Param('registrationId') registrationId: string,
+        @Body(new ValidationPipe()) updateDto: UpdateRegistrationDto,
+    ) {
+        return this.eventService.updateRegistration(registrationId, req.user.id, updateDto);
+    }
+
+    @ApiBearerAuth()
+    @Delete('/registration/:registrationId')
+    @HttpCode(204)
+    async cancelRegistration(
+        @Request() req: any,
+        @Param('registrationId') registrationId: string,
+        @Body(new ValidationPipe()) cancelDto: CancelRegistrationDto,
+    ) {
+        return this.eventService.cancelRegistration(registrationId, req.user.id, cancelDto);
+    }
+
+    // Registration Management (Event Authors/Admins)
+    @PermissionsRequired(Module.EVENT, Permission.READ)
+    @ApiBearerAuth()
+    @Get(':id/registrations')
+    async getEventRegistrations(
+        @Request() req: any,
+        @Param('id') eventId: string,
+        @Query(new ValidationPipe({ transform: true })) pagination: PaginationDeletedIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true })) filter: RegistrationFilterDto,
+    ) {
+        const event = await this.eventService.findOne(eventId);
+        if (event.authorId !== req.user.id && req.user.role === 'USER') {
+            throw new ForbiddenException('Only event author can view registrations');
+        }
+        return this.eventService.getEventRegistrations(eventId, pagination, filter);
+    }
+
+    @PermissionsRequired(Module.EVENT, Permission.READ)
+    @ApiBearerAuth()
+    @Get(':id/registrations/export')
+    @Header('Content-Type', 'application/pdf')
+    async exportEventRegistrations(
+        @Request() req: any,
+        @Param('id') eventId: string,
+        @Query(new ValidationPipe({ transform: true })) filter: RegistrationFilterDto,
+        @Res() res: any,
+    ) {
+        const event = await this.eventService.findOne(eventId);
+        if (event.authorId !== req.user.id && req.user.role === 'USER') {
+            throw new ForbiddenException('Only event author can export registrations');
+        }
+
+        const buffer = await this.eventService.exportEventRegistrationsToPDF(eventId, filter);
+        const filename = `${event.slug}-registrations-${new Date().toISOString().split('T')[0]}.pdf`;
+
+        res.set({
+            'Content-Disposition': `attachment; filename="${filename}"`,
+        });
+
+        return res.send(buffer);
+    }
+
+    @PermissionsRequired(Module.EVENT, Permission.APPROVE)
+    @ApiBearerAuth()
+    @Post('/registration/:registrationId/confirm')
+    @HttpCode(204)
+    async confirmRegistration(
+        @Param('registrationId') registrationId: string,
+        @Body(new ValidationPipe()) confirmDto: ConfirmRegistrationDto,
+    ) {
+        return this.eventService.confirmRegistration(registrationId, confirmDto);
+    }
+
+    // User's Own Registrations
+    @ApiBearerAuth()
+    @Get('/my-registrations')
+    async getUserRegistrations(
+        @Request() req: any,
+        @Query(new ValidationPipe({ transform: true })) pagination: PaginationDeletedIncludeQueryDto,
+    ) {
+        return this.eventService.getUserRegistrations(req.user.id, pagination);
     }
 }

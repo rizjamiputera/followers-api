@@ -96,7 +96,6 @@ export class ArticleController {
         @Query(new ValidationPipe({ transform: true }))
         filter: FilterArticleQueryDto,
     ): Promise<Paginate<Article[]>> {
-        console.log({ user: req.user })
         return this.articleService.findAll(pagination, filter);
     }
 

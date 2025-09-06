@@ -1,0 +1,56 @@
+name: Deploy to Staging
+
+on:
+    push:
+        branches:
+            - stg # run only when pushing to stg
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up SSH
+              uses: webfactory/ssh-agent@v0.7.0
+              with:
+                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            - name: Deploy via SSH
+              run: |
+                  ssh -o StrictHostKeyChecking=no deploy@${{ secrets.VPS_HOST }} "
+                    cd /opt/followers/followers-api && \
+                    git config --global --add safe.directory /opt/followers/followers-api && \
+
+                    git fetch origin --tags && \
+                    git checkout stg && \
+
+                    git reset --hard origin/stg && \
+
+                    # extract version from package.json using grep and sed
+                    VERSION=\$(grep -o '\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"' package.json | sed 's/.*\"\([^\"]*\)\"/\1/') && \
+                    IMAGE_TAG=stg-api-followers:\$VERSION && \
+
+                    echo Building image = \$IMAGE_TAG && \
+
+                    echo 'Ensuring production containers are running before staging deployment...' && \
+                    docker ps --filter 'name=prod' --format 'table {{.Names}}\t{{.Status}}' && \
+                    
+                    echo 'Building staging image...' && \
+                    docker compose -f docker-compose-staging.yml build --no-cache && \
+                    docker tag stg-api-followers:latest \$IMAGE_TAG && \
+                    
+                    echo 'Deploying staging with production data copy...' && \
+                    docker compose -f docker-compose-staging.yml down --volumes && \
+                    docker compose -f docker-compose-staging.yml up -d && \
+                    
+                    echo 'Waiting for staging services to be ready...' && \
+                    sleep 15 && \
+                    
+                    echo 'Verifying staging deployment...' && \
+                    docker ps --filter 'name=stg' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' && \
+
+                    docker image prune -f --filter \"until=168h\"
+                  "

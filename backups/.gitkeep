@@ -1,0 +1,2 @@
+# This directory stores automatic backups created during staging deployment
+# Backups are automatically cleaned up after 30 days
