@@ -38,35 +38,35 @@ enum Module {
 }
 
 model User {
-    id               String            @id @default(uuid())
-    name             String            @db.VarChar(100)
-    email            String            @unique @db.VarChar(255)
-    avatar           String?           @db.VarChar(255)
-    avatar_md        String?           @db.VarChar(255)
-    role             Role
-    password         Password?
-    auths            Auth[]
-    active           Boolean           @default(true)
-    createdAt        DateTime          @default(now())
-    updatedAt        DateTime          @updatedAt
-    deleted          Boolean           @default(false)
-    permissions      UserPermission[]
-    ErrorLog         ErrorLog[]
-    articles         Article[]         @relation("author_articles")
-    events           Event[]           @relation("author_events")
-    contentApprovals ContentApproval[] @relation("content_approvals")
-    articlesReaction ContentReaction[]
-    articlesComments Comment[]         @relation("comment")
-    commentReactions CommentReaction[]
-    mentions         Comment[]         @relation("comment_mentions")
-    visits           Visitor[]
-    profile          Profile?
-    isProfilePublic  Boolean           @default(false)
-    followers        Follow[]          @relation("UserFollowers")
-    following        Follow[]          @relation("UserFollowing")
-    ratingsGiven     UserRating[]      @relation("RatingsGiven")
-    ratingsReceived  UserRating[]      @relation("RatingsReceived")
-    articleBookmarks ArticleBookmark[]
+    id                 String              @id @default(uuid())
+    name               String              @db.VarChar(100)
+    email              String              @unique @db.VarChar(255)
+    avatar             String?             @db.VarChar(255)
+    avatar_md          String?             @db.VarChar(255)
+    role               Role
+    password           Password?
+    auths              Auth[]
+    active             Boolean             @default(true)
+    createdAt          DateTime            @default(now())
+    updatedAt          DateTime            @updatedAt
+    deleted            Boolean             @default(false)
+    permissions        UserPermission[]
+    ErrorLog           ErrorLog[]
+    articles           Article[]           @relation("author_articles")
+    events             Event[]             @relation("author_events")
+    contentApprovals   ContentApproval[]   @relation("content_approvals")
+    articlesReaction   ContentReaction[]
+    articlesComments   Comment[]           @relation("comment")
+    commentReactions   CommentReaction[]
+    mentions           Comment[]           @relation("comment_mentions")
+    visits             Visitor[]
+    profile            Profile?
+    isProfilePublic    Boolean             @default(false)
+    followers          Follow[]            @relation("UserFollowers")
+    following          Follow[]            @relation("UserFollowing")
+    ratingsGiven       UserRating[]        @relation("RatingsGiven")
+    ratingsReceived    UserRating[]        @relation("RatingsReceived")
+    articleBookmarks   ArticleBookmark[]
     eventRegistrations EventRegistration[]
 
     @@index([email])
@@ -182,34 +182,36 @@ model Article {
  * Pemateri
  */
 model Event {
-    id          String            @id @default(uuid())
-    slug        String            @unique @db.VarChar(255)
-    title       String            @db.VarChar(255)
-    excerpt     String            @db.VarChar(500)
-    image       String?           @db.VarChar(255)
-    image_md    String?           @db.VarChar(255)
-    content     Content           @relation(fields: [contentId], references: [id], onDelete: Restrict)
-    contentId   String            @unique
-    location    String?
-    address     String?
-    start_at    DateTime
-    end_at      DateTime?
-    photos      PhotoContent[]
-    versions    ContentVersion[]
-    isFeatured  Boolean           @default(false)
-    status      ContentStatus     @default(DRAFT)
-    publishedAt DateTime? // actual publish time
-    author      User              @relation("author_events", fields: [authorId], references: [id], onDelete: Restrict)
-    authorId    String
-    approvals   ContentApproval[]
-    tags        ContentTag[]
-    reactions   ContentReaction[]
-    createdAt   DateTime          @default(now())
-    updatedAt   DateTime          @updatedAt
-    deleted     Boolean           @default(false)
-    stats       ContentStats      @relation(fields: [statsId], references: [id])
-    statsId     String            @unique
-    visitors    Visit[]
+    id                 String                   @id @default(uuid())
+    slug               String                   @unique @db.VarChar(255)
+    title              String                   @db.VarChar(255)
+    excerpt            String                   @db.VarChar(500)
+    image              String?                  @db.VarChar(255)
+    image_md           String?                  @db.VarChar(255)
+    image_portrait     String?                  @db.VarChar(255)
+    image_portrait_md  String?                  @db.VarChar(255)
+    content            Content                  @relation(fields: [contentId], references: [id], onDelete: Restrict)
+    contentId          String                   @unique
+    location           String?
+    address            String?
+    start_at           DateTime
+    end_at             DateTime?
+    photos             PhotoContent[]
+    versions           ContentVersion[]
+    isFeatured         Boolean                  @default(false)
+    status             ContentStatus            @default(DRAFT)
+    publishedAt        DateTime? // actual publish time
+    author             User                     @relation("author_events", fields: [authorId], references: [id], onDelete: Restrict)
+    authorId           String
+    approvals          ContentApproval[]
+    tags               ContentTag[]
+    reactions          ContentReaction[]
+    createdAt          DateTime                 @default(now())
+    updatedAt          DateTime                 @updatedAt
+    deleted            Boolean                  @default(false)
+    stats              ContentStats             @relation(fields: [statsId], references: [id])
+    statsId            String                   @unique
+    visitors           Visit[]
     registrationConfig EventRegistrationConfig?
     registrations      EventRegistration[]
 
@@ -561,7 +563,7 @@ model UserRating {
 // EVENT REGISTRATION SYSTEM
 enum RegistrationStatus {
     PENDING
-    CONFIRMED  
+    CONFIRMED
     CANCELLED
 }
 
@@ -578,19 +580,19 @@ enum FormFieldType {
 }
 
 model EventRegistrationConfig {
-    id                   String    @id @default(uuid())
-    event                Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-    eventId              String    @unique
-    isEnabled            Boolean   @default(false)
-    label                String    @default("Registrasi") // custom label for registration form
-    participantLimit     Int?      // null means unlimited
-    registrationStart    DateTime? // null means open immediately when published
-    registrationEnd      DateTime? // null means open until event starts
-    formFields           Json      @db.JsonB // flexible form field definitions
-    requireApproval      Boolean   @default(false) // if true, registrations need manual approval
-    confirmationMessage  String?   @db.Text // custom message shown after registration
-    createdAt            DateTime  @default(now())
-    updatedAt            DateTime  @updatedAt
+    id                  String    @id @default(uuid())
+    event               Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventId             String    @unique
+    isEnabled           Boolean   @default(false)
+    label               String    @default("Registrasi") // custom label for registration form
+    participantLimit    Int? // null means unlimited
+    registrationStart   DateTime? // null means open immediately when published
+    registrationEnd     DateTime? // null means open until event starts
+    formFields          Json      @db.JsonB // flexible form field definitions
+    requireApproval     Boolean   @default(false) // if true, registrations need manual approval
+    confirmationMessage String?   @db.Text // custom message shown after registration
+    createdAt           DateTime  @default(now())
+    updatedAt           DateTime  @updatedAt
 
     @@map("event_registration_config")
 }

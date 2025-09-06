@@ -48,6 +48,16 @@ export class CreateEventDto {
     @IsString()
     image_md: string;
 
+    @ApiProperty({ description: 'Image Portrait' })
+    @IsOptional()
+    @IsString()
+    image_portrait: string;
+
+    @ApiProperty({ description: 'Image Portrait medium' })
+    @IsOptional()
+    @IsString()
+    image_portrait_md: string;
+
     @ApiProperty({ description: 'Event content (JSON)' })
     @IsNotEmpty()
     content: any;

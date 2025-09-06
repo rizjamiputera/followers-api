@@ -70,7 +70,7 @@ export class EventController {
     ) {
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
-        const { content, tags, image, image_md, ...eventDto } = createEventDto;
+        const { content, tags, image, image_md, image_portrait, image_portrait_md, ...eventDto } = createEventDto;
         const data: Prisma.EventCreateInput & { tags?: string[] } = {
             ...eventDto,
             ...(image && {
@@ -78,6 +78,12 @@ export class EventController {
             }),
             ...(image_md && {
                 image_md: image_md.replace(apiUri, ''),
+            }),
+            ...(image_portrait && {
+                image_portrait: image_portrait.replace(apiUri, ''),
+            }),
+            ...(image_portrait_md && {
+                image_portrait_md: image_portrait_md.replace(apiUri, ''),
             }),
             content: { create: { content: content } },
             author: { connect: { id: req.user.id } },
@@ -215,11 +221,14 @@ export class EventController {
 
         if (updateEventDto.image && updateEventDto.image_md) {
             updateEventDto.image = updateEventDto.image.replace(apiUri, '');
-            updateEventDto.image_md = updateEventDto.image_md.replace(
-                apiUri,
-                '',
-            );
+            updateEventDto.image_md = updateEventDto.image_md.replace(apiUri, '');
         }
+
+        if (updateEventDto.image_portrait && updateEventDto.image_portrait_md) {
+            updateEventDto.image_portrait = updateEventDto.image_portrait.replace(apiUri, '');
+            updateEventDto.image_portrait_md = updateEventDto.image_portrait_md.replace(apiUri, '');
+        }
+
         return this.eventService.update(id, updateEventDto);
     }
 
