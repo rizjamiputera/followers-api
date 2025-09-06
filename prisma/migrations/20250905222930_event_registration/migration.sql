@@ -4,6 +4,10 @@ CREATE TYPE "followers"."RegistrationStatus" AS ENUM ('PENDING', 'CONFIRMED', 'C
 -- CreateEnum
 CREATE TYPE "followers"."FormFieldType" AS ENUM ('TEXT', 'EMAIL', 'PHONE', 'NUMBER', 'TEXTAREA', 'SELECT', 'CHECKBOX', 'RADIO', 'DATE');
 
+-- AlterTable
+ALTER TABLE "followers"."event" ADD COLUMN     "image_portrait" VARCHAR(255),
+ADD COLUMN     "image_portrait_md" VARCHAR(255);
+
 -- CreateTable
 CREATE TABLE "followers"."event_registration_config" (
     "id" TEXT NOT NULL,

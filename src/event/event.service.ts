@@ -45,6 +45,8 @@ const VALID_INCLUDES = [
 const transformImages = [
     'image',
     'image_md',
+    'image_portrait',
+    'image_portrait_md',
     'author.avatar',
     'author.avatar_md',
 ];
@@ -140,6 +142,8 @@ export class EventService {
             await this.assignMainPhoto(create.id, [
                 create.image,
                 create.image_md,
+                create.image_portrait,
+                create.image_portrait_md
             ]);
         }
 
@@ -448,6 +452,8 @@ export class EventService {
             eventData.excerpt !== current.excerpt ||
             eventData.image !== current.image ||
             eventData.image_md !== current.image_md ||
+            eventData.image_portrait !== current.image_portrait ||
+            eventData.image_portrait_md !== current.image_portrait_md ||
             (content &&
                 current.content &&
                 JSON.stringify(content) !==
@@ -469,7 +475,7 @@ export class EventService {
         }
 
         // update photo
-        if (eventData.image && current.image_md) {
+        if ((eventData.image && current.image_md) || (eventData.image_portrait && current.image_portrait_md)) {
             // disconnet current photo
             await this.prisma.photoContent.updateMany({
                 where: {
@@ -479,10 +485,23 @@ export class EventService {
                 data: { eventId: null },
             });
 
-            await this.assignMainPhoto(id, [
-                eventData.image as string,
-                eventData.image_md as string,
-            ]);
+            let photos: string[] = [];
+
+            if (eventData.image) {
+                photos = [
+                    eventData.image as string,
+                    eventData.image_md as string,
+                ]
+            }
+            if (eventData.image_portrait) {
+                photos = [
+                    ...photos,
+                    eventData.image_portrait as string,
+                    eventData.image_portrait_md as string,
+                ]
+            }
+
+            await this.assignMainPhoto(id, photos);
         }
 
         // Update content if provided and changed
