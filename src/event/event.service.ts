@@ -163,6 +163,7 @@ export class EventService {
             exclude_statuses,
             published,
             start_from,
+            past
         } = filter;
 
         // Check if registeredCount is requested in includes
@@ -203,6 +204,9 @@ export class EventService {
                 ...(start_from
                     ? { start_at: { gte: start_from } }
                     : { start_at: { gte: new Date() } }),
+                ...(past &&
+                    { start_at: { lte: new Date() } }
+                )
             });
         }
 
