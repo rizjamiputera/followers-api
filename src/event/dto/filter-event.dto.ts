@@ -65,4 +65,10 @@ export class FilterEventQueryDto {
     })
     @IsDate()
     start_from?: Date;
+
+    @ApiPropertyOptional({ description: 'Filter with already past' })
+    @IsOptional()
+    @Transform(({ value }) => value == 'true')
+    @IsBoolean()
+    past?: boolean;
 }
