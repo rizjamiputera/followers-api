@@ -18,6 +18,7 @@ import { EventModule } from './event/event.module';
 import { ContentStatsModule } from './content-stats/content-stats.module';
 import { HomePageModule } from './home-page/home-page.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
         ContentStatsModule,
         HomePageModule,
         DashboardModule,
+        MailModule,
     ],
     controllers: [AppController],
     providers: [

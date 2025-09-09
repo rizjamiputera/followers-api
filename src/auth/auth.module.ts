@@ -7,10 +7,12 @@ import { UserService } from 'src/user/user.service';
 import { UserModule } from 'src/user/user.module';
 import { jwtConstants } from './auth.constants';
 import { AppService } from 'src/app.service';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
     imports: [
         UserModule,
+        MailModule,
         JwtModule.register({
             global: true,
             secret: jwtConstants.secret,

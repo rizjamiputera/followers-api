@@ -22,6 +22,8 @@ import { LoginDto } from './dto/login.dto';
 import { Prisma, User } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from './auth.metadata';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
@@ -198,5 +200,29 @@ export class AuthController {
         };
 
         return this.userService.update(userId, req.user.role, userId, dataUser);
+    }
+
+    /**
+     * Send password reset email
+     */
+    @Public()
+    @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
+    async forgotPassword(
+        @Body(new ValidationPipe()) forgotPasswordDto: ForgotPasswordDto,
+    ): Promise<{ message: string }> {
+        return this.authService.forgotPassword(forgotPasswordDto);
+    }
+
+    /**
+     * Reset password using token from email
+     */
+    @Public()
+    @Post('reset-password')
+    @HttpCode(HttpStatus.OK)
+    async resetPassword(
+        @Body(new ValidationPipe()) resetPasswordDto: ResetPasswordDto,
+    ): Promise<{ message: string }> {
+        return this.authService.resetPassword(resetPasswordDto);
     }
 }
