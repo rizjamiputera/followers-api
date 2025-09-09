@@ -107,19 +107,23 @@ export class CreateRegistrationConfigDto {
     participantLimit?: number | null;
 
     @ApiProperty({
-        description: 'Registration start date (ISO string)',
-        required: false
+        description: 'Registration start date (ISO string with timezone)',
+        required: false,
+        example: '2024-12-25T10:00:00Z'
     })
-    @IsDateString()
+    @IsDateString({}, { message: 'Registration start must be a valid ISO date string with timezone' })
     @IsOptional()
+    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
     registrationStart?: string;
 
     @ApiProperty({
-        description: 'Registration end date (ISO string)',
-        required: false
+        description: 'Registration end date (ISO string with timezone)',
+        required: false,
+        example: '2024-12-31T23:59:59Z'
     })
-    @IsDateString()
+    @IsDateString({}, { message: 'Registration end must be a valid ISO date string with timezone' })
     @IsOptional()
+    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
     registrationEnd?: string;
 
     @ApiProperty({
@@ -175,19 +179,23 @@ export class UpdateRegistrationConfigDto {
     participantLimit?: number | null;
 
     @ApiProperty({
-        description: 'Registration start date (ISO string)',
-        required: false
+        description: 'Registration start date (ISO string with timezone)',
+        required: false,
+        example: '2024-12-25T10:00:00Z'
     })
-    @IsDateString()
+    @IsDateString({}, { message: 'Registration start must be a valid ISO date string with timezone' })
     @IsOptional()
+    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
     registrationStart?: string;
 
     @ApiProperty({
-        description: 'Registration end date (ISO string)',
-        required: false
+        description: 'Registration end date (ISO string with timezone)',
+        required: false,
+        example: '2024-12-31T23:59:59Z'
     })
-    @IsDateString()
+    @IsDateString({}, { message: 'Registration end must be a valid ISO date string with timezone' })
     @IsOptional()
+    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
     registrationEnd?: string;
 
     @ApiProperty({
