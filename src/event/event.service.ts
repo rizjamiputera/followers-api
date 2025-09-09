@@ -1376,21 +1376,56 @@ export class EventService {
 
         // Generate PDF using Puppeteer
         let browser: puppeteer.Browser;
+        
+        // Try different executable paths for Alpine Linux
+        const possiblePaths = [
+            process.env.PUPPETEER_EXECUTABLE_PATH,
+            '/usr/bin/chromium-browser',
+            '/usr/bin/chromium',
+            '/usr/local/bin/chromium',
+            puppeteer.executablePath()
+        ].filter(Boolean);
+
+        let lastError: Error | null = null;
+        
+        for (const execPath of possiblePaths) {
+            try {
+                console.log(`Attempting to launch Chromium at: ${execPath}`);
+                
+                browser = await puppeteer.launch({
+                    headless: true,
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--single-process',
+                        '--disable-gpu',
+                        '--disable-software-rasterizer',
+                        '--disable-background-timer-throttling',
+                        '--disable-backgrounding-occluded-windows',
+                        '--disable-renderer-backgrounding'
+                    ],
+                    executablePath: execPath
+                });
+                
+                console.log(`Successfully launched Chromium at: ${execPath}`);
+                break; // Success, exit loop
+                
+            } catch (error) {
+                console.error(`Failed to launch Chromium at ${execPath}:`, error.message);
+                lastError = error;
+                continue; // Try next path
+            }
+        }
+        
+        if (!browser) {
+            throw lastError || new Error('Could not find Chromium executable');
+        }
+
         try {
-            browser = await puppeteer.launch({
-                headless: true,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--single-process',
-                    '--disable-gpu'
-                ],
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
-            });
 
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'domcontentloaded' });
@@ -1408,9 +1443,25 @@ export class EventService {
 
             return Buffer.from(pdfBuffer);
         } catch (error) {
-            console.error('Puppeteer error:', error);
+            console.error('Puppeteer error details:', {
+                message: error.message,
+                stack: error.stack,
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
+                nodeEnv: process.env.NODE_ENV
+            });
+            
+            // Check if Chromium executable exists
+            try {
+                const fs = require('fs');
+                const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
+                const exists = fs.existsSync(execPath);
+                console.error('Chromium executable check:', { execPath, exists });
+            } catch (fsError) {
+                console.error('File system check error:', fsError);
+            }
+            
             throw new BadRequestException(
-                'Failed to generate PDF export. Please check server configuration or try again later.'
+                `Failed to generate PDF export: ${error.message}. Please check server configuration.`
             );
         } finally {
             if (browser) {

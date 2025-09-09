@@ -16,7 +16,16 @@ RUN apk add --no-cache \
     freetype-dev \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    ttf-dejavu \
+    ttf-droid \
+    ttf-liberation \
+    font-noto \
+    font-noto-cjk \
+    font-noto-emoji \
+    udev \
+    xvfb \
+    xvfb-run
 
 # PRISMA
 # ENV DATABASE_URL="mysql://root:my-secret-pw@db-ecourse-rehab-hati:3306/ecourse"
@@ -32,6 +41,9 @@ RUN npm ci --verbose
 
 # Copy the rest of the application code
 COPY . .
+
+# Verify Chromium installation
+RUN node verify-chromium.js
 
 # EXPOSE ${PORT}
 
