@@ -6,6 +6,17 @@ ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mydb?schema=my_d
 ENV JWTSECRET="SECRET"
 ENV WEB_URI="http://localhost:3000"
 ENV API_URI="http://localhost:5111"
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Install Chromium and required dependencies for Puppeteer
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 # PRISMA
 # ENV DATABASE_URL="mysql://root:my-secret-pw@db-ecourse-rehab-hati:3306/ecourse"

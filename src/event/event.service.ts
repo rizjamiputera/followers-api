@@ -1374,12 +1374,23 @@ export class EventService {
         const html = this.generateRegistrationPDFTemplate(event, registrations, formFields, stats);
 
         // Generate PDF using Puppeteer
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
-
+        let browser: puppeteer.Browser;
         try {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-gpu'
+                ],
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath()
+            });
+
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
@@ -1395,8 +1406,15 @@ export class EventService {
             });
 
             return Buffer.from(pdfBuffer);
+        } catch (error) {
+            console.error('Puppeteer error:', error);
+            throw new BadRequestException(
+                'Failed to generate PDF export. Please check server configuration or try again later.'
+            );
         } finally {
-            await browser.close();
+            if (browser) {
+                await browser.close();
+            }
         }
     }
 
