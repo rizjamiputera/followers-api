@@ -29,7 +29,7 @@ export class AuthService {
         private userService: UserService,
         private app: AppService,
         private mailService: MailService,
-    ) {}
+    ) { }
 
     // collect expired tokens in blacklist
     private blacklistedTokens: Set<string> = new Set();
@@ -173,7 +173,7 @@ export class AuthService {
      */
     async forgotPassword(data: ForgotPasswordDto): Promise<{ message: string }> {
         const { email } = data;
-        
+
         // Find user by email
         const user = await this.prisma.user.findUnique({
             where: { email: email.toLowerCase() },
@@ -199,12 +199,12 @@ export class AuthService {
                 iat: Math.floor(Date.now() / 1000), // issued at
             };
 
-            const resetToken = this.jwtService.sign(resetPayload, { 
+            const resetToken = this.jwtService.sign(resetPayload, {
                 expiresIn: '1h' // Token expires in 1 hour
             });
 
             // Generate reset URL
-            const resetUrl = `${process.env.WEB_URI}/reset-password?token=${resetToken}`;
+            const resetUrl = `${process.env.WEB_URI}/auth/reset-password?token=${resetToken}`;
 
             // Send password reset email
             const emailSent = await this.mailService.sendPasswordResetEmail(user.email, {
@@ -235,7 +235,7 @@ export class AuthService {
         try {
             // Verify and decode the reset token
             const payload = this.jwtService.verify(token);
-            
+
             // Check if token is for password reset
             if (payload.type !== 'password-reset') {
                 throw new BadRequestException('Invalid reset token');
@@ -243,7 +243,7 @@ export class AuthService {
 
             // Find user
             const user = await this.prisma.user.findUnique({
-                where: { 
+                where: {
                     id: payload.userId,
                     email: payload.email,
                 },
