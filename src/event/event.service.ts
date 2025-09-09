@@ -27,6 +27,7 @@ import { EventWithAuthReaction, EventWithRegistrationCount } from './event-inter
 import { CreateRegistrationConfigDto, UpdateRegistrationConfigDto, FormFieldDto } from './dto/registration-config.dto';
 import { RegisterForEventDto, UpdateRegistrationDto, ConfirmRegistrationDto, CancelRegistrationDto, RegistrationFilterDto } from './dto/event-registration.dto';
 import * as puppeteer from 'puppeteer';
+import * as XLSX from 'xlsx';
 
 const VALID_INCLUDES = [
     'content',
@@ -1374,12 +1375,58 @@ export class EventService {
         const html = this.generateRegistrationPDFTemplate(event, registrations, formFields, stats);
 
         // Generate PDF using Puppeteer
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+        let browser: puppeteer.Browser;
+        
+        // Try different executable paths for Alpine Linux
+        const possiblePaths = [
+            process.env.PUPPETEER_EXECUTABLE_PATH,
+            '/usr/bin/chromium-browser',
+            '/usr/bin/chromium',
+            '/usr/local/bin/chromium',
+            puppeteer.executablePath()
+        ].filter(Boolean);
+
+        let lastError: Error | null = null;
+        
+        for (const execPath of possiblePaths) {
+            try {
+                console.log(`Attempting to launch Chromium at: ${execPath}`);
+                
+                browser = await puppeteer.launch({
+                    headless: true,
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--single-process',
+                        '--disable-gpu',
+                        '--disable-software-rasterizer',
+                        '--disable-background-timer-throttling',
+                        '--disable-backgrounding-occluded-windows',
+                        '--disable-renderer-backgrounding'
+                    ],
+                    executablePath: execPath
+                });
+                
+                console.log(`Successfully launched Chromium at: ${execPath}`);
+                break; // Success, exit loop
+                
+            } catch (error) {
+                console.error(`Failed to launch Chromium at ${execPath}:`, error.message);
+                lastError = error;
+                continue; // Try next path
+            }
+        }
+        
+        if (!browser) {
+            throw lastError || new Error('Could not find Chromium executable');
+        }
 
         try {
+
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
@@ -1395,8 +1442,31 @@ export class EventService {
             });
 
             return Buffer.from(pdfBuffer);
+        } catch (error) {
+            console.error('Puppeteer error details:', {
+                message: error.message,
+                stack: error.stack,
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
+                nodeEnv: process.env.NODE_ENV
+            });
+            
+            // Check if Chromium executable exists
+            try {
+                const fs = require('fs');
+                const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
+                const exists = fs.existsSync(execPath);
+                console.error('Chromium executable check:', { execPath, exists });
+            } catch (fsError) {
+                console.error('File system check error:', fsError);
+            }
+            
+            throw new BadRequestException(
+                `Failed to generate PDF export: ${error.message}. Please check server configuration.`
+            );
         } finally {
-            await browser.close();
+            if (browser) {
+                await browser.close();
+            }
         }
     }
 
@@ -1565,6 +1635,114 @@ export class EventService {
             </body>
             </html>
         `;
+    }
+
+    async exportEventRegistrationsToXLSX(
+        eventId: string,
+        filter: RegistrationFilterDto,
+    ): Promise<Buffer> {
+        // Get the event details
+        const event = await this.findOne(eventId, ['registrationConfig']);
+        if (!event) {
+            throw new NotFoundException('Event not found');
+        }
+
+        // Get all registrations for this event
+        const registrations = await this.prisma.eventRegistration.findMany({
+            where: {
+                eventId,
+                ...(filter.status && { status: filter.status as RegistrationStatus }),
+                ...(filter.search && {
+                    OR: [
+                        { user: { name: { contains: filter.search, mode: 'insensitive' } } },
+                        { user: { email: { contains: filter.search, mode: 'insensitive' } } },
+                    ]
+                }),
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Get form fields from registration config
+        const formFields = (event as any).registrationConfig?.formFields as FormFieldDto[] || [];
+
+        // Prepare worksheet data
+        const worksheetData = [];
+
+        // Header row
+        const headers = [
+            'No',
+            'Name',
+            'Email',
+            'Status',
+            'Registration Date',
+            'Confirmed Date',
+            'Cancelled Date',
+            'Cancellation Note'
+        ];
+
+        // Add form field headers
+        formFields.forEach(field => {
+            headers.push(field.label);
+        });
+
+        worksheetData.push(headers);
+
+        // Data rows
+        registrations.forEach((reg, index) => {
+            const row = [
+                index + 1,
+                reg.user.name,
+                reg.user.email,
+                reg.status,
+                reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : '',
+                reg.confirmedAt ? new Date(reg.confirmedAt).toLocaleDateString() : '',
+                reg.cancelledAt ? new Date(reg.cancelledAt).toLocaleDateString() : '',
+                reg.cancellationNote || ''
+            ];
+
+            // Add form field values
+            formFields.forEach(field => {
+                const value = reg.formData?.[field.key];
+                if (Array.isArray(value)) {
+                    row.push(value.join(', '));
+                } else {
+                    row.push(value || '');
+                }
+            });
+
+            worksheetData.push(row);
+        });
+
+        // Create workbook and worksheet
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+        // Auto-size columns
+        const colWidths = headers.map((header, colIndex) => {
+            let maxLength = header.length;
+            worksheetData.slice(1).forEach(row => {
+                const cellValue = String(row[colIndex] || '');
+                maxLength = Math.max(maxLength, cellValue.length);
+            });
+            return { wch: Math.min(maxLength + 2, 50) }; // Max width of 50 characters
+        });
+        worksheet['!cols'] = colWidths;
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');
+
+        // Generate buffer
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        return buffer;
     }
 
     // FEATURED EVENTS MANAGEMENT
