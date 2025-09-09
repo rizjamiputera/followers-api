@@ -110,6 +110,10 @@ services:
             DATABASE_URL: postgresql://followersBicaraDong:_amburaduL@stg_followers_bicara_postgre:5432/postgres?schema=followers
             # for export pdf
             PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+            # email
+            EMAIL_USER: udaputera.hostinger@gmail.com
+            EMAIL_PASSWORD: bjsu zxtb kwbx toyf
+            APP_NAME: Followers Bicara
         volumes:
             - stg_volume_api_followers:/app/public
         networks:

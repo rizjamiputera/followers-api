@@ -18,11 +18,16 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from './auth/guards/roles/roles.decorator';
 import { ErrorLog, Role } from '@prisma/client';
 import { PaginationIncludeQueryDto } from './app/dto/pagination-query.dto';
+import { SendEmailDto } from './app/dto/send-email.dto';
 import * as path from 'path';
+import { MailService } from './mail/mail.service';
 
 @Controller()
 export class AppController {
-    constructor(private readonly appService: AppService) { }
+    constructor(
+        private readonly appService: AppService,
+        private readonly mailService: MailService,
+    ) { }
 
     @Public()
     @Get()
@@ -127,5 +132,39 @@ export class AppController {
         pagination: PaginationIncludeQueryDto,
     ): Promise<Paginate<ErrorLog[]>> {
         return this.appService.getAllErrorLog(pagination);
+    }
+
+    @Public()
+    @Post('send-test-email')
+    async sayHello(
+        @Body(new ValidationPipe()) sendEmailDto: SendEmailDto,
+    ): Promise<{ success: boolean; message: string }> {
+        try {
+            // Send email using the provided data
+            const emailSent = await this.mailService.sendEmail({
+                to: sendEmailDto.to,
+                subject: sendEmailDto.subject || 'Hello from Followers Bicara!',
+                html: sendEmailDto.html || '<h1>Hello World!</h1><p>This is a test email from our API.</p>',
+                text: sendEmailDto.text || 'Hello World! This is a test email from our API.'
+            });
+
+            if (emailSent) {
+                return {
+                    success: true,
+                    message: `Test email sent successfully to ${sendEmailDto.to}`
+                };
+            } else {
+                return {
+                    success: false,
+                    message: 'Failed to send email. Please check email configuration.'
+                };
+            }
+        } catch (error) {
+            console.error('Error sending test email:', error);
+            return {
+                success: false,
+                message: 'An error occurred while sending the email.'
+            };
+        }
     }
 }
