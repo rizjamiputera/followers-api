@@ -564,6 +564,31 @@ export class EventController {
         return res.send(buffer);
     }
 
+    @PermissionsRequired(Module.EVENT, Permission.READ)
+    @ApiBearerAuth()
+    @Get(':id/registrations/export/xlsx')
+    @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    async exportEventRegistrationsXLSX(
+        @Request() req: any,
+        @Param('id') eventId: string,
+        @Query(new ValidationPipe({ transform: true })) filter: RegistrationFilterDto,
+        @Res() res: any,
+    ) {
+        const event = await this.eventService.findOne(eventId);
+        if (event.authorId !== req.user.id && req.user.role === 'USER') {
+            throw new ForbiddenException('Only event author can export registrations');
+        }
+
+        const buffer = await this.eventService.exportEventRegistrationsToXLSX(eventId, filter);
+        const filename = `${event.slug}-registrations-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+        res.set({
+            'Content-Disposition': `attachment; filename="${filename}"`,
+        });
+
+        return res.send(buffer);
+    }
+
     @PermissionsRequired(Module.EVENT, Permission.APPROVE)
     @ApiBearerAuth()
     @Post('/registration/:registrationId/confirm')
