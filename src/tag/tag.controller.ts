@@ -8,19 +8,23 @@ import {
     Delete,
     Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Module, Permission } from '@prisma/client';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { Public } from '../auth/auth.metadata';
+import { PermissionsRequired } from '../auth/guards/permissions/permission.decorator';
 
 @ApiTags('tags')
 @Controller({ path: 'tags', version: '1' })
 export class TagController {
-    constructor(private readonly tagService: TagService) {}
+    constructor(private readonly tagService: TagService) { }
 
     @Post()
-    @ApiOperation({ summary: 'Create a new tag' })
+    @ApiBearerAuth()
+    @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
+    @ApiOperation({ summary: 'Create a new tag (Admin only)' })
     @ApiResponse({ status: 201, description: 'Tag created successfully' })
     @ApiResponse({ status: 409, description: 'Tag already exists' })
     create(@Body() createTagDto: CreateTagDto) {
@@ -61,7 +65,9 @@ export class TagController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update tag' })
+    @ApiBearerAuth()
+    @PermissionsRequired(Module.ARTICLE, Permission.EDIT)
+    @ApiOperation({ summary: 'Update tag (Admin only)' })
     @ApiResponse({ status: 200, description: 'Tag updated successfully' })
     @ApiResponse({ status: 404, description: 'Tag not found' })
     @ApiResponse({ status: 409, description: 'Tag name already exists' })
@@ -70,7 +76,9 @@ export class TagController {
     }
 
     @Delete(':id')
-    @ApiOperation({ summary: 'Delete tag' })
+    @ApiBearerAuth()
+    @PermissionsRequired(Module.ARTICLE, Permission.DELETE)
+    @ApiOperation({ summary: 'Delete tag (Admin only)' })
     @ApiResponse({ status: 200, description: 'Tag deleted successfully' })
     @ApiResponse({ status: 404, description: 'Tag not found' })
     remove(@Param('id') id: string) {

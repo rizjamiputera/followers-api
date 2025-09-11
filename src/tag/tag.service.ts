@@ -9,7 +9,7 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 
 @Injectable()
 export class TagService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
     private generateSlug(name: string): string {
         return name
@@ -44,6 +44,7 @@ export class TagService {
             data: {
                 name: createTagDto.name,
                 slug: slug,
+                // color: createTagDto.color || null,
             },
         });
     }
