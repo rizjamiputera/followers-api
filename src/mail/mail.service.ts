@@ -47,7 +47,9 @@ export class MailService {
         const emailPassword = process.env.EMAIL_PASSWORD;
 
         if (!emailUser || !emailPassword) {
-            this.logger.warn('Email credentials not configured. Email functionality will be disabled.');
+            this.logger.warn(
+                'Email credentials not configured. Email functionality will be disabled.',
+            );
             return;
         }
 
@@ -60,8 +62,8 @@ export class MailService {
                 pass: emailPassword, // Gmail App Password
             },
             tls: {
-                rejectUnauthorized: false
-            }
+                rejectUnauthorized: false,
+            },
         });
 
         // Verify transporter configuration
@@ -71,7 +73,9 @@ export class MailService {
     private async verifyConnection() {
         try {
             await this.transporter.verify();
-            this.logger.log('Email service successfully configured and connected to Gmail SMTP');
+            this.logger.log(
+                'Email service successfully configured and connected to Gmail SMTP',
+            );
         } catch (error) {
             this.logger.error('Failed to connect to Gmail SMTP:', error);
         }
@@ -82,7 +86,9 @@ export class MailService {
      */
     async sendEmail(emailOptions: EmailOptions): Promise<boolean> {
         if (!this.transporter) {
-            this.logger.error('Email transporter not initialized. Cannot send email.');
+            this.logger.error(
+                'Email transporter not initialized. Cannot send email.',
+            );
             return false;
         }
 
@@ -96,10 +102,15 @@ export class MailService {
                 attachments: emailOptions.attachments,
             });
 
-            this.logger.log(`Email sent successfully to ${emailOptions.to}. Message ID: ${info.messageId}`);
+            this.logger.log(
+                `Email sent successfully to ${emailOptions.to}. Message ID: ${info.messageId}`,
+            );
             return true;
         } catch (error) {
-            this.logger.error(`Failed to send email to ${emailOptions.to}:`, error);
+            this.logger.error(
+                `Failed to send email to ${emailOptions.to}:`,
+                error,
+            );
             return false;
         }
     }
@@ -107,63 +118,77 @@ export class MailService {
     /**
      * Send password reset email
      */
-    async sendPasswordResetEmail(email: string, data: PasswordResetEmailData): Promise<boolean> {
+    async sendPasswordResetEmail(
+        email: string,
+        data: PasswordResetEmailData,
+    ): Promise<boolean> {
         const html = this.generatePasswordResetTemplate(data);
-        
+
         return this.sendEmail({
             to: email,
             subject: 'Reset Your Password - Followers Bicara',
             html,
-            text: `Hi ${data.name}, click this link to reset your password: ${data.resetUrl}. This link expires in ${data.expirationTime || '1 hour'}.`
+            text: `Hi ${data.name}, click this link to reset your password: ${data.resetUrl}. This link expires in ${data.expirationTime || '1 hour'}.`,
         });
     }
 
     /**
      * Send welcome email
      */
-    async sendWelcomeEmail(email: string, data: WelcomeEmailData): Promise<boolean> {
+    async sendWelcomeEmail(
+        email: string,
+        data: WelcomeEmailData,
+    ): Promise<boolean> {
         const html = this.generateWelcomeTemplate(data);
-        
+
         return this.sendEmail({
             to: email,
             subject: 'Welcome to Followers Bicara!',
             html,
-            text: `Welcome ${data.name}! Thanks for joining Followers Bicara. You can login at: ${data.loginUrl}`
+            text: `Welcome ${data.name}! Thanks for joining Followers Bicara. You can login at: ${data.loginUrl}`,
         });
     }
 
     /**
      * Send event registration confirmation email
      */
-    async sendEventRegistrationEmail(email: string, data: EventRegistrationEmailData): Promise<boolean> {
+    async sendEventRegistrationEmail(
+        email: string,
+        data: EventRegistrationEmailData,
+    ): Promise<boolean> {
         const html = this.generateEventRegistrationTemplate(data);
-        
+
         return this.sendEmail({
             to: email,
             subject: `Registration Confirmed - ${data.eventTitle}`,
             html,
-            text: `Hi ${data.userName}, your registration for "${data.eventTitle}" has been confirmed!`
+            text: `Hi ${data.userName}, your registration for "${data.eventTitle}" has been confirmed!`,
         });
     }
 
     /**
      * Send event registration approved email
      */
-    async sendEventRegistrationApprovedEmail(email: string, data: EventRegistrationEmailData): Promise<boolean> {
+    async sendEventRegistrationApprovedEmail(
+        email: string,
+        data: EventRegistrationEmailData,
+    ): Promise<boolean> {
         const html = this.generateEventRegistrationApprovedTemplate(data);
-        
+
         return this.sendEmail({
             to: email,
             subject: `Registration Approved - ${data.eventTitle}`,
             html,
-            text: `Hi ${data.userName}, your registration for "${data.eventTitle}" has been approved!`
+            text: `Hi ${data.userName}, your registration for "${data.eventTitle}" has been approved!`,
         });
     }
 
     /**
      * Generate password reset email template
      */
-    private generatePasswordResetTemplate(data: PasswordResetEmailData): string {
+    private generatePasswordResetTemplate(
+        data: PasswordResetEmailData,
+    ): string {
         return `
         <!DOCTYPE html>
         <html>
@@ -259,7 +284,9 @@ export class MailService {
     /**
      * Generate event registration confirmation template
      */
-    private generateEventRegistrationTemplate(data: EventRegistrationEmailData): string {
+    private generateEventRegistrationTemplate(
+        data: EventRegistrationEmailData,
+    ): string {
         return `
         <!DOCTYPE html>
         <html>
@@ -309,7 +336,9 @@ export class MailService {
     /**
      * Generate event registration approved template
      */
-    private generateEventRegistrationApprovedTemplate(data: EventRegistrationEmailData): string {
+    private generateEventRegistrationApprovedTemplate(
+        data: EventRegistrationEmailData,
+    ): string {
         return `
         <!DOCTYPE html>
         <html>

@@ -23,9 +23,22 @@ import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.d
 import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { FilterEventQueryDto } from './dto/filter-event.dto';
-import { EventWithAuthReaction, EventWithRegistrationCount } from './event-interface';
-import { CreateRegistrationConfigDto, UpdateRegistrationConfigDto, FormFieldDto } from './dto/registration-config.dto';
-import { RegisterForEventDto, UpdateRegistrationDto, ConfirmRegistrationDto, CancelRegistrationDto, RegistrationFilterDto } from './dto/event-registration.dto';
+import {
+    EventWithAuthReaction,
+    EventWithRegistrationCount,
+} from './event-interface';
+import {
+    CreateRegistrationConfigDto,
+    UpdateRegistrationConfigDto,
+    FormFieldDto,
+} from './dto/registration-config.dto';
+import {
+    RegisterForEventDto,
+    UpdateRegistrationDto,
+    ConfirmRegistrationDto,
+    CancelRegistrationDto,
+    RegistrationFilterDto,
+} from './dto/event-registration.dto';
 import * as puppeteer from 'puppeteer';
 import * as XLSX from 'xlsx';
 
@@ -57,7 +70,7 @@ export class EventService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) { }
+    ) {}
 
     private transformData(
         data: Event & {
@@ -144,7 +157,7 @@ export class EventService {
                 create.image,
                 create.image_md,
                 create.image_portrait,
-                create.image_portrait_md
+                create.image_portrait_md,
             ]);
         }
 
@@ -164,23 +177,28 @@ export class EventService {
             exclude_statuses,
             published,
             start_from,
-            past
+            past,
         } = filter;
 
         // Check if registeredCount is requested in includes
-        const includeRegisteredCount = includes?.includes('registeredCount') || false;
+        const includeRegisteredCount =
+            includes?.includes('registeredCount') || false;
 
         // Remove registeredCount from includes before processing valid includes
-        const filteredIncludes = includes?.filter(inc => inc !== 'registeredCount') || [];
-        const include = this.app.getValidIncludes(VALID_INCLUDES, filteredIncludes);
+        const filteredIncludes =
+            includes?.filter((inc) => inc !== 'registeredCount') || [];
+        const include = this.app.getValidIncludes(
+            VALID_INCLUDES,
+            filteredIncludes,
+        );
 
         const searchCondition: Prisma.EventWhereInput = search
             ? {
-                OR: [
-                    { title: { contains: search, mode: 'insensitive' } },
-                    { excerpt: { contains: search, mode: 'insensitive' } },
-                ],
-            }
+                  OR: [
+                      { title: { contains: search, mode: 'insensitive' } },
+                      { excerpt: { contains: search, mode: 'insensitive' } },
+                  ],
+              }
             : {};
 
         const whereConditions: Prisma.EventWhereInput[] = [
@@ -205,9 +223,7 @@ export class EventService {
                 ...(start_from
                     ? { start_at: { gte: start_from } }
                     : { start_at: { gte: new Date() } }),
-                ...(past &&
-                    { start_at: { lte: new Date() } }
-                )
+                ...(past && { start_at: { lte: new Date() } }),
             });
         }
 
@@ -236,20 +252,21 @@ export class EventService {
         if (includeRegisteredCount) {
             dataWithRegistrationCount = await Promise.all(
                 data.map(async (event) => {
-                    const registeredCount = await this.prisma.eventRegistration.count({
-                        where: {
-                            eventId: event.id,
-                            status: {
-                                in: ['PENDING', 'CONFIRMED'],
+                    const registeredCount =
+                        await this.prisma.eventRegistration.count({
+                            where: {
+                                eventId: event.id,
+                                status: {
+                                    in: ['PENDING', 'CONFIRMED'],
+                                },
                             },
-                        },
-                    });
+                        });
 
                     return {
                         ...this.transformData(event),
                         registeredCount,
                     };
-                })
+                }),
             );
 
             // return {
@@ -337,12 +354,22 @@ export class EventService {
                     status: 'CONFIRMED',
                 },
             });
-            availableSpots = Math.max(0, (event as any).registrationConfig.participantLimit - confirmedCount);
+            availableSpots = Math.max(
+                0,
+                (event as any).registrationConfig.participantLimit -
+                    confirmedCount,
+            );
         }
 
         const transform = this.transformData(event);
 
-        return { ...transform, auth_reaction, userRegistration, registeredCount, availableSpots };
+        return {
+            ...transform,
+            auth_reaction,
+            userRegistration,
+            registeredCount,
+            availableSpots,
+        };
     }
 
     async findOne(id: string, includes: string[] = []): Promise<Event> {
@@ -362,7 +389,7 @@ export class EventService {
     async findOneWithUserContext(
         id: string,
         userId?: string,
-        includes: string[] = []
+        includes: string[] = [],
     ): Promise<EventWithAuthReaction> {
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
@@ -421,12 +448,22 @@ export class EventService {
                     status: 'CONFIRMED',
                 },
             });
-            availableSpots = Math.max(0, (event as any).registrationConfig.participantLimit - confirmedCount);
+            availableSpots = Math.max(
+                0,
+                (event as any).registrationConfig.participantLimit -
+                    confirmedCount,
+            );
         }
 
         const transform = this.transformData(event);
 
-        return { ...transform, auth_reaction, userRegistration, registeredCount, availableSpots };
+        return {
+            ...transform,
+            auth_reaction,
+            userRegistration,
+            registeredCount,
+            availableSpots,
+        };
     }
 
     async update(
@@ -462,7 +499,7 @@ export class EventService {
             (content &&
                 current.content &&
                 JSON.stringify(content) !==
-                JSON.stringify(current.content.content));
+                    JSON.stringify(current.content.content));
 
         // Create version if content changed
         if (contentChanged && current.content) {
@@ -480,7 +517,10 @@ export class EventService {
         }
 
         // update photo
-        if ((eventData.image && current.image_md) || (eventData.image_portrait && current.image_portrait_md)) {
+        if (
+            (eventData.image && current.image_md) ||
+            (eventData.image_portrait && current.image_portrait_md)
+        ) {
             // disconnet current photo
             await this.prisma.photoContent.updateMany({
                 where: {
@@ -496,14 +536,14 @@ export class EventService {
                 photos = [
                     eventData.image as string,
                     eventData.image_md as string,
-                ]
+                ];
             }
             if (eventData.image_portrait) {
                 photos = [
                     ...photos,
                     eventData.image_portrait as string,
                     eventData.image_portrait_md as string,
-                ]
+                ];
             }
 
             await this.assignMainPhoto(id, photos);
@@ -820,12 +860,15 @@ export class EventService {
         }
 
         // Check if config already exists
-        const existingConfig = await this.prisma.eventRegistrationConfig.findUnique({
-            where: { eventId }
-        });
+        const existingConfig =
+            await this.prisma.eventRegistrationConfig.findUnique({
+                where: { eventId },
+            });
 
         if (existingConfig) {
-            throw new BadRequestException('Registration config already exists for this event');
+            throw new BadRequestException(
+                'Registration config already exists for this event',
+            );
         }
 
         const configData: Prisma.EventRegistrationConfigCreateInput = {
@@ -833,8 +876,12 @@ export class EventService {
             isEnabled: configDto.isEnabled,
             label: configDto.label || 'Registrasi',
             participantLimit: configDto.participantLimit,
-            registrationStart: configDto.registrationStart ? new Date(configDto.registrationStart) : null,
-            registrationEnd: configDto.registrationEnd ? new Date(configDto.registrationEnd) : null,
+            registrationStart: configDto.registrationStart
+                ? new Date(configDto.registrationStart)
+                : null,
+            registrationEnd: configDto.registrationEnd
+                ? new Date(configDto.registrationEnd)
+                : null,
             formFields: configDto.formFields as any,
             requireApproval: configDto.requireApproval || false,
             confirmationMessage: configDto.confirmationMessage,
@@ -850,22 +897,38 @@ export class EventService {
         configDto: UpdateRegistrationConfigDto,
     ): Promise<EventRegistrationConfig> {
         const config = await this.prisma.eventRegistrationConfig.findUnique({
-            where: { eventId }
+            where: { eventId },
         });
 
         if (!config) {
-            throw new NotFoundException('Registration config not found for this event');
+            throw new NotFoundException(
+                'Registration config not found for this event',
+            );
         }
 
         const updateData: Prisma.EventRegistrationConfigUpdateInput = {
-            ...(configDto.isEnabled !== undefined && { isEnabled: configDto.isEnabled }),
+            ...(configDto.isEnabled !== undefined && {
+                isEnabled: configDto.isEnabled,
+            }),
             ...(configDto.label !== undefined && { label: configDto.label }),
-            ...(configDto.participantLimit !== undefined && { participantLimit: configDto.participantLimit }),
-            ...(configDto.registrationStart && { registrationStart: new Date(configDto.registrationStart) }),
-            ...(configDto.registrationEnd && { registrationEnd: new Date(configDto.registrationEnd) }),
-            ...(configDto.formFields && { formFields: configDto.formFields as any }),
-            ...(configDto.requireApproval !== undefined && { requireApproval: configDto.requireApproval }),
-            ...(configDto.confirmationMessage !== undefined && { confirmationMessage: configDto.confirmationMessage }),
+            ...(configDto.participantLimit !== undefined && {
+                participantLimit: configDto.participantLimit,
+            }),
+            ...(configDto.registrationStart && {
+                registrationStart: new Date(configDto.registrationStart),
+            }),
+            ...(configDto.registrationEnd && {
+                registrationEnd: new Date(configDto.registrationEnd),
+            }),
+            ...(configDto.formFields && {
+                formFields: configDto.formFields as any,
+            }),
+            ...(configDto.requireApproval !== undefined && {
+                requireApproval: configDto.requireApproval,
+            }),
+            ...(configDto.confirmationMessage !== undefined && {
+                confirmationMessage: configDto.confirmationMessage,
+            }),
         };
 
         return this.prisma.eventRegistrationConfig.update({
@@ -874,9 +937,11 @@ export class EventService {
         });
     }
 
-    async getRegistrationConfig(eventId: string): Promise<EventRegistrationConfig | null> {
+    async getRegistrationConfig(
+        eventId: string,
+    ): Promise<EventRegistrationConfig | null> {
         return this.prisma.eventRegistrationConfig.findUnique({
-            where: { eventId }
+            where: { eventId },
         });
     }
 
@@ -892,7 +957,7 @@ export class EventService {
                 status: ContentStatus.PUBLISHED,
                 deleted: false,
             },
-            include: { registrationConfig: true }
+            include: { registrationConfig: true },
         });
 
         if (!event) {
@@ -900,28 +965,37 @@ export class EventService {
         }
 
         if (!event.registrationConfig || !event.registrationConfig.isEnabled) {
-            throw new BadRequestException('Registration is not enabled for this event');
+            throw new BadRequestException(
+                'Registration is not enabled for this event',
+            );
         }
 
         // Check registration timing
         const now = new Date();
-        if (event.registrationConfig.registrationStart && now < event.registrationConfig.registrationStart) {
+        if (
+            event.registrationConfig.registrationStart &&
+            now < event.registrationConfig.registrationStart
+        ) {
             throw new BadRequestException('Registration has not started yet');
         }
 
-        if (event.registrationConfig.registrationEnd && now > event.registrationConfig.registrationEnd) {
+        if (
+            event.registrationConfig.registrationEnd &&
+            now > event.registrationConfig.registrationEnd
+        ) {
             throw new BadRequestException('Registration has ended');
         }
 
         // Check if user already registered with active status
-        const existingRegistration = await this.prisma.eventRegistration.findUnique({
-            where: {
-                eventId_userId: {
-                    eventId,
-                    userId,
-                }
-            }
-        });
+        const existingRegistration =
+            await this.prisma.eventRegistration.findUnique({
+                where: {
+                    eventId_userId: {
+                        eventId,
+                        userId,
+                    },
+                },
+            });
 
         if (existingRegistration) {
             // If previous registration was cancelled, allow re-registration
@@ -929,14 +1003,15 @@ export class EventService {
                 // Delete the cancelled registration to allow a fresh one
                 await this.prisma.eventRegistration.delete({
                     where: {
-                        id: existingRegistration.id
-                    }
+                        id: existingRegistration.id,
+                    },
                 });
             } else {
                 // If registration is still pending or confirmed, prevent duplicate
-                const statusMessage = existingRegistration.status === RegistrationStatus.PENDING
-                    ? 'You already have a pending registration for this event'
-                    : 'You are already registered for this event';
+                const statusMessage =
+                    existingRegistration.status === RegistrationStatus.PENDING
+                        ? 'You already have a pending registration for this event'
+                        : 'You are already registered for this event';
                 throw new BadRequestException(statusMessage);
             }
         }
@@ -947,7 +1022,7 @@ export class EventService {
                 where: {
                     eventId,
                     status: RegistrationStatus.CONFIRMED,
-                }
+                },
             });
 
             if (confirmedCount >= event.registrationConfig.participantLimit) {
@@ -956,15 +1031,22 @@ export class EventService {
         }
 
         // Validate form data against config
-        this.validateFormData(registrationDto.formData, event.registrationConfig.formFields as unknown as FormFieldDto[]);
+        this.validateFormData(
+            registrationDto.formData,
+            event.registrationConfig.formFields as unknown as FormFieldDto[],
+        );
 
         // Create registration
         const registrationData: Prisma.EventRegistrationCreateInput = {
             event: { connect: { id: eventId } },
             user: { connect: { id: userId } },
             formData: registrationDto.formData,
-            status: event.registrationConfig.requireApproval ? RegistrationStatus.PENDING : RegistrationStatus.CONFIRMED,
-            ...(event.registrationConfig.requireApproval ? {} : { confirmedAt: new Date() }),
+            status: event.registrationConfig.requireApproval
+                ? RegistrationStatus.PENDING
+                : RegistrationStatus.CONFIRMED,
+            ...(event.registrationConfig.requireApproval
+                ? {}
+                : { confirmedAt: new Date() }),
         };
 
         return this.prisma.eventRegistration.create({
@@ -975,16 +1057,16 @@ export class EventService {
                         id: true,
                         name: true,
                         email: true,
-                    }
+                    },
                 },
                 event: {
                     select: {
                         id: true,
                         title: true,
                         slug: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
     }
 
@@ -996,8 +1078,8 @@ export class EventService {
         const registration = await this.prisma.eventRegistration.findUnique({
             where: { id: registrationId },
             include: {
-                event: { include: { registrationConfig: true } }
-            }
+                event: { include: { registrationConfig: true } },
+            },
         });
 
         if (!registration) {
@@ -1005,22 +1087,38 @@ export class EventService {
         }
 
         if (registration.userId !== userId) {
-            throw new ForbiddenException('You can only update your own registration');
+            throw new ForbiddenException(
+                'You can only update your own registration',
+            );
         }
 
         if (registration.status === RegistrationStatus.CANCELLED) {
-            throw new BadRequestException('Cannot update cancelled registration');
+            throw new BadRequestException(
+                'Cannot update cancelled registration',
+            );
         }
 
         // Check if registration is still open
         const now = new Date();
-        if (registration.event.registrationConfig?.registrationEnd && now > registration.event.registrationConfig.registrationEnd) {
-            throw new BadRequestException('Registration update period has ended');
+        if (
+            registration.event.registrationConfig?.registrationEnd &&
+            now > registration.event.registrationConfig.registrationEnd
+        ) {
+            throw new BadRequestException(
+                'Registration update period has ended',
+            );
         }
 
         // Validate form data if provided
-        if (updateDto.formData && registration.event.registrationConfig?.formFields) {
-            this.validateFormData(updateDto.formData, registration.event.registrationConfig.formFields as unknown as FormFieldDto[]);
+        if (
+            updateDto.formData &&
+            registration.event.registrationConfig?.formFields
+        ) {
+            this.validateFormData(
+                updateDto.formData,
+                registration.event.registrationConfig
+                    .formFields as unknown as FormFieldDto[],
+            );
         }
 
         const updateData: Prisma.EventRegistrationUpdateInput = {
@@ -1037,9 +1135,9 @@ export class EventService {
                         id: true,
                         name: true,
                         email: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
     }
 
@@ -1052,26 +1150,34 @@ export class EventService {
         const { status, search } = filter;
 
         const whereConditions: Prisma.EventRegistrationWhereInput[] = [
-            { eventId }
+            { eventId },
         ];
 
         if (status) {
             whereConditions.push({
-                status: status as RegistrationStatus
+                status: status as RegistrationStatus,
             });
         }
 
         if (search) {
             whereConditions.push({
                 OR: [
-                    { user: { name: { contains: search, mode: 'insensitive' } } },
-                    { user: { email: { contains: search, mode: 'insensitive' } } },
-                ]
+                    {
+                        user: {
+                            name: { contains: search, mode: 'insensitive' },
+                        },
+                    },
+                    {
+                        user: {
+                            email: { contains: search, mode: 'insensitive' },
+                        },
+                    },
+                ],
             });
         }
 
         const where: Prisma.EventRegistrationWhereInput = {
-            AND: whereConditions
+            AND: whereConditions,
         };
 
         const skip = (page - 1) * limit;
@@ -1091,22 +1197,22 @@ export class EventService {
                             name: true,
                             email: true,
                             avatar_md: true,
-                        }
-                    }
-                }
-            })
+                        },
+                    },
+                },
+            }),
         ]);
 
         const apiUri = process.env.API_URI || 'http://localhost:5111';
-        const dataRegistration = data.map(d => {
+        const dataRegistration = data.map((d) => {
             return {
                 ...d,
                 user: {
                     ...d.user,
-                    avatar_md: apiUri + d.user.avatar_md
-                }
-            }
-        })
+                    avatar_md: apiUri + d.user.avatar_md,
+                },
+            };
+        });
 
         return {
             data: dataRegistration,
@@ -1124,7 +1230,7 @@ export class EventService {
         const { page, limit, sortBy, order } = pagination;
 
         const where: Prisma.EventRegistrationWhereInput = {
-            userId
+            userId,
         };
 
         const skip = (page - 1) * limit;
@@ -1146,16 +1252,18 @@ export class EventService {
                             start_at: true,
                             location: true,
                             image: true,
-                        }
-                    }
-                }
-            })
+                        },
+                    },
+                },
+            }),
         ]);
 
         return {
-            data: data.map(reg => ({
+            data: data.map((reg) => ({
                 ...reg,
-                event: reg.event ? this.app.transformImageUrls(reg.event, 'image') : null
+                event: reg.event
+                    ? this.app.transformImageUrls(reg.event, 'image')
+                    : null,
             })),
             limit,
             total,
@@ -1171,8 +1279,8 @@ export class EventService {
         const registration = await this.prisma.eventRegistration.findUnique({
             where: { id: registrationId },
             include: {
-                event: { include: { registrationConfig: true } }
-            }
+                event: { include: { registrationConfig: true } },
+            },
         });
 
         if (!registration) {
@@ -1184,7 +1292,9 @@ export class EventService {
         }
 
         if (registration.status === RegistrationStatus.CANCELLED) {
-            throw new BadRequestException('Cannot confirm cancelled registration');
+            throw new BadRequestException(
+                'Cannot confirm cancelled registration',
+            );
         }
 
         // Check participant limit again
@@ -1193,10 +1303,13 @@ export class EventService {
                 where: {
                     eventId: registration.eventId,
                     status: RegistrationStatus.CONFIRMED,
-                }
+                },
             });
 
-            if (confirmedCount >= registration.event.registrationConfig.participantLimit) {
+            if (
+                confirmedCount >=
+                registration.event.registrationConfig.participantLimit
+            ) {
                 throw new BadRequestException('Event registration is full');
             }
         }
@@ -1213,9 +1326,9 @@ export class EventService {
                         id: true,
                         name: true,
                         email: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
     }
 
@@ -1225,7 +1338,7 @@ export class EventService {
         cancelDto: CancelRegistrationDto,
     ): Promise<EventRegistration> {
         const registration = await this.prisma.eventRegistration.findUnique({
-            where: { id: registrationId }
+            where: { id: registrationId },
         });
 
         if (!registration) {
@@ -1233,7 +1346,9 @@ export class EventService {
         }
 
         if (registration.userId !== userId) {
-            throw new ForbiddenException('You can only cancel your own registration');
+            throw new ForbiddenException(
+                'You can only cancel your own registration',
+            );
         }
 
         if (registration.status === RegistrationStatus.CANCELLED) {
@@ -1246,17 +1361,22 @@ export class EventService {
                 status: RegistrationStatus.CANCELLED,
                 cancelledAt: new Date(),
                 cancellationNote: cancelDto.cancellationNote,
-            }
+            },
         });
     }
 
-    private validateFormData(formData: Record<string, any>, formFields: FormFieldDto[]): void {
-        const requiredFields = formFields.filter(field => field.required);
+    private validateFormData(
+        formData: Record<string, any>,
+        formFields: FormFieldDto[],
+    ): void {
+        const requiredFields = formFields.filter((field) => field.required);
 
         // Check required fields
         for (const field of requiredFields) {
             if (!formData[field.key] || formData[field.key] === '') {
-                throw new BadRequestException(`Field '${field.label}' is required`);
+                throw new BadRequestException(
+                    `Field '${field.label}' is required`,
+                );
             }
         }
 
@@ -1271,41 +1391,55 @@ export class EventService {
                 case 'EMAIL':
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (!emailRegex.test(value)) {
-                        throw new BadRequestException(`Field '${field.label}' must be a valid email address`);
+                        throw new BadRequestException(
+                            `Field '${field.label}' must be a valid email address`,
+                        );
                     }
                     break;
 
                 case 'PHONE':
                     const phoneRegex = /^[\+]?[\d\s\-\(\)]{8,15}$/;
                     if (!phoneRegex.test(value)) {
-                        throw new BadRequestException(`Field '${field.label}' must be a valid phone number`);
+                        throw new BadRequestException(
+                            `Field '${field.label}' must be a valid phone number`,
+                        );
                     }
                     break;
 
                 case 'NUMBER':
                     if (isNaN(Number(value))) {
-                        throw new BadRequestException(`Field '${field.label}' must be a number`);
+                        throw new BadRequestException(
+                            `Field '${field.label}' must be a number`,
+                        );
                     }
                     break;
 
                 case 'DATE':
                     if (isNaN(Date.parse(value))) {
-                        throw new BadRequestException(`Field '${field.label}' must be a valid date`);
+                        throw new BadRequestException(
+                            `Field '${field.label}' must be a valid date`,
+                        );
                     }
                     break;
 
                 case 'SELECT':
                 case 'RADIO':
                     if (field.options && !field.options.includes(value)) {
-                        throw new BadRequestException(`Field '${field.label}' must be one of: ${field.options.join(', ')}`);
+                        throw new BadRequestException(
+                            `Field '${field.label}' must be one of: ${field.options.join(', ')}`,
+                        );
                     }
                     break;
 
                 case 'CHECKBOX':
                     if (field.options && Array.isArray(value)) {
-                        const invalidOptions = value.filter(v => !field.options.includes(v));
+                        const invalidOptions = value.filter(
+                            (v) => !field.options.includes(v),
+                        );
                         if (invalidOptions.length > 0) {
-                            throw new BadRequestException(`Field '${field.label}' contains invalid options: ${invalidOptions.join(', ')}`);
+                            throw new BadRequestException(
+                                `Field '${field.label}' contains invalid options: ${invalidOptions.join(', ')}`,
+                            );
                         }
                     }
                     break;
@@ -1313,14 +1447,29 @@ export class EventService {
 
             // Custom validation rules
             if (field.validation) {
-                if (field.validation.minLength && value.length < field.validation.minLength) {
-                    throw new BadRequestException(`Field '${field.label}' must be at least ${field.validation.minLength} characters long`);
+                if (
+                    field.validation.minLength &&
+                    value.length < field.validation.minLength
+                ) {
+                    throw new BadRequestException(
+                        `Field '${field.label}' must be at least ${field.validation.minLength} characters long`,
+                    );
                 }
-                if (field.validation.maxLength && value.length > field.validation.maxLength) {
-                    throw new BadRequestException(`Field '${field.label}' must be at most ${field.validation.maxLength} characters long`);
+                if (
+                    field.validation.maxLength &&
+                    value.length > field.validation.maxLength
+                ) {
+                    throw new BadRequestException(
+                        `Field '${field.label}' must be at most ${field.validation.maxLength} characters long`,
+                    );
                 }
-                if (field.validation.pattern && !new RegExp(field.validation.pattern).test(value)) {
-                    throw new BadRequestException(`Field '${field.label}' format is invalid`);
+                if (
+                    field.validation.pattern &&
+                    !new RegExp(field.validation.pattern).test(value)
+                ) {
+                    throw new BadRequestException(
+                        `Field '${field.label}' format is invalid`,
+                    );
                 }
             }
         }
@@ -1340,12 +1489,28 @@ export class EventService {
         const registrations = await this.prisma.eventRegistration.findMany({
             where: {
                 eventId,
-                ...(filter.status && { status: filter.status as RegistrationStatus }),
+                ...(filter.status && {
+                    status: filter.status as RegistrationStatus,
+                }),
                 ...(filter.search && {
                     OR: [
-                        { user: { name: { contains: filter.search, mode: 'insensitive' } } },
-                        { user: { email: { contains: filter.search, mode: 'insensitive' } } },
-                    ]
+                        {
+                            user: {
+                                name: {
+                                    contains: filter.search,
+                                    mode: 'insensitive',
+                                },
+                            },
+                        },
+                        {
+                            user: {
+                                email: {
+                                    contains: filter.search,
+                                    mode: 'insensitive',
+                                },
+                            },
+                        },
+                    ],
                 }),
             },
             include: {
@@ -1354,44 +1519,53 @@ export class EventService {
                         id: true,
                         name: true,
                         email: true,
-                    }
-                }
+                    },
+                },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
 
         // Get form fields from registration config
-        const formFields = (event as any).registrationConfig?.formFields as FormFieldDto[] || [];
+        const formFields =
+            ((event as any).registrationConfig?.formFields as FormFieldDto[]) ||
+            [];
 
         // Calculate statistics
         const stats = {
             total: registrations.length,
-            confirmed: registrations.filter(r => r.status === 'CONFIRMED').length,
-            pending: registrations.filter(r => r.status === 'PENDING').length,
-            cancelled: registrations.filter(r => r.status === 'CANCELLED').length,
+            confirmed: registrations.filter((r) => r.status === 'CONFIRMED')
+                .length,
+            pending: registrations.filter((r) => r.status === 'PENDING').length,
+            cancelled: registrations.filter((r) => r.status === 'CANCELLED')
+                .length,
         };
 
         // Generate HTML template for PDF
-        const html = this.generateRegistrationPDFTemplate(event, registrations, formFields, stats);
+        const html = this.generateRegistrationPDFTemplate(
+            event,
+            registrations,
+            formFields,
+            stats,
+        );
 
         // Generate PDF using Puppeteer
         let browser: puppeteer.Browser;
-        
+
         // Try different executable paths for Alpine Linux
         const possiblePaths = [
             process.env.PUPPETEER_EXECUTABLE_PATH,
             '/usr/bin/chromium-browser',
             '/usr/bin/chromium',
             '/usr/local/bin/chromium',
-            puppeteer.executablePath()
+            puppeteer.executablePath(),
         ].filter(Boolean);
 
         let lastError: Error | null = null;
-        
+
         for (const execPath of possiblePaths) {
             try {
                 console.log(`Attempting to launch Chromium at: ${execPath}`);
-                
+
                 browser = await puppeteer.launch({
                     headless: true,
                     args: [
@@ -1406,27 +1580,28 @@ export class EventService {
                         '--disable-software-rasterizer',
                         '--disable-background-timer-throttling',
                         '--disable-backgrounding-occluded-windows',
-                        '--disable-renderer-backgrounding'
+                        '--disable-renderer-backgrounding',
                     ],
-                    executablePath: execPath
+                    executablePath: execPath,
                 });
-                
+
                 console.log(`Successfully launched Chromium at: ${execPath}`);
                 break; // Success, exit loop
-                
             } catch (error) {
-                console.error(`Failed to launch Chromium at ${execPath}:`, error.message);
+                console.error(
+                    `Failed to launch Chromium at ${execPath}:`,
+                    error.message,
+                );
                 lastError = error;
                 continue; // Try next path
             }
         }
-        
+
         if (!browser) {
             throw lastError || new Error('Could not find Chromium executable');
         }
 
         try {
-
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
@@ -1446,22 +1621,29 @@ export class EventService {
             console.error('Puppeteer error details:', {
                 message: error.message,
                 stack: error.stack,
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
-                nodeEnv: process.env.NODE_ENV
+                executablePath:
+                    process.env.PUPPETEER_EXECUTABLE_PATH ||
+                    puppeteer.executablePath(),
+                nodeEnv: process.env.NODE_ENV,
             });
-            
+
             // Check if Chromium executable exists
             try {
                 const fs = require('fs');
-                const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
+                const execPath =
+                    process.env.PUPPETEER_EXECUTABLE_PATH ||
+                    puppeteer.executablePath();
                 const exists = fs.existsSync(execPath);
-                console.error('Chromium executable check:', { execPath, exists });
+                console.error('Chromium executable check:', {
+                    execPath,
+                    exists,
+                });
             } catch (fsError) {
                 console.error('File system check error:', fsError);
             }
-            
+
             throw new BadRequestException(
-                `Failed to generate PDF export: ${error.message}. Please check server configuration.`
+                `Failed to generate PDF export: ${error.message}. Please check server configuration.`,
             );
         } finally {
             if (browser) {
@@ -1474,14 +1656,23 @@ export class EventService {
         event: any,
         registrations: any[],
         formFields: FormFieldDto[],
-        stats: { total: number; confirmed: number; pending: number; cancelled: number }
+        stats: {
+            total: number;
+            confirmed: number;
+            pending: number;
+            cancelled: number;
+        },
     ): string {
         const getStatusColor = (status: string) => {
             switch (status) {
-                case 'CONFIRMED': return '#10b981'; // green-500
-                case 'PENDING': return '#f59e0b';   // amber-500
-                case 'CANCELLED': return '#ef4444'; // red-500
-                default: return '#6b7280';          // gray-500
+                case 'CONFIRMED':
+                    return '#10b981'; // green-500
+                case 'PENDING':
+                    return '#f59e0b'; // amber-500
+                case 'CANCELLED':
+                    return '#ef4444'; // red-500
+                default:
+                    return '#6b7280'; // gray-500
             }
         };
 
@@ -1490,7 +1681,7 @@ export class EventService {
             return new Date(date).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
-                day: 'numeric'
+                day: 'numeric',
             });
         };
 
@@ -1575,9 +1766,12 @@ export class EventService {
                     </div>
                 </div>
 
-                ${registrations.length === 0 ?
-                '<div class="no-registrations"><p>No registrations found matching the current filters.</p></div>' :
-                registrations.map((reg, index) => `
+                ${
+                    registrations.length === 0
+                        ? '<div class="no-registrations"><p>No registrations found matching the current filters.</p></div>'
+                        : registrations
+                              .map(
+                                  (reg, index) => `
                         ${index > 0 && index % 8 === 0 ? '<div class="page-break"></div>' : ''}
                         <div class="registration">
                             <div class="reg-header">
@@ -1596,42 +1790,66 @@ export class EventService {
                                     <div class="date-item">
                                         <span class="date-label">Registered:</span> ${formatDate(reg.createdAt)}
                                     </div>
-                                    ${reg.confirmedAt ? `
+                                    ${
+                                        reg.confirmedAt
+                                            ? `
                                         <div class="date-item">
                                             <span class="date-label">Confirmed:</span> ${formatDate(reg.confirmedAt)}
                                         </div>
-                                    ` : ''}
-                                    ${reg.cancelledAt ? `
+                                    `
+                                            : ''
+                                    }
+                                    ${
+                                        reg.cancelledAt
+                                            ? `
                                         <div class="date-item">
                                             <span class="date-label">Cancelled:</span> ${formatDate(reg.cancelledAt)}
                                         </div>
-                                    ` : ''}
+                                    `
+                                            : ''
+                                    }
                                 </div>
 
-                                ${formFields.length > 0 && reg.formData && Object.keys(reg.formData).length > 0 ? `
+                                ${
+                                    formFields.length > 0 &&
+                                    reg.formData &&
+                                    Object.keys(reg.formData).length > 0
+                                        ? `
                                     <div class="form-data">
                                         <h5>Registration Information</h5>
                                         <div class="form-fields">
-                                            ${formFields.map(field => `
+                                            ${formFields
+                                                .map(
+                                                    (field) => `
                                                 <div class="form-field">
                                                     <div class="form-field-label">${field.label}</div>
                                                     <div class="form-field-value">${formatFormValue(reg.formData[field.key])}</div>
                                                 </div>
-                                            `).join('')}
+                                            `,
+                                                )
+                                                .join('')}
                                         </div>
                                     </div>
-                                ` : ''}
+                                `
+                                        : ''
+                                }
 
-                                ${reg.cancellationNote ? `
+                                ${
+                                    reg.cancellationNote
+                                        ? `
                                     <div class="cancellation-note">
                                         <strong>Cancellation Reason:</strong>
                                         <span>${reg.cancellationNote}</span>
                                     </div>
-                                ` : ''}
+                                `
+                                        : ''
+                                }
                             </div>
                         </div>
-                    `).join('')
-            }
+                    `,
+                              )
+                              .join('')
+                }
             </body>
             </html>
         `;
@@ -1651,12 +1869,28 @@ export class EventService {
         const registrations = await this.prisma.eventRegistration.findMany({
             where: {
                 eventId,
-                ...(filter.status && { status: filter.status as RegistrationStatus }),
+                ...(filter.status && {
+                    status: filter.status as RegistrationStatus,
+                }),
                 ...(filter.search && {
                     OR: [
-                        { user: { name: { contains: filter.search, mode: 'insensitive' } } },
-                        { user: { email: { contains: filter.search, mode: 'insensitive' } } },
-                    ]
+                        {
+                            user: {
+                                name: {
+                                    contains: filter.search,
+                                    mode: 'insensitive',
+                                },
+                            },
+                        },
+                        {
+                            user: {
+                                email: {
+                                    contains: filter.search,
+                                    mode: 'insensitive',
+                                },
+                            },
+                        },
+                    ],
                 }),
             },
             include: {
@@ -1665,14 +1899,16 @@ export class EventService {
                         id: true,
                         name: true,
                         email: true,
-                    }
-                }
+                    },
+                },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
 
         // Get form fields from registration config
-        const formFields = (event as any).registrationConfig?.formFields as FormFieldDto[] || [];
+        const formFields =
+            ((event as any).registrationConfig?.formFields as FormFieldDto[]) ||
+            [];
 
         // Prepare worksheet data
         const worksheetData = [];
@@ -1686,11 +1922,11 @@ export class EventService {
             'Registration Date',
             'Confirmed Date',
             'Cancelled Date',
-            'Cancellation Note'
+            'Cancellation Note',
         ];
 
         // Add form field headers
-        formFields.forEach(field => {
+        formFields.forEach((field) => {
             headers.push(field.label);
         });
 
@@ -1703,14 +1939,20 @@ export class EventService {
                 reg.user.name,
                 reg.user.email,
                 reg.status,
-                reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : '',
-                reg.confirmedAt ? new Date(reg.confirmedAt).toLocaleDateString() : '',
-                reg.cancelledAt ? new Date(reg.cancelledAt).toLocaleDateString() : '',
-                reg.cancellationNote || ''
+                reg.createdAt
+                    ? new Date(reg.createdAt).toLocaleDateString()
+                    : '',
+                reg.confirmedAt
+                    ? new Date(reg.confirmedAt).toLocaleDateString()
+                    : '',
+                reg.cancelledAt
+                    ? new Date(reg.cancelledAt).toLocaleDateString()
+                    : '',
+                reg.cancellationNote || '',
             ];
 
             // Add form field values
-            formFields.forEach(field => {
+            formFields.forEach((field) => {
                 const value = reg.formData?.[field.key];
                 if (Array.isArray(value)) {
                     row.push(value.join(', '));
@@ -1729,7 +1971,7 @@ export class EventService {
         // Auto-size columns
         const colWidths = headers.map((header, colIndex) => {
             let maxLength = header.length;
-            worksheetData.slice(1).forEach(row => {
+            worksheetData.slice(1).forEach((row) => {
                 const cellValue = String(row[colIndex] || '');
                 maxLength = Math.max(maxLength, cellValue.length);
             });
@@ -1741,7 +1983,10 @@ export class EventService {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');
 
         // Generate buffer
-        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        const buffer = XLSX.write(workbook, {
+            type: 'buffer',
+            bookType: 'xlsx',
+        });
         return buffer;
     }
 
@@ -1796,7 +2041,9 @@ export class EventService {
         }
 
         if (event.status !== 'PUBLISHED') {
-            throw new BadRequestException('Only published events can be featured');
+            throw new BadRequestException(
+                'Only published events can be featured',
+            );
         }
 
         return this.prisma.event.update({

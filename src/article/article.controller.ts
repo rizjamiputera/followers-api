@@ -48,7 +48,7 @@ export class ArticleController {
     constructor(
         private readonly articleService: ArticleService,
         private readonly appService: AppService,
-    ) { }
+    ) {}
 
     @PermissionsRequired(Module.ARTICLE, Permission.CREATE)
     @ApiBearerAuth()
@@ -158,7 +158,12 @@ export class ArticleController {
         return article;
     }
 
-    @PermissionsRequired(Module.ARTICLE, Permission.READ, Permission.CREATE, Permission.EDIT)
+    @PermissionsRequired(
+        Module.ARTICLE,
+        Permission.READ,
+        Permission.CREATE,
+        Permission.EDIT,
+    )
     @ApiBearerAuth()
     @Get('my/:id')
     async readMyArticle(
@@ -341,7 +346,10 @@ export class ArticleController {
         const currentData = await this.articleService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Article is not found');
-        if (!currentData.image) throw new BadRequestException('Artikel tanpa foto tidak dapat di publish')
+        if (!currentData.image)
+            throw new BadRequestException(
+                'Artikel tanpa foto tidak dapat di publish',
+            );
 
         const dataArticle: Prisma.ArticleUpdateInput = {
             status: ContentStatus.PUBLISHED,

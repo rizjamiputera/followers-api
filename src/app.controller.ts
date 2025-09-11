@@ -27,7 +27,7 @@ export class AppController {
     constructor(
         private readonly appService: AppService,
         private readonly mailService: MailService,
-    ) { }
+    ) {}
 
     @Public()
     @Get()
@@ -144,26 +144,31 @@ export class AppController {
             const emailSent = await this.mailService.sendEmail({
                 to: sendEmailDto.to,
                 subject: sendEmailDto.subject || 'Hello from Followers Bicara!',
-                html: sendEmailDto.html || '<h1>Hello World!</h1><p>This is a test email from our API.</p>',
-                text: sendEmailDto.text || 'Hello World! This is a test email from our API.'
+                html:
+                    sendEmailDto.html ||
+                    '<h1>Hello World!</h1><p>This is a test email from our API.</p>',
+                text:
+                    sendEmailDto.text ||
+                    'Hello World! This is a test email from our API.',
             });
 
             if (emailSent) {
                 return {
                     success: true,
-                    message: `Test email sent successfully to ${sendEmailDto.to}`
+                    message: `Test email sent successfully to ${sendEmailDto.to}`,
                 };
             } else {
                 return {
                     success: false,
-                    message: 'Failed to send email. Please check email configuration.'
+                    message:
+                        'Failed to send email. Please check email configuration.',
                 };
             }
         } catch (error) {
             console.error('Error sending test email:', error);
             return {
                 success: false,
-                message: 'An error occurred while sending the email.'
+                message: 'An error occurred while sending the email.',
             };
         }
     }
