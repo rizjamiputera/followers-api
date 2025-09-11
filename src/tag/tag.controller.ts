@@ -17,7 +17,7 @@ import { Public } from '../auth/auth.metadata';
 @ApiTags('tags')
 @Controller({ path: 'tags', version: '1' })
 export class TagController {
-    constructor(private readonly tagService: TagService) { }
+    constructor(private readonly tagService: TagService) {}
 
     @Post()
     @ApiOperation({ summary: 'Create a new tag' })

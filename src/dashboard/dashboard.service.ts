@@ -13,93 +13,99 @@ export class DashboardService {
     async getWebsiteOverview() {
         // Get current date ranges for analytics
         const now = new Date();
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const thirtyDaysAgo = new Date(
+            now.getTime() - 30 * 24 * 60 * 60 * 1000,
+        );
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfToday = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+        );
         const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfThisYear = new Date(now.getFullYear(), 0, 1);
 
         // Get visitor statistics
         const [
-            totalVisitors, 
-            uniqueVisitors, 
-            totalVisits, 
-            visitsLast7Days, 
+            totalVisitors,
+            uniqueVisitors,
+            totalVisits,
+            visitsLast7Days,
             visitsLast24Hours,
             visitsToday,
             visitsThisMonth,
             visitsThisYear,
             visitorsToday,
             visitorsThisMonth,
-            visitorsThisYear
+            visitorsThisYear,
         ] = await Promise.all([
             this.prisma.visitor.count(),
             this.prisma.visitor.count({
                 where: {
                     lastVisitAt: {
-                        gte: thirtyDaysAgo
-                    }
-                }
+                        gte: thirtyDaysAgo,
+                    },
+                },
             }),
             this.prisma.visit.count(),
             this.prisma.visit.count({
                 where: {
                     visitedAt: {
-                        gte: sevenDaysAgo
-                    }
-                }
+                        gte: sevenDaysAgo,
+                    },
+                },
             }),
             this.prisma.visit.count({
                 where: {
                     visitedAt: {
-                        gte: yesterday
-                    }
-                }
+                        gte: yesterday,
+                    },
+                },
             }),
             // New detailed visitor metrics
             this.prisma.visit.count({
                 where: {
                     visitedAt: {
-                        gte: startOfToday
-                    }
-                }
+                        gte: startOfToday,
+                    },
+                },
             }),
             this.prisma.visit.count({
                 where: {
                     visitedAt: {
-                        gte: startOfThisMonth
-                    }
-                }
+                        gte: startOfThisMonth,
+                    },
+                },
             }),
             this.prisma.visit.count({
                 where: {
                     visitedAt: {
-                        gte: startOfThisYear
-                    }
-                }
+                        gte: startOfThisYear,
+                    },
+                },
             }),
             this.prisma.visitor.count({
                 where: {
                     lastVisitAt: {
-                        gte: startOfToday
-                    }
-                }
+                        gte: startOfToday,
+                    },
+                },
             }),
             this.prisma.visitor.count({
                 where: {
                     lastVisitAt: {
-                        gte: startOfThisMonth
-                    }
-                }
+                        gte: startOfThisMonth,
+                    },
+                },
             }),
             this.prisma.visitor.count({
                 where: {
                     lastVisitAt: {
-                        gte: startOfThisYear
-                    }
-                }
-            })
+                        gte: startOfThisYear,
+                    },
+                },
+            }),
         ]);
 
         // Get content statistics
@@ -108,58 +114,63 @@ export class DashboardService {
             this.prisma.article.groupBy({
                 by: ['status'],
                 _count: {
-                    id: true
+                    id: true,
                 },
                 where: {
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             // Event statistics by status
             this.prisma.event.groupBy({
                 by: ['status'],
                 _count: {
-                    id: true
+                    id: true,
                 },
                 where: {
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             // Featured content count
             this.prisma.article.count({
                 where: {
                     isFeatured: true,
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.event.count({
                 where: {
                     isFeatured: true,
-                    deleted: false
-                }
-            })
+                    deleted: false,
+                },
+            }),
         ]);
 
         // Get user statistics
         const userStats = await this.prisma.user.groupBy({
             by: ['role'],
             _count: {
-                id: true
+                id: true,
             },
             where: {
-                deleted: false
-            }
+                deleted: false,
+            },
         });
 
         // Get engagement statistics
-        const [totalComments, totalReactions, totalBookmarks, totalEventRegistrations] = await Promise.all([
+        const [
+            totalComments,
+            totalReactions,
+            totalBookmarks,
+            totalEventRegistrations,
+        ] = await Promise.all([
             this.prisma.comment.count({
                 where: {
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.contentReaction.count(),
             this.prisma.articleBookmark.count(),
-            this.prisma.eventRegistration.count()
+            this.prisma.eventRegistration.count(),
         ]);
 
         // Recent activity (last 7 days)
@@ -167,35 +178,35 @@ export class DashboardService {
             this.prisma.article.count({
                 where: {
                     createdAt: {
-                        gte: sevenDaysAgo
+                        gte: sevenDaysAgo,
                     },
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.event.count({
                 where: {
                     createdAt: {
-                        gte: sevenDaysAgo
+                        gte: sevenDaysAgo,
                     },
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.comment.count({
                 where: {
                     createdAt: {
-                        gte: sevenDaysAgo
+                        gte: sevenDaysAgo,
                     },
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.user.count({
                 where: {
                     createdAt: {
-                        gte: sevenDaysAgo
+                        gte: sevenDaysAgo,
                     },
-                    deleted: false
-                }
-            })
+                    deleted: false,
+                },
+            }),
         ]);
 
         return {
@@ -208,59 +219,81 @@ export class DashboardService {
                 // Detailed visitor metrics
                 today: {
                     visits: visitsToday,
-                    visitors: visitorsToday
+                    visitors: visitorsToday,
                 },
                 thisMonth: {
                     visits: visitsThisMonth,
-                    visitors: visitorsThisMonth
+                    visitors: visitorsThisMonth,
                 },
                 thisYear: {
                     visits: visitsThisYear,
-                    visitors: visitorsThisYear
-                }
+                    visitors: visitorsThisYear,
+                },
             },
             content: {
-                articles: contentStats[0].reduce((acc, curr) => ({
-                    ...acc,
-                    [curr.status.toLowerCase()]: curr._count.id
-                }), {
-                    total: contentStats[0].reduce((sum, curr) => sum + curr._count.id, 0)
-                }),
-                events: contentStats[1].reduce((acc, curr) => ({
-                    ...acc,
-                    [curr.status.toLowerCase()]: curr._count.id
-                }), {
-                    total: contentStats[1].reduce((sum, curr) => sum + curr._count.id, 0)
-                }),
+                articles: contentStats[0].reduce(
+                    (acc, curr) => ({
+                        ...acc,
+                        [curr.status.toLowerCase()]: curr._count.id,
+                    }),
+                    {
+                        total: contentStats[0].reduce(
+                            (sum, curr) => sum + curr._count.id,
+                            0,
+                        ),
+                    },
+                ),
+                events: contentStats[1].reduce(
+                    (acc, curr) => ({
+                        ...acc,
+                        [curr.status.toLowerCase()]: curr._count.id,
+                    }),
+                    {
+                        total: contentStats[1].reduce(
+                            (sum, curr) => sum + curr._count.id,
+                            0,
+                        ),
+                    },
+                ),
                 featured: {
                     articles: contentStats[2],
-                    events: contentStats[3]
-                }
+                    events: contentStats[3],
+                },
             },
-            users: userStats.reduce((acc, curr) => ({
-                ...acc,
-                [curr.role.toLowerCase()]: curr._count.id
-            }), {
-                total: userStats.reduce((sum, curr) => sum + curr._count.id, 0)
-            }),
+            users: userStats.reduce(
+                (acc, curr) => ({
+                    ...acc,
+                    [curr.role.toLowerCase()]: curr._count.id,
+                }),
+                {
+                    total: userStats.reduce(
+                        (sum, curr) => sum + curr._count.id,
+                        0,
+                    ),
+                },
+            ),
             engagement: {
                 totalComments,
                 totalReactions,
                 totalBookmarks,
-                totalEventRegistrations
+                totalEventRegistrations,
             },
             recentActivity: {
                 newArticles: recentActivity[0],
                 newEvents: recentActivity[1],
                 newComments: recentActivity[2],
-                newUsers: recentActivity[3]
-            }
+                newUsers: recentActivity[3],
+            },
         };
     }
 
     async getTopPerformingContent(limit = 10) {
         // Get top articles by various metrics
-        const [topArticlesByViews, topArticlesByReactions, topEventsByRegistrations] = await Promise.all([
+        const [
+            topArticlesByViews,
+            topArticlesByReactions,
+            topEventsByRegistrations,
+        ] = await Promise.all([
             this.prisma.article.findMany({
                 select: {
                     id: true,
@@ -269,28 +302,28 @@ export class DashboardService {
                     publishedAt: true,
                     author: {
                         select: {
-                            name: true
-                        }
+                            name: true,
+                        },
                     },
                     stats: {
                         select: {
                             readCount: true,
                             likeCount: true,
                             commentCount: true,
-                            shareCount: true
-                        }
-                    }
+                            shareCount: true,
+                        },
+                    },
                 },
                 where: {
                     status: ContentStatus.PUBLISHED,
-                    deleted: false
+                    deleted: false,
                 },
                 orderBy: {
                     stats: {
-                        readCount: 'desc'
-                    }
+                        readCount: 'desc',
+                    },
                 },
-                take: limit
+                take: limit,
             }),
             this.prisma.article.findMany({
                 select: {
@@ -300,28 +333,28 @@ export class DashboardService {
                     publishedAt: true,
                     author: {
                         select: {
-                            name: true
-                        }
+                            name: true,
+                        },
                     },
                     stats: {
                         select: {
                             readCount: true,
                             likeCount: true,
                             commentCount: true,
-                            shareCount: true
-                        }
-                    }
+                            shareCount: true,
+                        },
+                    },
                 },
                 where: {
                     status: ContentStatus.PUBLISHED,
-                    deleted: false
+                    deleted: false,
                 },
                 orderBy: {
                     stats: {
-                        likeCount: 'desc'
-                    }
+                        likeCount: 'desc',
+                    },
                 },
-                take: limit
+                take: limit,
             }),
             this.prisma.event.findMany({
                 select: {
@@ -332,98 +365,104 @@ export class DashboardService {
                     location: true,
                     author: {
                         select: {
-                            name: true
-                        }
+                            name: true,
+                        },
                     },
                     registrations: {
                         select: {
                             id: true,
-                            status: true
-                        }
+                            status: true,
+                        },
                     },
                     stats: {
                         select: {
                             readCount: true,
                             likeCount: true,
-                            commentCount: true
-                        }
-                    }
+                            commentCount: true,
+                        },
+                    },
                 },
                 where: {
                     status: ContentStatus.PUBLISHED,
-                    deleted: false
+                    deleted: false,
                 },
                 orderBy: {
                     stats: {
-                        readCount: 'desc'
-                    }
+                        readCount: 'desc',
+                    },
                 },
-                take: limit
-            })
+                take: limit,
+            }),
         ]);
 
         return {
             topArticlesByViews,
             topArticlesByReactions,
-            topEventsByRegistrations: topEventsByRegistrations.map(event => ({
+            topEventsByRegistrations: topEventsByRegistrations.map((event) => ({
                 ...event,
                 registrationCount: event.registrations.length,
-                confirmedRegistrations: event.registrations.filter(r => r.status === 'CONFIRMED').length
-            }))
+                confirmedRegistrations: event.registrations.filter(
+                    (r) => r.status === 'CONFIRMED',
+                ).length,
+            })),
         };
     }
 
     async getCreatorStatistics(userId: string) {
         // Get current date ranges for creator analytics
         const now = new Date();
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfToday = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+        );
         const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfThisYear = new Date(now.getFullYear(), 0, 1);
 
         // Get creator's content statistics and visitor analytics
         const [
-            articleStats, 
-            eventStats, 
-            totalFollowers, 
+            articleStats,
+            eventStats,
+            totalFollowers,
             totalRatings,
             // Visitor analytics for creator's content
             contentVisitsToday,
-            contentVisitsThisMonth, 
+            contentVisitsThisMonth,
             contentVisitsThisYear,
-            totalContentVisits
+            totalContentVisits,
         ] = await Promise.all([
             this.prisma.article.groupBy({
                 by: ['status'],
                 _count: {
-                    id: true
+                    id: true,
                 },
                 where: {
                     authorId: userId,
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.event.groupBy({
                 by: ['status'],
                 _count: {
-                    id: true
+                    id: true,
                 },
                 where: {
                     authorId: userId,
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.follow.count({
                 where: {
-                    followingId: userId
-                }
+                    followingId: userId,
+                },
             }),
             this.prisma.userRating.findMany({
                 where: {
-                    userId: userId
+                    userId: userId,
                 },
                 select: {
-                    rating: true
-                }
+                    rating: true,
+                },
             }),
             // Get visits to creator's content - Today
             this.prisma.visit.count({
@@ -434,24 +473,24 @@ export class DashboardService {
                                 {
                                     article: {
                                         authorId: userId,
-                                        deleted: false
-                                    }
+                                        deleted: false,
+                                    },
                                 },
                                 {
                                     event: {
                                         authorId: userId,
-                                        deleted: false
-                                    }
-                                }
-                            ]
+                                        deleted: false,
+                                    },
+                                },
+                            ],
                         },
                         {
                             visitedAt: {
-                                gte: startOfToday
-                            }
-                        }
-                    ]
-                }
+                                gte: startOfToday,
+                            },
+                        },
+                    ],
+                },
             }),
             // Get visits to creator's content - This Month
             this.prisma.visit.count({
@@ -462,24 +501,24 @@ export class DashboardService {
                                 {
                                     article: {
                                         authorId: userId,
-                                        deleted: false
-                                    }
+                                        deleted: false,
+                                    },
                                 },
                                 {
                                     event: {
                                         authorId: userId,
-                                        deleted: false
-                                    }
-                                }
-                            ]
+                                        deleted: false,
+                                    },
+                                },
+                            ],
                         },
                         {
                             visitedAt: {
-                                gte: startOfThisMonth
-                            }
-                        }
-                    ]
-                }
+                                gte: startOfThisMonth,
+                            },
+                        },
+                    ],
+                },
             }),
             // Get visits to creator's content - This Year
             this.prisma.visit.count({
@@ -490,24 +529,24 @@ export class DashboardService {
                                 {
                                     article: {
                                         authorId: userId,
-                                        deleted: false
-                                    }
+                                        deleted: false,
+                                    },
                                 },
                                 {
                                     event: {
                                         authorId: userId,
-                                        deleted: false
-                                    }
-                                }
-                            ]
+                                        deleted: false,
+                                    },
+                                },
+                            ],
                         },
                         {
                             visitedAt: {
-                                gte: startOfThisYear
-                            }
-                        }
-                    ]
-                }
+                                gte: startOfThisYear,
+                            },
+                        },
+                    ],
+                },
             }),
             // Get total visits to creator's content - All Time
             this.prisma.visit.count({
@@ -516,18 +555,18 @@ export class DashboardService {
                         {
                             article: {
                                 authorId: userId,
-                                deleted: false
-                            }
+                                deleted: false,
+                            },
                         },
                         {
                             event: {
                                 authorId: userId,
-                                deleted: false
-                            }
-                        }
-                    ]
-                }
-            })
+                                deleted: false,
+                            },
+                        },
+                    ],
+                },
+            }),
         ]);
 
         // Get engagement metrics for creator's content
@@ -543,14 +582,14 @@ export class DashboardService {
                             likeCount: true,
                             commentCount: true,
                             shareCount: true,
-                            bookmarkCount: true
-                        }
-                    }
+                            bookmarkCount: true,
+                        },
+                    },
                 },
                 where: {
                     authorId: userId,
-                    deleted: false
-                }
+                    deleted: false,
+                },
             }),
             this.prisma.event.findMany({
                 select: {
@@ -560,57 +599,101 @@ export class DashboardService {
                     registrations: {
                         select: {
                             id: true,
-                            status: true
-                        }
+                            status: true,
+                        },
                     },
                     stats: {
                         select: {
                             readCount: true,
                             likeCount: true,
                             commentCount: true,
-                            shareCount: true
-                        }
-                    }
+                            shareCount: true,
+                        },
+                    },
                 },
                 where: {
                     authorId: userId,
-                    deleted: false
-                }
-            })
+                    deleted: false,
+                },
+            }),
         ]);
 
         // Calculate total engagement
-        const totalArticleViews = articleEngagement.reduce((sum, article) => sum + article.stats.readCount, 0);
-        const totalArticleLikes = articleEngagement.reduce((sum, article) => sum + article.stats.likeCount, 0);
-        const totalArticleComments = articleEngagement.reduce((sum, article) => sum + article.stats.commentCount, 0);
-        const totalArticleShares = articleEngagement.reduce((sum, article) => sum + article.stats.shareCount, 0);
-        const totalArticleBookmarks = articleEngagement.reduce((sum, article) => sum + article.stats.bookmarkCount, 0);
+        const totalArticleViews = articleEngagement.reduce(
+            (sum, article) => sum + article.stats.readCount,
+            0,
+        );
+        const totalArticleLikes = articleEngagement.reduce(
+            (sum, article) => sum + article.stats.likeCount,
+            0,
+        );
+        const totalArticleComments = articleEngagement.reduce(
+            (sum, article) => sum + article.stats.commentCount,
+            0,
+        );
+        const totalArticleShares = articleEngagement.reduce(
+            (sum, article) => sum + article.stats.shareCount,
+            0,
+        );
+        const totalArticleBookmarks = articleEngagement.reduce(
+            (sum, article) => sum + article.stats.bookmarkCount,
+            0,
+        );
 
-        const totalEventViews = eventEngagement.reduce((sum, event) => sum + event.stats.readCount, 0);
-        const totalEventLikes = eventEngagement.reduce((sum, event) => sum + event.stats.likeCount, 0);
-        const totalEventComments = eventEngagement.reduce((sum, event) => sum + event.stats.commentCount, 0);
-        const totalEventShares = eventEngagement.reduce((sum, event) => sum + event.stats.shareCount, 0);
-        const totalEventRegistrations = eventEngagement.reduce((sum, event) => sum + event.registrations.length, 0);
+        const totalEventViews = eventEngagement.reduce(
+            (sum, event) => sum + event.stats.readCount,
+            0,
+        );
+        const totalEventLikes = eventEngagement.reduce(
+            (sum, event) => sum + event.stats.likeCount,
+            0,
+        );
+        const totalEventComments = eventEngagement.reduce(
+            (sum, event) => sum + event.stats.commentCount,
+            0,
+        );
+        const totalEventShares = eventEngagement.reduce(
+            (sum, event) => sum + event.stats.shareCount,
+            0,
+        );
+        const totalEventRegistrations = eventEngagement.reduce(
+            (sum, event) => sum + event.registrations.length,
+            0,
+        );
 
         // Calculate average rating
-        const averageRating = totalRatings.length > 0 
-            ? totalRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings.length 
-            : 0;
+        const averageRating =
+            totalRatings.length > 0
+                ? totalRatings.reduce((sum, r) => sum + r.rating, 0) /
+                  totalRatings.length
+                : 0;
 
         return {
             content: {
-                articles: articleStats.reduce((acc, curr) => ({
-                    ...acc,
-                    [curr.status.toLowerCase()]: curr._count.id
-                }), {
-                    total: articleStats.reduce((sum, curr) => sum + curr._count.id, 0)
-                }),
-                events: eventStats.reduce((acc, curr) => ({
-                    ...acc,
-                    [curr.status.toLowerCase()]: curr._count.id
-                }), {
-                    total: eventStats.reduce((sum, curr) => sum + curr._count.id, 0)
-                })
+                articles: articleStats.reduce(
+                    (acc, curr) => ({
+                        ...acc,
+                        [curr.status.toLowerCase()]: curr._count.id,
+                    }),
+                    {
+                        total: articleStats.reduce(
+                            (sum, curr) => sum + curr._count.id,
+                            0,
+                        ),
+                    },
+                ),
+                events: eventStats.reduce(
+                    (acc, curr) => ({
+                        ...acc,
+                        [curr.status.toLowerCase()]: curr._count.id,
+                    }),
+                    {
+                        total: eventStats.reduce(
+                            (sum, curr) => sum + curr._count.id,
+                            0,
+                        ),
+                    },
+                ),
             },
             engagement: {
                 totalViews: totalArticleViews + totalEventViews,
@@ -619,34 +702,36 @@ export class DashboardService {
                 totalShares: totalArticleShares + totalEventShares,
                 totalBookmarks: totalArticleBookmarks,
                 totalEventRegistrations,
-                averageRating: parseFloat(averageRating.toFixed(2))
+                averageRating: parseFloat(averageRating.toFixed(2)),
             },
             social: {
                 followers: totalFollowers,
-                ratingsCount: totalRatings.length
+                ratingsCount: totalRatings.length,
             },
             visitors: {
                 total: totalContentVisits,
                 today: contentVisitsToday,
                 thisMonth: contentVisitsThisMonth,
-                thisYear: contentVisitsThisYear
+                thisYear: contentVisitsThisYear,
             },
             performance: {
-                articles: articleEngagement.map(article => ({
+                articles: articleEngagement.map((article) => ({
                     id: article.id,
                     title: article.title,
                     publishedAt: article.publishedAt,
-                    metrics: article.stats
+                    metrics: article.stats,
                 })),
-                events: eventEngagement.map(event => ({
+                events: eventEngagement.map((event) => ({
                     id: event.id,
                     title: event.title,
                     publishedAt: event.publishedAt,
                     registrations: event.registrations.length,
-                    confirmedRegistrations: event.registrations.filter(r => r.status === 'CONFIRMED').length,
-                    metrics: event.stats
-                }))
-            }
+                    confirmedRegistrations: event.registrations.filter(
+                        (r) => r.status === 'CONFIRMED',
+                    ).length,
+                    metrics: event.stats,
+                })),
+            },
         };
     }
 
@@ -664,17 +749,17 @@ export class DashboardService {
                 publishedAt: true,
                 author: {
                     select: {
-                        name: true
-                    }
-                }
+                        name: true,
+                    },
+                },
             },
             where: {
-                deleted: false
+                deleted: false,
             },
             orderBy: {
-                createdAt: 'desc'
+                createdAt: 'desc',
             },
-            take: Math.ceil(limit / 3)
+            take: Math.ceil(limit / 3),
         });
 
         // Recent events
@@ -688,17 +773,17 @@ export class DashboardService {
                 start_at: true,
                 author: {
                     select: {
-                        name: true
-                    }
-                }
+                        name: true,
+                    },
+                },
             },
             where: {
-                deleted: false
+                deleted: false,
             },
             orderBy: {
-                createdAt: 'desc'
+                createdAt: 'desc',
             },
-            take: Math.ceil(limit / 3)
+            take: Math.ceil(limit / 3),
         });
 
         // Recent user registrations
@@ -707,108 +792,125 @@ export class DashboardService {
                 id: true,
                 name: true,
                 role: true,
-                createdAt: true
+                createdAt: true,
             },
             where: {
-                deleted: false
+                deleted: false,
             },
             orderBy: {
-                createdAt: 'desc'
+                createdAt: 'desc',
             },
-            take: Math.ceil(limit / 3)
+            take: Math.ceil(limit / 3),
         });
 
         // Combine and format activities
-        recentArticles.forEach(article => {
+        recentArticles.forEach((article) => {
             activities.push({
                 type: 'article',
-                action: article.status === ContentStatus.PUBLISHED ? 'published' : 'created',
+                action:
+                    article.status === ContentStatus.PUBLISHED
+                        ? 'published'
+                        : 'created',
                 title: article.title,
                 author: article.author.name,
-                createdAt: article.status === ContentStatus.PUBLISHED ? article.publishedAt : article.createdAt
+                createdAt:
+                    article.status === ContentStatus.PUBLISHED
+                        ? article.publishedAt
+                        : article.createdAt,
             });
         });
 
-        recentEvents.forEach(event => {
+        recentEvents.forEach((event) => {
             activities.push({
                 type: 'event',
-                action: event.status === ContentStatus.PUBLISHED ? 'published' : 'created',
+                action:
+                    event.status === ContentStatus.PUBLISHED
+                        ? 'published'
+                        : 'created',
                 title: event.title,
                 author: event.author.name,
                 startAt: event.start_at,
-                createdAt: event.status === ContentStatus.PUBLISHED ? event.publishedAt : event.createdAt
+                createdAt:
+                    event.status === ContentStatus.PUBLISHED
+                        ? event.publishedAt
+                        : event.createdAt,
             });
         });
 
-        recentUsers.forEach(user => {
+        recentUsers.forEach((user) => {
             activities.push({
                 type: 'user',
                 action: 'joined',
                 title: `${user.name} (${user.role})`,
-                createdAt: user.createdAt
+                createdAt: user.createdAt,
             });
         });
 
         // Sort by date and return limited results
         return activities
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .sort(
+                (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime(),
+            )
             .slice(0, limit);
     }
 
     async getPlatformGrowth() {
         // Get growth metrics for the last 30 days
         const now = new Date();
-        
+
         // Get daily growth data
         const growthData = [];
         for (let i = 29; i >= 0; i--) {
             const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
             const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-            
-            const [newUsers, newArticles, newEvents, newVisits] = await Promise.all([
-                this.prisma.user.count({
-                    where: {
-                        createdAt: {
-                            gte: date,
-                            lt: nextDate
+
+            const [newUsers, newArticles, newEvents, newVisits] =
+                await Promise.all([
+                    this.prisma.user.count({
+                        where: {
+                            createdAt: {
+                                gte: date,
+                                lt: nextDate,
+                            },
+                            deleted: false,
                         },
-                        deleted: false
-                    }
-                }),
-                this.prisma.article.count({
-                    where: {
-                        createdAt: {
-                            gte: date,
-                            lt: nextDate
+                    }),
+                    this.prisma.article.count({
+                        where: {
+                            createdAt: {
+                                gte: date,
+                                lt: nextDate,
+                            },
+                            deleted: false,
                         },
-                        deleted: false
-                    }
-                }),
-                this.prisma.event.count({
-                    where: {
-                        createdAt: {
-                            gte: date,
-                            lt: nextDate
+                    }),
+                    this.prisma.event.count({
+                        where: {
+                            createdAt: {
+                                gte: date,
+                                lt: nextDate,
+                            },
+                            deleted: false,
                         },
-                        deleted: false
-                    }
-                }),
-                this.prisma.visit.count({
-                    where: {
-                        visitedAt: {
-                            gte: date,
-                            lt: nextDate
-                        }
-                    }
-                })
-            ]);
+                    }),
+                    this.prisma.visit.count({
+                        where: {
+                            visitedAt: {
+                                gte: date,
+                                lt: nextDate,
+                            },
+                        },
+                    }),
+                ]);
 
             growthData.push({
                 date: date.toISOString().split('T')[0],
                 newUsers,
                 newArticles,
                 newEvents,
-                newVisits
+                newVisits,
             });
         }
 

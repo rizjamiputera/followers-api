@@ -14,7 +14,7 @@ export class HomePageService {
     constructor(
         private articleService: ArticleService,
         private eventService: EventService,
-    ) { }
+    ) {}
 
     // FEATURED ARTICLES MANAGEMENT
     async getFeaturedArticles(limit: number = 5): Promise<Article[]> {
@@ -45,7 +45,7 @@ export class HomePageService {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Start of today
 
-        const featuredEvents = allFeaturedEvents.filter(event => {
+        const featuredEvents = allFeaturedEvents.filter((event) => {
             // If event has end_at, use it for comparison
             if (event.end_at) {
                 const eventEndDate = new Date(event.end_at);

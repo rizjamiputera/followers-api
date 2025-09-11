@@ -40,8 +40,17 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { PublishEventDto } from './dto/publish-event.dto';
 import { RejectEventDto } from './dto/reject-event.dto';
 import { EventWithAuthReaction } from './event-interface';
-import { CreateRegistrationConfigDto, UpdateRegistrationConfigDto } from './dto/registration-config.dto';
-import { RegisterForEventDto, UpdateRegistrationDto, ConfirmRegistrationDto, CancelRegistrationDto, RegistrationFilterDto } from './dto/event-registration.dto';
+import {
+    CreateRegistrationConfigDto,
+    UpdateRegistrationConfigDto,
+} from './dto/registration-config.dto';
+import {
+    RegisterForEventDto,
+    UpdateRegistrationDto,
+    ConfirmRegistrationDto,
+    CancelRegistrationDto,
+    RegistrationFilterDto,
+} from './dto/event-registration.dto';
 
 @ApiTags('Event')
 @Controller({
@@ -52,7 +61,7 @@ export class EventController {
     constructor(
         private readonly eventService: EventService,
         private readonly appService: AppService,
-    ) { }
+    ) {}
 
     @PermissionsRequired(Module.EVENT, Permission.CREATE)
     @ApiBearerAuth()
@@ -70,7 +79,15 @@ export class EventController {
     ) {
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
-        const { content, tags, image, image_md, image_portrait, image_portrait_md, ...eventDto } = createEventDto;
+        const {
+            content,
+            tags,
+            image,
+            image_md,
+            image_portrait,
+            image_portrait_md,
+            ...eventDto
+        } = createEventDto;
         const data: Prisma.EventCreateInput & { tags?: string[] } = {
             ...eventDto,
             ...(image && {
@@ -180,7 +197,12 @@ export class EventController {
     //     );
     // }
 
-    @PermissionsRequired(Module.EVENT, Permission.READ, Permission.CREATE, Permission.EDIT)
+    @PermissionsRequired(
+        Module.EVENT,
+        Permission.READ,
+        Permission.CREATE,
+        Permission.EDIT,
+    )
     @ApiBearerAuth()
     @Get('my/:id')
     async readMyEvent(
@@ -188,7 +210,11 @@ export class EventController {
         @Param('id') id: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        const event = await this.eventService.findOneWithUserContext(id, req.user.id, query.includes);
+        const event = await this.eventService.findOneWithUserContext(
+            id,
+            req.user.id,
+            query.includes,
+        );
 
         if (!event) throw new NotFoundException('Event is not found');
 
@@ -221,12 +247,17 @@ export class EventController {
 
         if (updateEventDto.image && updateEventDto.image_md) {
             updateEventDto.image = updateEventDto.image.replace(apiUri, '');
-            updateEventDto.image_md = updateEventDto.image_md.replace(apiUri, '');
+            updateEventDto.image_md = updateEventDto.image_md.replace(
+                apiUri,
+                '',
+            );
         }
 
         if (updateEventDto.image_portrait && updateEventDto.image_portrait_md) {
-            updateEventDto.image_portrait = updateEventDto.image_portrait.replace(apiUri, '');
-            updateEventDto.image_portrait_md = updateEventDto.image_portrait_md.replace(apiUri, '');
+            updateEventDto.image_portrait =
+                updateEventDto.image_portrait.replace(apiUri, '');
+            updateEventDto.image_portrait_md =
+                updateEventDto.image_portrait_md.replace(apiUri, '');
         }
 
         return this.eventService.update(id, updateEventDto);
@@ -353,7 +384,6 @@ export class EventController {
         return this.eventService.updateStatus(id, dataEvent, dataApproval);
     }
 
-
     @PermissionsRequired(Module.EVENT, Permission.PUBLISH)
     @ApiBearerAuth()
     @Post('publish/:id')
@@ -366,7 +396,10 @@ export class EventController {
         const currentData = await this.eventService.findOne(id);
 
         if (!currentData) throw new NotFoundException('Event is not found');
-        if (!currentData.image) throw new BadRequestException('Event tanpa foto tidak dapat di publish')
+        if (!currentData.image)
+            throw new BadRequestException(
+                'Event tanpa foto tidak dapat di publish',
+            );
 
         const dataEvent: Prisma.EventUpdateInput = {
             status: ContentStatus.PUBLISHED,
@@ -463,7 +496,9 @@ export class EventController {
     ) {
         const event = await this.eventService.findOne(eventId);
         if (event.authorId !== req.user.id && req.user.role === 'USER') {
-            throw new ForbiddenException('Only event author can configure registration');
+            throw new ForbiddenException(
+                'Only event author can configure registration',
+            );
         }
         return this.eventService.createRegistrationConfig(eventId, configDto);
     }
@@ -478,7 +513,9 @@ export class EventController {
     ) {
         const event = await this.eventService.findOne(eventId);
         if (event.authorId !== req.user.id && req.user.role === 'USER') {
-            throw new ForbiddenException('Only event author can configure registration');
+            throw new ForbiddenException(
+                'Only event author can configure registration',
+            );
         }
         return this.eventService.updateRegistrationConfig(eventId, configDto);
     }
@@ -498,7 +535,11 @@ export class EventController {
         @Param('id') eventId: string,
         @Body(new ValidationPipe()) registrationDto: RegisterForEventDto,
     ) {
-        return this.eventService.registerForEvent(eventId, req.user.id, registrationDto);
+        return this.eventService.registerForEvent(
+            eventId,
+            req.user.id,
+            registrationDto,
+        );
     }
 
     @ApiBearerAuth()
@@ -508,7 +549,11 @@ export class EventController {
         @Param('registrationId') registrationId: string,
         @Body(new ValidationPipe()) updateDto: UpdateRegistrationDto,
     ) {
-        return this.eventService.updateRegistration(registrationId, req.user.id, updateDto);
+        return this.eventService.updateRegistration(
+            registrationId,
+            req.user.id,
+            updateDto,
+        );
     }
 
     @ApiBearerAuth()
@@ -519,7 +564,11 @@ export class EventController {
         @Param('registrationId') registrationId: string,
         @Body(new ValidationPipe()) cancelDto: CancelRegistrationDto,
     ) {
-        return this.eventService.cancelRegistration(registrationId, req.user.id, cancelDto);
+        return this.eventService.cancelRegistration(
+            registrationId,
+            req.user.id,
+            cancelDto,
+        );
     }
 
     // Registration Management (Event Authors/Admins)
@@ -529,14 +578,22 @@ export class EventController {
     async getEventRegistrations(
         @Request() req: any,
         @Param('id') eventId: string,
-        @Query(new ValidationPipe({ transform: true })) pagination: PaginationDeletedIncludeQueryDto,
-        @Query(new ValidationPipe({ transform: true })) filter: RegistrationFilterDto,
+        @Query(new ValidationPipe({ transform: true }))
+        pagination: PaginationDeletedIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true }))
+        filter: RegistrationFilterDto,
     ) {
         const event = await this.eventService.findOne(eventId);
         if (event.authorId !== req.user.id && req.user.role === 'USER') {
-            throw new ForbiddenException('Only event author can view registrations');
+            throw new ForbiddenException(
+                'Only event author can view registrations',
+            );
         }
-        return this.eventService.getEventRegistrations(eventId, pagination, filter);
+        return this.eventService.getEventRegistrations(
+            eventId,
+            pagination,
+            filter,
+        );
     }
 
     @PermissionsRequired(Module.EVENT, Permission.READ)
@@ -546,15 +603,21 @@ export class EventController {
     async exportEventRegistrations(
         @Request() req: any,
         @Param('id') eventId: string,
-        @Query(new ValidationPipe({ transform: true })) filter: RegistrationFilterDto,
+        @Query(new ValidationPipe({ transform: true }))
+        filter: RegistrationFilterDto,
         @Res() res: any,
     ) {
         const event = await this.eventService.findOne(eventId);
         if (event.authorId !== req.user.id && req.user.role === 'USER') {
-            throw new ForbiddenException('Only event author can export registrations');
+            throw new ForbiddenException(
+                'Only event author can export registrations',
+            );
         }
 
-        const buffer = await this.eventService.exportEventRegistrationsToPDF(eventId, filter);
+        const buffer = await this.eventService.exportEventRegistrationsToPDF(
+            eventId,
+            filter,
+        );
         const filename = `${event.slug}-registrations-${new Date().toISOString().split('T')[0]}.pdf`;
 
         res.set({
@@ -567,19 +630,28 @@ export class EventController {
     @PermissionsRequired(Module.EVENT, Permission.READ)
     @ApiBearerAuth()
     @Get(':id/registrations/export/xlsx')
-    @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    @Header(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
     async exportEventRegistrationsXLSX(
         @Request() req: any,
         @Param('id') eventId: string,
-        @Query(new ValidationPipe({ transform: true })) filter: RegistrationFilterDto,
+        @Query(new ValidationPipe({ transform: true }))
+        filter: RegistrationFilterDto,
         @Res() res: any,
     ) {
         const event = await this.eventService.findOne(eventId);
         if (event.authorId !== req.user.id && req.user.role === 'USER') {
-            throw new ForbiddenException('Only event author can export registrations');
+            throw new ForbiddenException(
+                'Only event author can export registrations',
+            );
         }
 
-        const buffer = await this.eventService.exportEventRegistrationsToXLSX(eventId, filter);
+        const buffer = await this.eventService.exportEventRegistrationsToXLSX(
+            eventId,
+            filter,
+        );
         const filename = `${event.slug}-registrations-${new Date().toISOString().split('T')[0]}.xlsx`;
 
         res.set({
@@ -597,7 +669,10 @@ export class EventController {
         @Param('registrationId') registrationId: string,
         @Body(new ValidationPipe()) confirmDto: ConfirmRegistrationDto,
     ) {
-        return this.eventService.confirmRegistration(registrationId, confirmDto);
+        return this.eventService.confirmRegistration(
+            registrationId,
+            confirmDto,
+        );
     }
 
     // User's Own Registrations
@@ -605,7 +680,8 @@ export class EventController {
     @Get('/my-registrations')
     async getUserRegistrations(
         @Request() req: any,
-        @Query(new ValidationPipe({ transform: true })) pagination: PaginationDeletedIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true }))
+        pagination: PaginationDeletedIncludeQueryDto,
     ) {
         return this.eventService.getUserRegistrations(req.user.id, pagination);
     }

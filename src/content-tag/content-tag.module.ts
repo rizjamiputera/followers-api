@@ -4,8 +4,8 @@ import { ContentTagController } from './content-tag.controller';
 import { PrismaService } from '../prisma.service';
 
 @Module({
-  controllers: [ContentTagController],
-  providers: [ContentTagService, PrismaService],
-  exports: [ContentTagService],
+    controllers: [ContentTagController],
+    providers: [ContentTagService, PrismaService],
+    exports: [ContentTagService],
 })
 export class ContentTagModule {}

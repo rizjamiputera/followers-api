@@ -16,7 +16,7 @@ import { Module, Permission } from '@prisma/client';
 @ApiTags('Home Page')
 @Controller({ path: 'home-page', version: '1' })
 export class HomePageController {
-    constructor(private readonly homePageService: HomePageService) { }
+    constructor(private readonly homePageService: HomePageService) {}
 
     // PUBLIC ENDPOINTS FOR HOMEPAGE DATA
     @Public()
@@ -35,7 +35,9 @@ export class HomePageController {
 
     @Public()
     @Get('data')
-    @ApiOperation({ summary: 'Get all homepage data (featured articles and events)' })
+    @ApiOperation({
+        summary: 'Get all homepage data (featured articles and events)',
+    })
     getHomepageData() {
         return this.homePageService.getHomepageData();
     }
@@ -48,7 +50,7 @@ export class HomePageController {
     @ApiOperation({ summary: 'Set article as featured/unfeatured' })
     setArticleFeatured(
         @Param('id') id: string,
-        @Body() body: { isFeatured: boolean }
+        @Body() body: { isFeatured: boolean },
     ) {
         return this.homePageService.setArticleFeatured(id, body.isFeatured);
     }
@@ -60,7 +62,7 @@ export class HomePageController {
     @ApiOperation({ summary: 'Set event as featured/unfeatured' })
     setEventFeatured(
         @Param('id') id: string,
-        @Body() body: { isFeatured: boolean }
+        @Body() body: { isFeatured: boolean },
     ) {
         return this.homePageService.setEventFeatured(id, body.isFeatured);
     }
