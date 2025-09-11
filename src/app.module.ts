@@ -19,6 +19,8 @@ import { ContentStatsModule } from './content-stats/content-stats.module';
 import { HomePageModule } from './home-page/home-page.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MailModule } from './mail/mail.module';
+import { TagModule } from './tag/tag.module';
+import { ContentTagModule } from './content-tag/content-tag.module';
 
 @Module({
     imports: [
@@ -41,6 +43,8 @@ import { MailModule } from './mail/mail.module';
         HomePageModule,
         DashboardModule,
         MailModule,
+        TagModule,
+        ContentTagModule,
     ],
     controllers: [AppController],
     providers: [
