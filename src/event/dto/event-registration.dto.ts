@@ -1,19 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-    IsNotEmpty,
-    IsOptional,
-    IsString,
-    IsObject,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsObject } from 'class-validator';
 
 export class RegisterForEventDto {
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Form data responses based on event registration config',
         example: {
             phone: '+628123456789',
             dietary_requirements: 'Vegetarian',
-            company: 'Tech Corp'
-        }
+            company: 'Tech Corp',
+        },
     })
     @IsObject()
     @IsNotEmpty()
@@ -21,9 +16,9 @@ export class RegisterForEventDto {
 }
 
 export class UpdateRegistrationDto {
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Updated form data responses',
-        required: false
+        required: false,
     })
     @IsObject()
     @IsOptional()
@@ -31,9 +26,9 @@ export class UpdateRegistrationDto {
 }
 
 export class ConfirmRegistrationDto {
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Confirmation note (optional)',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
@@ -41,9 +36,9 @@ export class ConfirmRegistrationDto {
 }
 
 export class CancelRegistrationDto {
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Cancellation reason',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
@@ -51,18 +46,18 @@ export class CancelRegistrationDto {
 }
 
 export class RegistrationFilterDto {
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Filter by registration status',
         enum: ['PENDING', 'CONFIRMED', 'CANCELLED'],
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
     status?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Search by user name or email',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()

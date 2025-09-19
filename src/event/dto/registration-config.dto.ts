@@ -36,14 +36,14 @@ export class FormFieldDto {
 
     @ApiProperty({
         enum: FormFieldType,
-        description: 'Type of form field'
+        description: 'Type of form field',
     })
     @IsNotEmpty()
     type: FormFieldType;
 
     @ApiProperty({
         description: 'Whether this field is required',
-        default: false
+        default: false,
     })
     @IsBoolean()
     @IsOptional()
@@ -51,7 +51,7 @@ export class FormFieldDto {
 
     @ApiProperty({
         description: 'Placeholder text for the field',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
@@ -59,7 +59,7 @@ export class FormFieldDto {
 
     @ApiProperty({
         description: 'Help text for the field',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
@@ -68,7 +68,7 @@ export class FormFieldDto {
     @ApiProperty({
         description: 'Options for SELECT, CHECKBOX, or RADIO fields',
         required: false,
-        type: [String]
+        type: [String],
     })
     @IsArray()
     @IsString({ each: true })
@@ -77,7 +77,7 @@ export class FormFieldDto {
 
     @ApiProperty({
         description: 'Validation rules (e.g., min/max length, pattern)',
-        required: false
+        required: false,
     })
     @IsOptional()
     validation?: Record<string, any>;
@@ -91,7 +91,7 @@ export class CreateRegistrationConfigDto {
     @ApiProperty({
         description: 'Custom label for registration form',
         default: 'Registrasi',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
@@ -99,36 +99,48 @@ export class CreateRegistrationConfigDto {
 
     @ApiProperty({
         description: 'Maximum number of participants (null for unlimited)',
-        required: false
+        required: false,
     })
     @IsNumber()
     @IsOptional()
-    @Transform(({ value }) => value === null ? null : parseInt(value))
+    @Transform(({ value }) => (value === null ? null : parseInt(value)))
     participantLimit?: number | null;
 
     @ApiProperty({
         description: 'Registration start date (ISO string with timezone)',
         required: false,
-        example: '2024-12-25T10:00:00Z'
+        example: '2024-12-25T10:00:00Z',
     })
-    @IsDateString({}, { message: 'Registration start must be a valid ISO date string with timezone' })
+    @IsDateString(
+        {},
+        {
+            message:
+                'Registration start must be a valid ISO date string with timezone',
+        },
+    )
     @IsOptional()
-    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
+    @Transform(({ value }) => (value ? new Date(value).toISOString() : value))
     registrationStart?: string;
 
     @ApiProperty({
         description: 'Registration end date (ISO string with timezone)',
         required: false,
-        example: '2024-12-31T23:59:59Z'
+        example: '2024-12-31T23:59:59Z',
     })
-    @IsDateString({}, { message: 'Registration end must be a valid ISO date string with timezone' })
+    @IsDateString(
+        {},
+        {
+            message:
+                'Registration end must be a valid ISO date string with timezone',
+        },
+    )
     @IsOptional()
-    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
+    @Transform(({ value }) => (value ? new Date(value).toISOString() : value))
     registrationEnd?: string;
 
     @ApiProperty({
         description: 'Form fields configuration',
-        type: [FormFieldDto]
+        type: [FormFieldDto],
     })
     @IsArray()
     @ValidateNested({ each: true })
@@ -137,7 +149,7 @@ export class CreateRegistrationConfigDto {
 
     @ApiProperty({
         description: 'Whether registrations require manual approval',
-        default: false
+        default: false,
     })
     @IsBoolean()
     @IsOptional()
@@ -145,7 +157,7 @@ export class CreateRegistrationConfigDto {
 
     @ApiProperty({
         description: 'Custom confirmation message after registration',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
@@ -155,7 +167,7 @@ export class CreateRegistrationConfigDto {
 export class UpdateRegistrationConfigDto {
     @ApiProperty({
         description: 'Enable registration for this event',
-        required: false
+        required: false,
     })
     @IsBoolean()
     @IsOptional()
@@ -163,7 +175,7 @@ export class UpdateRegistrationConfigDto {
 
     @ApiProperty({
         description: 'Custom label for registration form',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()
@@ -171,37 +183,49 @@ export class UpdateRegistrationConfigDto {
 
     @ApiProperty({
         description: 'Maximum number of participants (null for unlimited)',
-        required: false
+        required: false,
     })
     @IsNumber()
     @IsOptional()
-    @Transform(({ value }) => value === null ? null : parseInt(value))
+    @Transform(({ value }) => (value === null ? null : parseInt(value)))
     participantLimit?: number | null;
 
     @ApiProperty({
         description: 'Registration start date (ISO string with timezone)',
         required: false,
-        example: '2024-12-25T10:00:00Z'
+        example: '2024-12-25T10:00:00Z',
     })
-    @IsDateString({}, { message: 'Registration start must be a valid ISO date string with timezone' })
+    @IsDateString(
+        {},
+        {
+            message:
+                'Registration start must be a valid ISO date string with timezone',
+        },
+    )
     @IsOptional()
-    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
+    @Transform(({ value }) => (value ? new Date(value).toISOString() : value))
     registrationStart?: string;
 
     @ApiProperty({
         description: 'Registration end date (ISO string with timezone)',
         required: false,
-        example: '2024-12-31T23:59:59Z'
+        example: '2024-12-31T23:59:59Z',
     })
-    @IsDateString({}, { message: 'Registration end must be a valid ISO date string with timezone' })
+    @IsDateString(
+        {},
+        {
+            message:
+                'Registration end must be a valid ISO date string with timezone',
+        },
+    )
     @IsOptional()
-    @Transform(({ value }) => value ? new Date(value).toISOString() : value)
+    @Transform(({ value }) => (value ? new Date(value).toISOString() : value))
     registrationEnd?: string;
 
     @ApiProperty({
         description: 'Form fields configuration',
         type: [FormFieldDto],
-        required: false
+        required: false,
     })
     @IsArray()
     @ValidateNested({ each: true })
@@ -211,7 +235,7 @@ export class UpdateRegistrationConfigDto {
 
     @ApiProperty({
         description: 'Whether registrations require manual approval',
-        required: false
+        required: false,
     })
     @IsBoolean()
     @IsOptional()
@@ -219,7 +243,7 @@ export class UpdateRegistrationConfigDto {
 
     @ApiProperty({
         description: 'Custom confirmation message after registration',
-        required: false
+        required: false,
     })
     @IsString()
     @IsOptional()

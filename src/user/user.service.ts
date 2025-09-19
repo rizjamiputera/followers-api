@@ -16,7 +16,7 @@ export class UserService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) { }
+    ) {}
 
     create(data: Prisma.UserCreateInput) {
         return this.prisma.user.create({ data });
@@ -39,11 +39,11 @@ export class UserService {
 
         const searchCondition: Prisma.UserWhereInput = search
             ? {
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { email: { contains: search, mode: 'insensitive' } },
-                ],
-            }
+                  OR: [
+                      { name: { contains: search, mode: 'insensitive' } },
+                      { email: { contains: search, mode: 'insensitive' } },
+                  ],
+              }
             : {};
 
         const whereConditions: Prisma.UserWhereInput[] = [
@@ -188,8 +188,8 @@ export class UserService {
                     requester_role == Role.OPERATOR
                         ? { role: { notIn: [Role.SUPERADMIN, Role.ADMIN] } }
                         : requester_role == Role.ADMIN
-                            ? { role: { not: Role.SUPERADMIN } }
-                            : {},
+                          ? { role: { not: Role.SUPERADMIN } }
+                          : {},
                 ],
             },
             include,
@@ -245,8 +245,7 @@ export class UserService {
                     },
                 },
             });
-        } catch (error) {
-        }
+        } catch (error) {}
 
         return;
     }

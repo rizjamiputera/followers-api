@@ -13,24 +13,23 @@ services:
             - -c
             - |
                 echo '💾 Creating production backup before staging copy...'
+                DATE_FOLDER=$$(date +%Y%m%d)
                 TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
-                mkdir -p /backups
+                mkdir -p /backups/$$DATE_FOLDER
 
                 echo '📁 Backing up production files...'
-                tar czf /backups/prod_files_backup_$$TIMESTAMP.tar.gz -C /source/files . 2>/dev/null || echo 'No files to backup'
+                tar czf /backups/$$DATE_FOLDER/prod_files_backup_$$TIMESTAMP.tar.gz -C /source/files . 2>/dev/null || echo 'No files to backup'
 
-                echo '🗄️ Backing up production database...'
-                tar czf /backups/prod_db_backup_$$TIMESTAMP.tar.gz -C /source/db . 2>/dev/null || echo 'No database to backup'
-
-                echo '📋 Backup created: prod_files_backup_$$TIMESTAMP.tar.gz, prod_db_backup_$$TIMESTAMP.tar.gz'
+                echo '📋 Files backup created in /backups/$$DATE_FOLDER/: prod_files_backup_$$TIMESTAMP.tar.gz'
 
                 echo '📁 Copying production files to staging...'
                 cp -r /source/files/* /target/files/ 2>/dev/null || echo 'No files to copy or target ready'
 
-                echo '🗄️ Skipping database file copy (will be handled by db-restore service)...'
+                echo '🗄️ Database backup will be handled by db-restore service...'
 
                 echo '🧹 Cleaning old backups (keeping last 30 days)...'
                 find /backups -name 'prod_*_backup_*.tar.gz' -mtime +30 -delete 2>/dev/null || true
+                find /backups -type d -empty -mtime +1 -delete 2>/dev/null || true
 
                 echo '✅ Backup and copy completed successfully'
         networks:
@@ -70,13 +69,14 @@ services:
                 done
 
                 echo '🗄️ Creating database backup from production...'
+                DATE_FOLDER=$$(date +%Y%m%d)
                 TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
-                mkdir -p /backups
+                mkdir -p /backups/$$DATE_FOLDER
 
                 # Try to connect to production database and create backup
-                if pg_dump -h prod_followers_bicara_postgre -U followersBicaraDong -d postgres > /backups/prod_db_backup_$$TIMESTAMP.sql 2>/dev/null; then
+                if pg_dump -h prod_followers_bicara_postgre -U followersBicaraDong -d postgres > /backups/$$DATE_FOLDER/prod_db_backup_$$TIMESTAMP.sql 2>/dev/null; then
                   echo '📥 Restoring production data to staging database...'
-                  psql -h stg_followers_bicara_postgre -U followersBicaraDong -d postgres < /backups/prod_db_backup_$$TIMESTAMP.sql
+                  psql -h stg_followers_bicara_postgre -U followersBicaraDong -d postgres < /backups/$$DATE_FOLDER/prod_db_backup_$$TIMESTAMP.sql
                   echo '✅ Database restore completed successfully'
                 else
                   echo '⚠️ Could not connect to production database - staging will start with empty database'

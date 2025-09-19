@@ -8,14 +8,14 @@ import { Roles } from 'src/auth/guards/roles/roles.decorator';
 @ApiTags('Dashboard')
 @Controller({ path: 'dashboard', version: '1' })
 export class DashboardController {
-    constructor(private readonly dashboardService: DashboardService) { }
+    constructor(private readonly dashboardService: DashboardService) {}
 
     @Get('overview')
     @Roles(Role.ADMIN, Role.SUPERADMIN, Role.OPERATOR)
     async getWebsiteOverview() {
         return {
             success: true,
-            data: await this.dashboardService.getWebsiteOverview()
+            data: await this.dashboardService.getWebsiteOverview(),
         };
     }
 
@@ -25,7 +25,9 @@ export class DashboardController {
         const parsedLimit = limit ? parseInt(limit, 10) : 10;
         return {
             success: true,
-            data: await this.dashboardService.getTopPerformingContent(parsedLimit)
+            data: await this.dashboardService.getTopPerformingContent(
+                parsedLimit,
+            ),
         };
     }
 
@@ -33,7 +35,7 @@ export class DashboardController {
     async getCreatorStatistics(@Request() req) {
         return {
             success: true,
-            data: await this.dashboardService.getCreatorStatistics(req.user.id)
+            data: await this.dashboardService.getCreatorStatistics(req.user.id),
         };
     }
 
@@ -43,7 +45,7 @@ export class DashboardController {
         const parsedLimit = limit ? parseInt(limit, 10) : 20;
         return {
             success: true,
-            data: await this.dashboardService.getActivityTimeline(parsedLimit)
+            data: await this.dashboardService.getActivityTimeline(parsedLimit),
         };
     }
 
@@ -52,19 +54,20 @@ export class DashboardController {
     async getPlatformGrowth() {
         return {
             success: true,
-            data: await this.dashboardService.getPlatformGrowth()
+            data: await this.dashboardService.getPlatformGrowth(),
         };
     }
 
     @Get('admin-overview')
     @Roles(Role.ADMIN, Role.SUPERADMIN)
     async getAdminDashboard() {
-        const [overview, topContent, activityTimeline, growth] = await Promise.all([
-            this.dashboardService.getWebsiteOverview(),
-            this.dashboardService.getTopPerformingContent(5),
-            this.dashboardService.getActivityTimeline(10),
-            this.dashboardService.getPlatformGrowth()
-        ]);
+        const [overview, topContent, activityTimeline, growth] =
+            await Promise.all([
+                this.dashboardService.getWebsiteOverview(),
+                this.dashboardService.getTopPerformingContent(5),
+                this.dashboardService.getActivityTimeline(10),
+                this.dashboardService.getPlatformGrowth(),
+            ]);
 
         return {
             success: true,
@@ -72,14 +75,16 @@ export class DashboardController {
                 overview,
                 topContent,
                 recentActivity: activityTimeline,
-                growth
-            }
+                growth,
+            },
         };
     }
 
     @Get('creator-dashboard')
     async getCreatorDashboard(@Request() req) {
-        const creatorStats = await this.dashboardService.getCreatorStatistics(req.user.id);
+        const creatorStats = await this.dashboardService.getCreatorStatistics(
+            req.user.id,
+        );
 
         return {
             success: true,
@@ -87,10 +92,10 @@ export class DashboardController {
                 user: {
                     name: req.user.name,
                     role: req.user.role,
-                    email: req.user.email
+                    email: req.user.email,
                 },
-                statistics: creatorStats
-            }
+                statistics: creatorStats,
+            },
         };
     }
 }
