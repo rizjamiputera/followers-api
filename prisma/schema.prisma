@@ -61,11 +61,8 @@ model User {
     mentions           Comment[]           @relation("comment_mentions")
     visits             Visitor[]
     profile            Profile?
-    isProfilePublic    Boolean             @default(false)
     followers          Follow[]            @relation("UserFollowers")
     following          Follow[]            @relation("UserFollowing")
-    ratingsGiven       UserRating[]        @relation("RatingsGiven")
-    ratingsReceived    UserRating[]        @relation("RatingsReceived")
     articleBookmarks   ArticleBookmark[]
     eventRegistrations EventRegistration[]
 
@@ -122,6 +119,78 @@ model ErrorLog {
     createdAt   DateTime @default(now())
 
     @@map("error-log")
+}
+
+// PROFILE
+enum VerificationStatus {
+    UNVERIFIED
+    PENDING
+    VERIFIED
+    REJECTED
+}
+
+model Profile {
+    id              String       @id @default(uuid())
+    user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId          String       @unique
+    slug            String       @unique @db.VarChar(100) // Custom username/slug
+    isPublic        Boolean      @default(false)
+    // Biography & Personal Info
+    // biography       String?      @db.Text // Rich text biography
+    biography       Content      @relation(fields: [contentId], references: [id], onDelete: Restrict)
+    contentId       String       @unique
+    specializations String[] // ["Quran", "Hadith", "Fiqh", "Tafsir", "Sejarah Islam"]
+    // Public stats
+    socialLinks     SocialLink[]
+    totalArticles   Int          @default(0)
+    totalFollowers  Int          @default(0)
+    createdAt       DateTime     @default(now())
+    updatedAt       DateTime     @updatedAt
+
+    // @@index([isVerified, expertise])
+    @@index([slug])
+    @@map("profile")
+}
+
+enum SocialPlatform {
+    INSTAGRAM
+    FACEBOOK
+    TWITTER
+    YOUTUBE
+    TIKTOK
+    LINKEDIN
+    TELEGRAM
+    WHATSAPP
+    WEBSITE
+}
+
+model SocialLink {
+    id        String         @id @default(uuid())
+    profile   Profile?       @relation(fields: [profileId], references: [id])
+    profileId String?
+    platform  SocialPlatform
+    url       String         @db.VarChar(255)
+    handle    String?        @db.VarChar(100) // @username
+    // isPublic Boolean        @default(true)
+
+    // @@unique([userId, platform])
+    @@unique([profileId, platform])
+    @@map("social_link")
+}
+
+// FOLLOW SYSTEM
+model Follow {
+    id          String   @id @default(uuid())
+    follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+    followerId  String
+    following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+    followingId String
+    createdAt   DateTime @default(now())
+
+    @@unique([followerId, followingId])
+    @@index([followerId])
+    @@index([followingId])
+    @@map("follow")
 }
 
 // ARTICLES
@@ -245,6 +314,7 @@ model Content {
     comments  Comment[]
     article   Article?
     event     Event?
+    profile   Profile?
 
     @@map("content")
 }
@@ -449,116 +519,6 @@ model ArticleBookmark {
 //     DOCTORATE // S3
 //     ISLAMIC_SCHOLAR // Formal Islamic education
 // }
-
-enum VerificationStatus {
-    UNVERIFIED
-    PENDING
-    VERIFIED
-    REJECTED
-}
-
-model Profile {
-    id               String       @id @default(uuid())
-    user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId           String       @unique
-    // Biography & Personal Info
-    location         String?      @db.VarChar(100)
-    birthDate        DateTime?
-    biography        String?      @db.Text // Rich text biography
-    // Islamic Dakwah Specific
-    // expertise             ExpertiseLevel     @default(BEGINNER)
-    specializations  String[] // ["Quran", "Hadith", "Fiqh", "Tafsir", "Sejarah Islam"]
-    educationDetails String?      @db.Text // Where studied, degree details
-    // educationLevel          EducationLevel     @default(NONE)
-    // Languages spoken/written
-    // languages               String[] // ["Indonesian", "Arabic", "English"]
-    // Verification for credibility
-    // isVerified              Boolean            @default(false)
-    // verificationStatus      VerificationStatus @default(UNVERIFIED)
-    // verificationNote        String?            @db.Text
-    // verificationDocuments   String[] // URLs to uploaded documents
-    // verifiedAt              DateTime?
-    // verifiedBy              String? // Admin who verified
-    // Teaching/Mentoring
-    // isAvailableForMentoring Boolean   @default(false)
-    // mentoringTopics         String[] // Areas willing to mentor
-    // mentoringContact        String?   @db.VarChar(255)
-    // Public stats
-    socialLinks      SocialLink[]
-    totalArticles    Int          @default(0)
-    totalFollowers   Int          @default(0)
-    totalLikes       Int          @default(0)
-    avgRating        Float? // From user ratings
-    // SEO & Discovery
-    slug             String?      @unique @db.VarChar(100) // Custom username/slug
-    website          String?      @db.VarChar(255)
-    contact          String?      @db.VarChar(255)
-    createdAt        DateTime     @default(now())
-    updatedAt        DateTime     @updatedAt
-
-    // @@index([isVerified, expertise])
-    @@index([slug])
-    @@map("profile")
-}
-
-enum SocialPlatform {
-    INSTAGRAM
-    FACEBOOK
-    TWITTER
-    YOUTUBE
-    TIKTOK
-    LINKEDIN
-    TELEGRAM
-    WHATSAPP
-    WEBSITE
-    BLOG
-}
-
-model SocialLink {
-    id        String         @id @default(uuid())
-    profile   Profile?       @relation(fields: [profileId], references: [id])
-    profileId String?
-    platform  SocialPlatform
-    url       String         @db.VarChar(255)
-    handle    String?        @db.VarChar(100) // @username
-    // isPublic Boolean        @default(true)
-
-    // @@unique([userId, platform])
-    @@unique([profileId, platform])
-    @@map("social_link")
-}
-
-// FOLLOW SYSTEM
-model Follow {
-    id          String   @id @default(uuid())
-    follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
-    followerId  String
-    following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
-    followingId String
-    createdAt   DateTime @default(now())
-
-    @@unique([followerId, followingId])
-    @@index([followerId])
-    @@index([followingId])
-    @@map("follow")
-}
-
-// WRITER RATINGS & REVIEWS
-model UserRating {
-    id        String   @id @default(uuid())
-    user      User     @relation("RatingsReceived", fields: [userId], references: [id], onDelete: Cascade)
-    userId    String
-    rater     User     @relation("RatingsGiven", fields: [raterId], references: [id], onDelete: Cascade)
-    raterId   String
-    rating    Int // 1-5 stars
-    review    String?  @db.Text
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@unique([userId, raterId])
-    @@index([userId, rating])
-    @@map("writer_rating")
-}
 
 // EVENT REGISTRATION SYSTEM
 enum RegistrationStatus {
