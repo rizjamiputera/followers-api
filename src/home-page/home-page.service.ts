@@ -61,7 +61,7 @@ export class HomePageService {
 
         return {
             featuredArticles,
-            allFeaturedEvents,
+            featuredEvents: allFeaturedEvents,
         };
     }
 }
