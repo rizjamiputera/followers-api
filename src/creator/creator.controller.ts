@@ -5,6 +5,8 @@ import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { Public } from 'src/auth/auth.metadata';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { FilterCreatorDto } from './dto/filter-creator.dto';
+import { PermissionsRequired } from 'src/auth/guards/permissions/permission.decorator';
+import { Module, Permission } from '@prisma/client';
 
 @Controller({
     path: 'creator',
@@ -28,6 +30,7 @@ export class CreatorController {
     }
 
     @ApiBearerAuth()
+    @PermissionsRequired(Module.USER, Permission.READ)
     @Get()
     findAll(
         @Query(new ValidationPipe({ transform: true }))
@@ -59,6 +62,7 @@ export class CreatorController {
     // }
 
     @ApiBearerAuth()
+    @PermissionsRequired(Module.USER, Permission.EDIT)
     @Patch(':id/toggle-public')
     @HttpCode(200)
     togglePublic(@Param('id') id: string) {
