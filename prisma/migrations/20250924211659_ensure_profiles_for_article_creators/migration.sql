@@ -23,13 +23,12 @@ BEGIN
 
     -- Create profile
     INSERT INTO "followers"."profile" (
-      id, "userId", slug, "isPublic", "contentId", specializations,
+      id, "userId", "isPublic", "contentId", specializations,
       "totalArticles", "totalFollowers", "createdAt", "updatedAt"
     )
     VALUES (
       gen_random_uuid(),
       user_record.id,
-      LOWER(REGEXP_REPLACE(user_record.name, '[^a-zA-Z0-9]', '-', 'g')),
       false,
       content_id,
       ARRAY[]::text[],

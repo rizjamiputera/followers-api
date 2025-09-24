@@ -63,7 +63,7 @@ export class UserController {
         private readonly userService: UserService,
         private readonly authService: AuthService,
         private readonly appService: AppService,
-    ) {}
+    ) { }
 
     @CreateSuperadminDoc()
     @Roles(Role.SUPERADMIN)
@@ -75,8 +75,10 @@ export class UserController {
 
         const password = await bcrypt.hash(dataDto.password, 10);
 
+        const username = dataDto.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
         const dataUser: Prisma.UserCreateInput = {
             ...dataDto,
+            username,
             role: Role.SUPERADMIN,
             password: {
                 create: {
@@ -97,8 +99,10 @@ export class UserController {
         await this.authService.validateNewUser(dataDto);
         const password = await bcrypt.hash(dataDto.password, 10);
 
+        const username = dataDto.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
         const dataUser: Prisma.UserCreateInput = {
             ...dataDto,
+            username,
             role: Role.ADMIN,
             password: {
                 create: {
@@ -120,8 +124,10 @@ export class UserController {
         await this.authService.validateNewUser(dataDto);
         const password = await bcrypt.hash(dataDto.password, 10);
 
+        const username = dataDto.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
         const dataUser: Prisma.UserCreateInput = {
             ...dataDto,
+            username,
             role: Role.OPERATOR,
             password: {
                 create: {

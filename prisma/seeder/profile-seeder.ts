@@ -46,7 +46,6 @@ export async function ProfileSeed(prisma: PrismaClient) {
                     user: {
                         connect: { id: user.id }
                     },
-                    slug,
                     biography: {
                         connect: { id: biographyContent.id }
                     },
@@ -62,7 +61,8 @@ export async function ProfileSeed(prisma: PrismaClient) {
                         'Dakwah',
                         'Syariah'
                     ], { min: 2, max: 5 }),
-                    isPublic: faker.datatype.boolean(0.7),
+                    // slug,
+                    // isPublic: faker.datatype.boolean(0.7),
                 },
             });
 

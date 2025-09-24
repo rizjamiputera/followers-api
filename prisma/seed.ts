@@ -16,7 +16,7 @@ async function main() {
         await ArticleSeed(prisma);
         await EventSeed(prisma);
         await EventRegistrationSeed(prisma);
-        await FollowSeed(prisma);
+        // await FollowSeed(prisma);
         // await ProfileSeed(prisma);
         // await ContentReactionSeed(prisma);
     }
