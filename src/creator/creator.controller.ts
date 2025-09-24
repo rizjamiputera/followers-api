@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ValidationPipe, HttpCode } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Query, ValidationPipe, HttpCode, Request } from '@nestjs/common';
 import { CreatorService } from './creator.service';
 import { PaginationIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
@@ -14,11 +14,6 @@ import { Module, Permission } from '@prisma/client';
 })
 export class CreatorController {
     constructor(private readonly creatorService: CreatorService) { }
-
-    // @Post()
-    // create(@Body() createCreatorDto: CreateCreatorDto) {
-    //     return this.creatorService.create(createCreatorDto);
-    // }
 
     @Public()
     @Get('public')
@@ -47,19 +42,47 @@ export class CreatorController {
         return this.creatorService.getStats();
     }
 
-    @Public()
-    @Get(':slug')
+    @ApiBearerAuth()
+    @Get('my/profile')
+    getMyProfile(
+        @Request() req: any,
+        @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
+    ) {
+        console.log('masuk my profile')
+        return this.creatorService.findOneByUserId(req.user.id, query.includes);
+    }
+
+    @ApiBearerAuth()
+    @Patch('my/profile')
+    updateMyProfile(@Request() req: any, @Body() updateCreatorDto: any) {
+        return this.creatorService.update(req.user.id, updateCreatorDto);
+    }
+
+    @ApiBearerAuth()
+    @Get(':userId')
     findOne(
+        @Param('userId') userId: string,
+        @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
+    ) {
+        console.log('by user id')
+        return this.creatorService.findOneByUserId(userId, query.includes);
+    }
+
+    @Public()
+    @Get('public/:slug')
+    findOnePublic(
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
         return this.creatorService.findOne(slug, query.includes);
     }
 
-    // @Patch(':id')
-    // update(@Param('id') id: string, @Body() updateCreatorDto: UpdateCreatorDto) {
-    //     return this.creatorService.update(+id, updateCreatorDto);
-    // }
+    @ApiBearerAuth()
+    @PermissionsRequired(Module.USER, Permission.EDIT)
+    @Patch(':userId')
+    update(@Param('userId') userId: string, @Body() updateCreatorDto: any) {
+        return this.creatorService.update(userId, updateCreatorDto);
+    }
 
     @ApiBearerAuth()
     @PermissionsRequired(Module.USER, Permission.EDIT)
@@ -68,9 +91,4 @@ export class CreatorController {
     togglePublic(@Param('id') id: string) {
         return this.creatorService.togglePublic(id);
     }
-
-    // @Delete(':id')
-    // remove(@Param('id') id: string) {
-    //     return this.creatorService.remove(+id);
-    // }
 }

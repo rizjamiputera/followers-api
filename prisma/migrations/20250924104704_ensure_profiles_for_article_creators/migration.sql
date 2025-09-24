@@ -18,7 +18,7 @@ BEGIN
   LOOP
     -- Create content for biography
     INSERT INTO "followers"."content" (id, content, "createdAt", "updatedAt")
-    VALUES (gen_random_uuid(), '{}'::jsonb, NOW(), NOW())
+    VALUES (gen_random_uuid(), '{"type":"doc","content":[]}'::jsonb, NOW(), NOW())
     RETURNING id INTO content_id;
 
     -- Create profile
