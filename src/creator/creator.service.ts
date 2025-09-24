@@ -16,10 +16,6 @@ export class CreatorService {
         private app: AppService,
     ) { }
 
-    // create(createCreatorDto: CreateCreatorDto) {
-    //     return 'This action adds a new creator';
-    // }
-
     async findAll(
         pagination: PaginationIncludeQueryDto,
         filter: FilterCreatorDto,
@@ -292,8 +288,4 @@ export class CreatorService {
             isPublic: updated.isPublic,
         };
     }
-
-    // remove(id: number) {
-    //     return `This action removes a #${id} creator`;
-    // }
 }
