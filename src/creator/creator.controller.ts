@@ -70,12 +70,12 @@ export class CreatorController {
     }
 
     @Public()
-    @Get('public/:slug')
+    @Get('public/:username')
     findOnePublic(
-        @Param('slug') slug: string,
+        @Param('username') username: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        return this.creatorService.findOne(slug, query.includes);
+        return this.creatorService.findOne(username, query.includes);
     }
 
     @ApiBearerAuth()
