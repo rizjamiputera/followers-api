@@ -176,11 +176,88 @@ export class CreatorService {
         if (!data) throw new NotFoundException('Creator tidak ditemukan')
 
         return this.app.transformImageUrls(data, ...transformImages);
+
+    }
+    async findOneByUserId(
+        userId: string,
+        includes: string[] = [],
+    ) {
+        const include = this.app.getValidIncludes(
+            VALID_INCLUDES,
+            includes,
+            false,
+        );
+
+        const data = await this.prisma.profile.findFirst({
+            where: { userId },
+            include,
+        });
+
+        if (!data) throw new NotFoundException('Creator tidak ditemukan')
+
+        return this.app.transformImageUrls(data, ...transformImages);
     }
 
-    // update(id: number, updateCreatorDto: UpdateCreatorDto) {
-    //     return `This action updates a #${id} creator`;
-    // }
+    async update(userId: string, updateCreatorDto: any) {
+        const profile = await this.prisma.profile.findUnique({
+            where: { userId },
+            include: { biography: true, socialLinks: true },
+        });
+
+        if (!profile) throw new NotFoundException('Creator tidak ditemukan');
+
+        const { biography, socialLinks, ...profileData } = updateCreatorDto;
+
+        if (profileData.slug && profileData.slug !== profile.slug) {
+            const existingProfile = await this.prisma.profile.findUnique({
+                where: { slug: profileData.slug },
+            });
+
+            if (existingProfile) {
+                throw new Error('Username sudah digunakan');
+            }
+        }
+
+        const updateData: any = {
+            ...profileData,
+        };
+
+        if (biography) {
+            updateData.biography = {
+                update: {
+                    content: biography,
+                },
+            };
+        }
+
+        if (socialLinks !== undefined) {
+            await this.prisma.socialLink.deleteMany({
+                where: { profileId: profile.id },
+            });
+
+            if (socialLinks.length > 0) {
+                updateData.socialLinks = {
+                    create: socialLinks.map((link: any) => ({
+                        platform: link.platform,
+                        url: link.url,
+                        handle: link.handle || null,
+                    })),
+                };
+            }
+        }
+
+        const updated = await this.prisma.profile.update({
+            where: { userId },
+            data: updateData,
+            include: {
+                biography: true,
+                socialLinks: true,
+                user: true,
+            },
+        });
+
+        return this.app.transformImageUrls(updated, ...transformImages);
+    }
 
     async getStats() {
         const [totalPublic, total] = await Promise.all([

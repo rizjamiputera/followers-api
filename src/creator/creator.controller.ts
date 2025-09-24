@@ -47,19 +47,31 @@ export class CreatorController {
         return this.creatorService.getStats();
     }
 
-    @Public()
-    @Get(':slug')
+    @ApiBearerAuth()
+    @Get(':userId')
     findOne(
+        @Param('userId') userId: string,
+        @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
+    ) {
+        console.log('by user id')
+        return this.creatorService.findOneByUserId(userId, query.includes);
+    }
+
+    @Public()
+    @Get('public/:slug')
+    findOnePublic(
         @Param('slug') slug: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
         return this.creatorService.findOne(slug, query.includes);
     }
 
-    // @Patch(':id')
-    // update(@Param('id') id: string, @Body() updateCreatorDto: UpdateCreatorDto) {
-    //     return this.creatorService.update(+id, updateCreatorDto);
-    // }
+    @ApiBearerAuth()
+    @PermissionsRequired(Module.USER, Permission.EDIT)
+    @Patch(':userId')
+    update(@Param('userId') userId: string, @Body() updateCreatorDto: any) {
+        return this.creatorService.update(userId, updateCreatorDto);
+    }
 
     @ApiBearerAuth()
     @PermissionsRequired(Module.USER, Permission.EDIT)
