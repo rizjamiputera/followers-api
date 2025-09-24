@@ -17,7 +17,7 @@ class SocialLinkDto {
 export class UpdateCreatorDto {
     @IsOptional()
     @IsString()
-    slug?: string;
+    username?: string;
 
     @IsOptional()
     @IsBoolean()

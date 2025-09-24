@@ -7,6 +7,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { FilterCreatorDto } from './dto/filter-creator.dto';
 import { PermissionsRequired } from 'src/auth/guards/permissions/permission.decorator';
 import { Module, Permission } from '@prisma/client';
+import { UpdateCreatorDto } from './dto/update-creator.dto';
 
 @Controller({
     path: 'creator',
@@ -54,7 +55,7 @@ export class CreatorController {
 
     @ApiBearerAuth()
     @Patch('my/profile')
-    updateMyProfile(@Request() req: any, @Body() updateCreatorDto: any) {
+    updateMyProfile(@Request() req: any, @Body() updateCreatorDto: UpdateCreatorDto) {
         return this.creatorService.update(req.user.id, updateCreatorDto);
     }
 
@@ -69,18 +70,18 @@ export class CreatorController {
     }
 
     @Public()
-    @Get('public/:slug')
+    @Get('public/:username')
     findOnePublic(
-        @Param('slug') slug: string,
+        @Param('username') username: string,
         @Query(new ValidationPipe({ transform: true })) query: IncludesQueryDto,
     ) {
-        return this.creatorService.findOne(slug, query.includes);
+        return this.creatorService.findOne(username, query.includes);
     }
 
     @ApiBearerAuth()
     @PermissionsRequired(Module.USER, Permission.EDIT)
     @Patch(':userId')
-    update(@Param('userId') userId: string, @Body() updateCreatorDto: any) {
+    update(@Param('userId') userId: string, @Body() updateCreatorDto: UpdateCreatorDto) {
         return this.creatorService.update(userId, updateCreatorDto);
     }
 

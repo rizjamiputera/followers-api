@@ -15,10 +15,10 @@ export class FollowService {
         const followingUser = await this.prisma.user.findFirst({
             where: {
                 id: followingId,
-                active: true,
-                profile: {
-                    isPublic: true
-                }
+                // active: true,
+                // profile: {
+                //     isPublic: true
+                // }
             },
             include: {
                 profile: true
@@ -133,12 +133,12 @@ export class FollowService {
                             id: true,
                             name: true,
                             avatar_md: true,
-                            profile: {
-                                select: {
-                                    slug: true,
-                                    specializations: true,
-                                },
-                            },
+                            // profile: {
+                            //     select: {
+                            //         slug: true,
+                            //         specializations: true,
+                            //     },
+                            // },
                         },
                     },
                 },
@@ -172,12 +172,12 @@ export class FollowService {
                             id: true,
                             name: true,
                             avatar_md: true,
-                            profile: {
-                                select: {
-                                    slug: true,
-                                    specializations: true,
-                                },
-                            },
+                            // profile: {
+                            //     select: {
+                            //         slug: true,
+                            //         specializations: true,
+                            //     },
+                            // },
                         },
                     },
                 },

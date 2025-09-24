@@ -158,11 +158,9 @@ export class ArticleService {
             }
         })
         if (!user.profile) {
-            const slug = user.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
             await this.prisma.profile.create({
                 data: {
                     user: { connect: { id: userId } },
-                    slug,
                     biography: {
                         create: {
                             content: '{"type":"doc","content":[]}'

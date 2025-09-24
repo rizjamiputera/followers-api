@@ -50,7 +50,7 @@ export class AuthController {
         private readonly authService: AuthService,
         private readonly userService: UserService,
         private readonly appService: AppService,
-    ) {}
+    ) { }
 
     @Public()
     @LoginDoc()
@@ -78,8 +78,10 @@ export class AuthController {
                 ...data
             } = dataDto;
 
+            const username = data.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
             const dataUser: Prisma.UserCreateInput = {
                 ...data,
+                username,
                 role: 'USER',
                 password: {
                     create: {

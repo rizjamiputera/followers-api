@@ -41,6 +41,7 @@ model User {
     id                 String              @id @default(uuid())
     name               String              @db.VarChar(100)
     email              String              @unique @db.VarChar(255)
+    username           String              @unique @db.VarChar(100) // Custom username/slug
     avatar             String?             @db.VarChar(255)
     avatar_md          String?             @db.VarChar(255)
     role               Role
@@ -66,7 +67,7 @@ model User {
     articleBookmarks   ArticleBookmark[]
     eventRegistrations EventRegistration[]
 
-    @@index([email])
+    @@index([email, username])
     @@map("user")
 }
 
@@ -133,7 +134,6 @@ model Profile {
     id              String       @id @default(uuid())
     user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId          String       @unique
-    slug            String       @unique @db.VarChar(100) // Custom username/slug
     isPublic        Boolean      @default(false)
     // Biography & Personal Info
     // biography       String?      @db.Text // Rich text biography
@@ -148,7 +148,6 @@ model Profile {
     updatedAt       DateTime     @updatedAt
 
     // @@index([isVerified, expertise])
-    @@index([slug])
     @@map("profile")
 }
 

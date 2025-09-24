@@ -5,6 +5,7 @@ import { AppService } from 'src/app.service';
 import { Prisma } from '@prisma/client';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
 import { FilterCreatorDto } from './dto/filter-creator.dto';
+import { UpdateCreatorDto } from './dto/update-creator.dto';
 
 const VALID_INCLUDES = ['user', 'biography', 'socialLinks'];
 const transformImages = ['user.avatar', 'user.avatar_md'];
@@ -155,7 +156,7 @@ export class CreatorService {
     }
 
     async findOne(
-        slug: string,
+        username: string,
         includes: string[] = [],
     ) {
         const include = this.app.getValidIncludes(
@@ -165,7 +166,7 @@ export class CreatorService {
         );
 
         const data = await this.prisma.profile.findFirst({
-            where: { slug },
+            where: { user: { username } },
             include,
         });
 
@@ -194,29 +195,35 @@ export class CreatorService {
         return this.app.transformImageUrls(data, ...transformImages);
     }
 
-    async update(userId: string, updateCreatorDto: any) {
+    async update(userId: string, updateCreatorDto: UpdateCreatorDto) {
         const profile = await this.prisma.profile.findUnique({
             where: { userId },
-            include: { biography: true, socialLinks: true },
+            include: { biography: true, socialLinks: true, user: true },
         });
 
         if (!profile) throw new NotFoundException('Creator tidak ditemukan');
 
-        const { biography, socialLinks, ...profileData } = updateCreatorDto;
+        const { biography, socialLinks, username, ...profileData } = updateCreatorDto;
 
-        if (profileData.slug && profileData.slug !== profile.slug) {
-            const existingProfile = await this.prisma.profile.findUnique({
-                where: { slug: profileData.slug },
+        const updateData: any = {
+            ...profileData,
+        };
+
+        if (username && username !== profile.user.username) {
+            const existingProfile = await this.prisma.user.findUnique({
+                where: { username },
             });
 
             if (existingProfile) {
                 throw new Error('Username sudah digunakan');
             }
-        }
 
-        const updateData: any = {
-            ...profileData,
-        };
+            updateData.user = {
+                update: {
+                    username
+                }
+            }
+        }
 
         if (biography) {
             updateData.biography = {
