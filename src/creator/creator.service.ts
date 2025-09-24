@@ -4,6 +4,7 @@ import { PaginationIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { AppService } from 'src/app.service';
 import { Prisma } from '@prisma/client';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
+import { FilterCreatorDto } from './dto/filter-creator.dto';
 
 const VALID_INCLUDES = ['user', 'biography', 'socialLinks'];
 const transformImages = ['user.avatar', 'user.avatar_md'];
@@ -20,9 +21,11 @@ export class CreatorService {
     // }
 
     async findAll(
-        pagination: PaginationIncludeQueryDto
+        pagination: PaginationIncludeQueryDto,
+        filter: FilterCreatorDto,
     ) {
         const { search, page, limit, sortBy, order, includes } = pagination;
+        const { isPublic } = filter;
 
         const include = this.app.getValidIncludes(
             VALID_INCLUDES,
@@ -62,8 +65,10 @@ export class CreatorService {
             OR: searchConditions
         } : {};
 
+        // const publicFilter = forPublicRoute ? true : isPublic;
+
         const whereConditions: Prisma.ProfileWhereInput[] = [
-            { isPublic: true },
+            isPublic !== undefined && { isPublic },
             searchCondition,
         ];
 
@@ -81,9 +86,9 @@ export class CreatorService {
             const searchTerm = search.trim().toLowerCase();
 
             // Get all profiles that match basic criteria
-            const baseWhere: Prisma.ProfileWhereInput = {
-                isPublic: true,
-            };
+            const baseWhere: Prisma.ProfileWhereInput = isPublic !== undefined
+                ? { isPublic }
+                : {};
 
             // First get profiles matching user name
             const nameMatches = await this.prisma.profile.findMany({
@@ -176,6 +181,40 @@ export class CreatorService {
     // update(id: number, updateCreatorDto: UpdateCreatorDto) {
     //     return `This action updates a #${id} creator`;
     // }
+
+    async getStats() {
+        const [totalPublic, total] = await Promise.all([
+            this.prisma.profile.count({
+                where: { isPublic: true },
+            }),
+            this.prisma.profile.count(),
+        ]);
+
+        return {
+            totalPublic,
+            total,
+        };
+    }
+
+    async togglePublic(id: string) {
+        const profile = await this.prisma.profile.findUnique({
+            where: { id },
+        });
+
+        if (!profile) throw new NotFoundException('Creator tidak ditemukan');
+
+        const updated = await this.prisma.profile.update({
+            where: { id },
+            data: {
+                isPublic: !profile.isPublic,
+            },
+        });
+
+        return {
+            message: 'Status public berhasil diubah',
+            isPublic: updated.isPublic,
+        };
+    }
 
     // remove(id: number) {
     //     return `This action removes a #${id} creator`;

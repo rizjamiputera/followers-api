@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ValidationPipe, HttpCode } from '@nestjs/common';
 import { CreatorService } from './creator.service';
 import { PaginationIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { Public } from 'src/auth/auth.metadata';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { FilterCreatorDto } from './dto/filter-creator.dto';
 
 @Controller({
     path: 'creator',
@@ -17,12 +19,29 @@ export class CreatorController {
     // }
 
     @Public()
+    @Get('public')
+    findAllPublic(
+        @Query(new ValidationPipe({ transform: true }))
+        pagination: PaginationIncludeQueryDto,
+    ) {
+        return this.creatorService.findAll(pagination, { isPublic: true });
+    }
+
+    @ApiBearerAuth()
     @Get()
     findAll(
         @Query(new ValidationPipe({ transform: true }))
         pagination: PaginationIncludeQueryDto,
+        @Query(new ValidationPipe({ transform: true }))
+        filter: FilterCreatorDto,
     ) {
-        return this.creatorService.findAll(pagination);
+        return this.creatorService.findAll(pagination, filter);
+    }
+
+    @ApiBearerAuth()
+    @Get('stats')
+    getStats() {
+        return this.creatorService.getStats();
     }
 
     @Public()
@@ -38,6 +57,13 @@ export class CreatorController {
     // update(@Param('id') id: string, @Body() updateCreatorDto: UpdateCreatorDto) {
     //     return this.creatorService.update(+id, updateCreatorDto);
     // }
+
+    @ApiBearerAuth()
+    @Patch(':id/toggle-public')
+    @HttpCode(200)
+    togglePublic(@Param('id') id: string) {
+        return this.creatorService.togglePublic(id);
+    }
 
     // @Delete(':id')
     // remove(@Param('id') id: string) {
