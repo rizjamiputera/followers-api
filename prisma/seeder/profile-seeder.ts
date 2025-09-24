@@ -62,7 +62,7 @@ export async function ProfileSeed(prisma: PrismaClient) {
                         'Dakwah',
                         'Syariah'
                     ], { min: 2, max: 5 }),
-                    isPublic: faker.datatype.boolean(0.7)
+                    isPublic: faker.datatype.boolean(0.7),
                 },
             });
 
@@ -135,6 +135,42 @@ export async function ProfileSeed(prisma: PrismaClient) {
     const profiles = await Promise.all(profilePromises);
 
     console.log(`Created ${profiles.length} profiles with biographies and social links`);
+
+    console.log('\nUpdating profile statistics...');
+
+    const updateStatsPromises = users.map(async (user) => {
+        const profile = await prisma.profile.findUnique({
+            where: { userId: user.id }
+        });
+
+        if (!profile) return null;
+
+        const [totalArticles, totalFollowers] = await Promise.all([
+            prisma.article.count({
+                where: {
+                    authorId: user.id,
+                    status: 'PUBLISHED'
+                }
+            }),
+            prisma.follow.count({
+                where: {
+                    followingId: user.id
+                }
+            })
+        ]);
+
+        return prisma.profile.update({
+            where: { id: profile.id },
+            data: {
+                totalArticles,
+                totalFollowers
+            }
+        });
+    });
+
+    await Promise.all(updateStatsPromises);
+
+    console.log('Profile statistics updated successfully');
     console.log('\nSeed Finish: Profile');
 }
 
