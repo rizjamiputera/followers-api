@@ -21,6 +21,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { MailModule } from './mail/mail.module';
 import { TagModule } from './tag/tag.module';
 import { ContentTagModule } from './content-tag/content-tag.module';
+import { CreatorModule } from './creator/creator.module';
+import { FollowModule } from './follow/follow.module';
 
 @Module({
     imports: [
@@ -45,6 +47,8 @@ import { ContentTagModule } from './content-tag/content-tag.module';
         MailModule,
         TagModule,
         ContentTagModule,
+        CreatorModule,
+        FollowModule,
     ],
     controllers: [AppController],
     providers: [
