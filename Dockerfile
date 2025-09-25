@@ -1,5 +1,5 @@
 # Use a base image with Node.js installed
-FROM node:23.11.1-alpine
+FROM node:23.11.1-alpine3.22
 
 ENV PORT=5000
 ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mydb?schema=my_db"
