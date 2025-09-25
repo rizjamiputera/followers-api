@@ -8,7 +8,7 @@ export class DashboardService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) {}
+    ) { }
 
     async getWebsiteOverview() {
         // Get current date ranges for analytics
@@ -424,7 +424,7 @@ export class DashboardService {
             articleStats,
             eventStats,
             totalFollowers,
-            totalRatings,
+            // totalRatings,
             // Visitor analytics for creator's content
             contentVisitsToday,
             contentVisitsThisMonth,
@@ -456,14 +456,14 @@ export class DashboardService {
                     followingId: userId,
                 },
             }),
-            this.prisma.userRating.findMany({
-                where: {
-                    userId: userId,
-                },
-                select: {
-                    rating: true,
-                },
-            }),
+            // this.prisma.userRating.findMany({
+            //     where: {
+            //         userId: userId,
+            //     },
+            //     select: {
+            //         rating: true,
+            //     },
+            // }),
             // Get visits to creator's content - Today
             this.prisma.visit.count({
                 where: {
@@ -662,11 +662,11 @@ export class DashboardService {
         );
 
         // Calculate average rating
-        const averageRating =
-            totalRatings.length > 0
-                ? totalRatings.reduce((sum, r) => sum + r.rating, 0) /
-                  totalRatings.length
-                : 0;
+        // const averageRating =
+        //     totalRatings.length > 0
+        //         ? totalRatings.reduce((sum, r) => sum + r.rating, 0) /
+        //         totalRatings.length
+        //         : 0;
 
         return {
             content: {
@@ -702,11 +702,11 @@ export class DashboardService {
                 totalShares: totalArticleShares + totalEventShares,
                 totalBookmarks: totalArticleBookmarks,
                 totalEventRegistrations,
-                averageRating: parseFloat(averageRating.toFixed(2)),
+                // averageRating: parseFloat(averageRating.toFixed(2)),
             },
             social: {
                 followers: totalFollowers,
-                ratingsCount: totalRatings.length,
+                // ratingsCount: totalRatings.length,
             },
             visitors: {
                 total: totalContentVisits,

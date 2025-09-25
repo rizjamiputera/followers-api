@@ -24,12 +24,12 @@ export async function UserSeed(prisma: PrismaClient) {
     const promises = [];
     // Create 1 superadmin
     const superadmin_avatar = faker.helpers.arrayElement(avatars);
-    console.log({ superadmin_avatar });
     promises.push(
         prisma.user.create({
             data: {
                 name: 'Super Admin',
                 email: 'superadmin@example.com',
+                username: 'super_admin',
                 role: 'SUPERADMIN',
                 avatar: superadmin_avatar,
                 avatar_md: superadmin_avatar,
@@ -45,11 +45,13 @@ export async function UserSeed(prisma: PrismaClient) {
     // Create 20 regular users
     for (let i = 1; i <= 20; i++) {
         const superadmin_user = faker.helpers.arrayElement(avatars);
-        console.log({ superadmin_user });
+        const name = faker.person.fullName();
+        const username = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
         promises.push(
             prisma.user.create({
                 data: {
-                    name: faker.person.fullName(),
+                    name,
+                    username,
                     email: `user${i}@gmail.com`,
                     role: 'USER',
                     avatar: superadmin_user,
@@ -80,11 +82,14 @@ export async function UserSeed(prisma: PrismaClient) {
         for (let i = 1; i <= 15; i++) {
             const superadmin_operator_admin =
                 faker.helpers.arrayElement(avatars);
-            console.log({ superadmin_operator_admin });
+
+            const name = faker.person.fullName();
+            const username = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
             promises.push(
                 prisma.user.create({
                     data: {
-                        name: faker.person.fullName(),
+                        name,
+                        username,
                         email: `${role.toLowerCase()}${i}@gmail.com`,
                         role,
                         avatar: superadmin_operator_admin,

@@ -44,7 +44,7 @@ export class ArticleService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
-    ) {}
+    ) { }
 
     private transformData(
         data: Article & {
@@ -149,6 +149,27 @@ export class ArticleService {
         //     }
         // })
 
+        // create user profile
+        const userId = create.authorId;
+        const user = await this.prisma.user.findFirst({
+            where: { id: userId },
+            include: {
+                profile: true
+            }
+        })
+        if (!user.profile) {
+            await this.prisma.profile.create({
+                data: {
+                    user: { connect: { id: userId } },
+                    biography: {
+                        create: {
+                            content: '{"type":"doc","content":[]}'
+                        }
+                    }
+                }
+            })
+        }
+
         return create;
     }
 
@@ -163,11 +184,11 @@ export class ArticleService {
 
         const searchCondition: Prisma.ArticleWhereInput = search
             ? {
-                  OR: [
-                      { title: { contains: search, mode: 'insensitive' } },
-                      { excerpt: { contains: search, mode: 'insensitive' } },
-                  ],
-              }
+                OR: [
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { excerpt: { contains: search, mode: 'insensitive' } },
+                ],
+            }
             : {};
 
         const whereConditions: Prisma.ArticleWhereInput[] = [
@@ -311,7 +332,7 @@ export class ArticleService {
             (content &&
                 current.content &&
                 JSON.stringify(content) !==
-                    JSON.stringify(current.content.content));
+                JSON.stringify(current.content.content));
 
         // Create version if content changed
         if (contentChanged && current.content) {
@@ -419,6 +440,10 @@ export class ArticleService {
             },
         });
 
+        if (articleData.status) {
+            await this.updateAuthorArticleCount(current.authorId);
+        }
+
         return this.transformData(update);
     }
 
@@ -453,7 +478,25 @@ export class ArticleService {
             await this.prisma.contentApproval.create({ data: approvalDto });
         }
 
+        if (dataDto.status) {
+            await this.updateAuthorArticleCount(current.authorId);
+        }
+
         return;
+    }
+
+    private async updateAuthorArticleCount(authorId: string): Promise<void> {
+        const totalArticles = await this.prisma.article.count({
+            where: {
+                authorId,
+                status: ContentStatus.PUBLISHED,
+            },
+        });
+
+        await this.prisma.profile.updateMany({
+            where: { userId: authorId },
+            data: { totalArticles },
+        });
     }
 
     async createTags(tags: string[]): Promise<Tag[]> {

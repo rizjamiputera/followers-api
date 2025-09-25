@@ -12,6 +12,7 @@ export async function UserProductionSeed(prisma: PrismaClient) {
         data: {
             name: 'Super Uda',
             email: 'rizjamiputera@gmail.com',
+            username: 'super_uda',
             role: 'SUPERADMIN',
             password: {
                 create: {
