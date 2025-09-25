@@ -83,11 +83,13 @@ export class VisitStatsController {
     @Roles(Role.SUPERADMIN, Role.ADMIN)
     @ApiOperation({ summary: 'Get individual visitor journey paths' })
     @ApiQuery({ name: 'days', required: false, type: Number, description: 'Number of days to analyze (default: 30)' })
-    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Maximum number of journeys to return (default: 100)' })
-    async getVisitorJourneys(@Query('days') days?: string, @Query('limit') limit?: string) {
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Maximum number of journeys to return per page (default: 20)' })
+    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number for pagination (default: 1)' })
+    async getVisitorJourneys(@Query('days') days?: string, @Query('limit') limit?: string, @Query('page') page?: string) {
         const daysNumber = days ? parseInt(days, 10) : 30;
-        const limitNumber = limit ? parseInt(limit, 10) : 100;
-        return this.visitStatsService.getVisitorJourneys(daysNumber, limitNumber);
+        const limitNumber = limit ? parseInt(limit, 10) : 20;
+        const pageNumber = page ? parseInt(page, 10) : 1;
+        return this.visitStatsService.getVisitorJourneys(daysNumber, limitNumber, pageNumber);
     }
 
     @Get('path-flow')
