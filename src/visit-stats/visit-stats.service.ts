@@ -524,11 +524,24 @@ export class VisitStatsService {
 
     // Visitor Journey Analytics Methods
 
-    async getVisitorJourneys(days: number = 30, limit: number = 100) {
+    async getVisitorJourneys(days: number = 30, limit: number = 20, page: number = 1) {
         const now = new Date();
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+        const skip = (page - 1) * limit;
 
-        // Get visitors with their complete journey paths
+        // Get total count for pagination
+        const totalCount = await this.prisma.visitor.count({
+            where: {
+                firstVisitAt: {
+                    gte: startDate,
+                },
+                fingerprint: {
+                    not: null,
+                },
+            },
+        });
+
+        // Get visitors with their complete journey paths and user information
         const visitors = await this.prisma.visitor.findMany({
             where: {
                 firstVisitAt: {
@@ -539,6 +552,14 @@ export class VisitStatsService {
                 },
             },
             include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                        email: true,
+                    },
+                },
                 visits: {
                     where: {
                         visitedAt: {
@@ -554,10 +575,11 @@ export class VisitStatsService {
                     },
                 },
             },
-            take: limit,
             orderBy: {
                 lastVisitAt: 'desc',
             },
+            skip,
+            take: limit,
         });
 
         const journeys = visitors.map(visitor => ({
@@ -565,6 +587,12 @@ export class VisitStatsService {
             firstVisitAt: visitor.firstVisitAt,
             lastVisitAt: visitor.lastVisitAt,
             totalPages: visitor.visits.length,
+            user: visitor.user ? {
+                id: visitor.user.id,
+                name: visitor.user.name,
+                username: visitor.user.username,
+                email: visitor.user.email,
+            } : null,
             path: visitor.visits.map(visit => ({
                 page: visit.path,
                 timestamp: visit.visitedAt,
@@ -573,9 +601,15 @@ export class VisitStatsService {
                 new Date(visitor.lastVisitAt).getTime() - new Date(visitor.firstVisitAt).getTime() : 0,
         }));
 
+        const totalPages = Math.ceil(totalCount / limit);
+
         return {
             journeys,
-            totalJourneys: visitors.length,
+            totalJourneys: totalCount,
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
         };
     }
 
