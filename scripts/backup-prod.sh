@@ -62,8 +62,8 @@ offsite_upload() {
         log "    WARN: OFFSITE_REMOTE set but rclone not installed — skipping upload"
         return 0
     fi
-    log "    Uploading $(basename "$file") → $OFFSITE_REMOTE/"
-    if rclone copy "$file" "$OFFSITE_REMOTE/" --quiet; then
+    log "    Uploading $(basename "$file") → $OFFSITE_REMOTE/$DATE_FOLDER/"
+    if rclone copy "$file" "$OFFSITE_REMOTE/$DATE_FOLDER/" --quiet; then
         log "    Offsite upload OK"
     else
         log "    WARN: offsite upload failed (local copy kept in $BACKUP_DIR)"
