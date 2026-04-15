@@ -77,6 +77,7 @@ fi
 if docker volume inspect "$PROD_FILES_VOLUME" >/dev/null 2>&1; then
     log "==> Archiving production files volume..."
     docker run --rm \
+        --user "$(id -u):$(id -g)" \
         -v "$PROD_FILES_VOLUME":/source:ro \
         -v "$TARGET_DIR":/backup \
         alpine tar czf "/backup/prod_files_${TIMESTAMP}.tar.gz" -C /source .
