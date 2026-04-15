@@ -1,56 +1,95 @@
-name: Deploy to Staging
+name: Deploy Staging
 
 on:
     push:
-        branches:
-            - stg # run only when pushing to stg
+        tags:
+            - 'stg-*'
+
+concurrency:
+    group: deploy-staging
+    cancel-in-progress: false
 
 jobs:
-    deploy:
+    build-and-push:
+        name: Build & Push API image
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        outputs:
+            image: ${{ steps.img.outputs.full }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Compute image path
+              id: img
+              run: |
+                  REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+                  echo "name=ghcr.io/${REPO}" >> "$GITHUB_OUTPUT"
+                  echo "full=ghcr.io/${REPO}:${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+            - uses: docker/setup-buildx-action@v3
+
+            - uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build & push
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: Dockerfile-Production
+                  push: true
+                  tags: |
+                      ${{ steps.img.outputs.name }}:${{ github.ref_name }}
+                      ${{ steps.img.outputs.name }}:stg-latest
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+    deploy:
+        name: Deploy to VPS (Staging)
+        runs-on: ubuntu-latest
+        needs: [build-and-push]
 
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
-
-            - name: Set up SSH
-              uses: webfactory/ssh-agent@v0.7.0
-              with:
-                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+            - name: Extract tag
+              id: tag
+              run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
             - name: Deploy via SSH
-              run: |
-                  ssh -o StrictHostKeyChecking=no deploy@${{ secrets.VPS_HOST }} "
-                    cd /opt/followers/followers-api && \
-                    git config --global --add safe.directory /opt/followers/followers-api && \
+              uses: appleboy/ssh-action@v1
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  username: ${{ secrets.VPS_USER }}
+                  key: ${{ secrets.VPS_SSH_KEY }}
+                  port: ${{ secrets.VPS_PORT }}
+                  command_timeout: 30m
+                  script: |
+                      set -e
+                      TAG="${{ steps.tag.outputs.tag }}"
+                      PROJECT_DIR="${{ secrets.PROJECT_DIR || '/opt/followers/followers-api' }}"
+                      PROJECT_DIR="$(eval echo "$PROJECT_DIR")"
+                      cd "$PROJECT_DIR"
 
-                    git fetch origin --tags && \
-                    git checkout stg && \
+                      echo "==> Deploying staging tag: $TAG"
 
-                    git reset --hard origin/stg && \
+                      git fetch --tags --force origin
+                      git checkout "$TAG"
 
-                    # extract version from package.json using grep and sed
-                    VERSION=\$(grep -o '\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"' package.json | sed 's/.*\"\([^\"]*\)\"/\1/') && \
-                    IMAGE_TAG=stg-api-followers:\$VERSION && \
+                      echo "==> Pulling API image ghcr.io/${{ github.repository }}:${TAG}..."
+                      export STG_API_IMAGE_TAG="$TAG"
+                      docker compose -f docker-compose-staging.yml pull stg-api-followers
+                      docker compose -f docker-compose-staging.yml up -d
 
-                    echo Building image = \$IMAGE_TAG && \
+                      # ── Sync prod → staging (backup prod + restore into stg) ──
+                      echo "==> Syncing production data into staging..."
+                      BACKUP_DIR="$PROJECT_DIR/backups" bash scripts/sync-prod-to-staging.sh
 
-                    echo 'Ensuring production containers are running before staging deployment...' && \
-                    docker ps --filter 'name=prod' --format 'table {{.Names}}\t{{.Status}}' && \
-                    
-                    echo 'Building staging image...' && \
-                    docker compose -f docker-compose-staging.yml build --no-cache && \
-                    docker tag stg-api-followers:latest \$IMAGE_TAG && \
-                    
-                    echo 'Deploying staging with production data copy...' && \
-                    docker compose -f docker-compose-staging.yml down --volumes && \
-                    docker compose -f docker-compose-staging.yml up -d && \
-                    
-                    echo 'Waiting for staging services to be ready...' && \
-                    sleep 15 && \
-                    
-                    echo 'Verifying staging deployment...' && \
-                    docker ps --filter 'name=stg' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' && \
+                      echo "==> Waiting for staging API..."
+                      sleep 15
+                      docker ps --filter 'name=stg-api-followers' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 
-                    docker image prune -f --filter \"until=168h\"
-                  "
+                      docker image prune -f --filter "until=168h"
+                      echo "==> Staging deploy $TAG complete!"
