@@ -1,17 +1,19 @@
 import { PrismaClient } from '@prisma/client';
-import { UserSeed } from './seeder/user-seeder';
-import { ArticleSeed } from './seeder/article-seeder';
-import { EventSeed } from './seeder/event-seeder';
-import { EventRegistrationSeed } from './seeder/event-registration-seeder';
-import { UserProductionSeed } from './seeder/production/user-production';
 import { CategorySeed } from './seeder/category-seeder';
+
 const prisma = new PrismaClient();
 
 async function main() {
     // Canonical taxonomy — idempotent, seed in every environment.
     await CategorySeed(prisma);
 
-    if (process.env.NODE_ENV !== 'production') {
+    // Dev-only seeders. Lazy-loaded so deployed images (which only need
+    // CategorySeed) don't have to ship these files.
+    if (process.env.NODE_ENV === 'development') {
+        const { UserSeed } = await import('./seeder/user-seeder');
+        const { ArticleSeed } = await import('./seeder/article-seeder');
+        const { EventSeed } = await import('./seeder/event-seeder');
+        const { EventRegistrationSeed } = await import('./seeder/event-registration-seeder');
         await UserSeed(prisma);
         await ArticleSeed(prisma);
         await EventSeed(prisma);
