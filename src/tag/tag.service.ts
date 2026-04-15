@@ -144,6 +144,50 @@ export class TagService {
         });
     }
 
+    async merge(sourceId: string, targetId: string) {
+        if (sourceId === targetId) {
+            throw new ConflictException('Cannot merge a tag into itself');
+        }
+
+        await Promise.all([this.findOne(sourceId), this.findOne(targetId)]);
+
+        await this.prisma.$transaction(async (tx) => {
+            const sourceLinks = await tx.contentTag.findMany({
+                where: { tagId: sourceId },
+                select: { articleId: true, eventId: true },
+            });
+
+            // Articles have @@unique([articleId, tagId]) — use createMany skipDuplicates
+            const articleLinks = sourceLinks
+                .filter((l) => l.articleId)
+                .map((l) => ({ articleId: l.articleId!, tagId: targetId }));
+            if (articleLinks.length) {
+                await tx.contentTag.createMany({
+                    data: articleLinks,
+                    skipDuplicates: true,
+                });
+            }
+
+            // Events have no unique constraint — check individually
+            const eventLinks = sourceLinks.filter((l) => l.eventId);
+            for (const link of eventLinks) {
+                const exists = await tx.contentTag.findFirst({
+                    where: { eventId: link.eventId!, tagId: targetId },
+                });
+                if (!exists) {
+                    await tx.contentTag.create({
+                        data: { eventId: link.eventId!, tagId: targetId },
+                    });
+                }
+            }
+
+            // Delete source tag — ContentTag rows cascade-delete automatically
+            await tx.tag.delete({ where: { id: sourceId } });
+        });
+
+        return this.findOne(targetId);
+    }
+
     async search(query: string) {
         return this.prisma.tag.findMany({
             where: {

@@ -4,21 +4,18 @@ import { ArticleSeed } from './seeder/article-seeder';
 import { EventSeed } from './seeder/event-seeder';
 import { EventRegistrationSeed } from './seeder/event-registration-seeder';
 import { UserProductionSeed } from './seeder/production/user-production';
-import { FollowSeed } from './seeder/follow-seeder';
-import { ProfileSeed } from './seeder/profile-seeder';
+import { CategorySeed } from './seeder/category-seeder';
 const prisma = new PrismaClient();
 
 async function main() {
-    if (process.env.NODE_ENV === 'production') {
-        await UserProductionSeed(prisma);
-    } else {
+    // Canonical taxonomy — idempotent, seed in every environment.
+    await CategorySeed(prisma);
+
+    if (process.env.NODE_ENV !== 'production') {
         await UserSeed(prisma);
         await ArticleSeed(prisma);
         await EventSeed(prisma);
         await EventRegistrationSeed(prisma);
-        // await FollowSeed(prisma);
-        // await ProfileSeed(prisma);
-        // await ContentReactionSeed(prisma);
     }
 }
 

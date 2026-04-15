@@ -84,4 +84,15 @@ export class TagController {
     remove(@Param('id') id: string) {
         return this.tagService.remove(id);
     }
+
+    @Post(':id/merge-into/:targetId')
+    @ApiBearerAuth()
+    @PermissionsRequired(Module.ARTICLE, Permission.DELETE)
+    @ApiOperation({ summary: 'Merge tag into another — moves all content, deletes source (Admin only)' })
+    @ApiResponse({ status: 201, description: 'Merged successfully, returns target tag' })
+    @ApiResponse({ status: 404, description: 'Tag not found' })
+    @ApiResponse({ status: 409, description: 'Cannot merge tag into itself' })
+    merge(@Param('id') id: string, @Param('targetId') targetId: string) {
+        return this.tagService.merge(id, targetId);
+    }
 }

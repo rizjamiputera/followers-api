@@ -31,6 +31,7 @@ const VALID_INCLUDES = [
     'versions',
     'author',
     'stats',
+    'category',
 ];
 const transformImages = [
     'image',
@@ -179,7 +180,7 @@ export class ArticleService {
     ): Promise<Paginate<Article[]>> {
         const { page, limit, sortBy, order, includes, deleted, search } =
             pagination;
-        const { authorId, tags, status, exclude_statuses, published } = filter;
+        const { authorId, tags, status, exclude_statuses, published, categoryId, categorySlug } = filter;
         const include = this.app.getValidIncludes(VALID_INCLUDES, includes);
 
         const searchCondition: Prisma.ArticleWhereInput = search
@@ -206,6 +207,10 @@ export class ArticleService {
             whereConditions.push({
                 tags: { some: { tag: { slug: { in: tags } } } },
             });
+        }
+        if (categoryId) whereConditions.push({ categoryId });
+        if (categorySlug) {
+            whereConditions.push({ category: { slug: categorySlug } });
         }
         if (published) {
             whereConditions.push({
@@ -306,6 +311,7 @@ export class ArticleService {
         data: Prisma.ArticleUpdateInput & {
             content?: any;
             tags?: string[];
+            categoryId?: string | null;
         },
     ): Promise<Article> {
         const current = (await this.findOne(id, ['content'])) as Article & {
@@ -320,8 +326,16 @@ export class ArticleService {
         //     );
         // }
 
-        // Separate content body and tags from article data
-        const { content, tags, ...articleData } = data;
+        // Separate content body, tags, and category from article data
+        const { content, tags, categoryId, ...articleData } = data;
+
+        // Translate categoryId → relation set/disconnect (only if caller
+        // included the key; undefined means "don't touch").
+        if (categoryId !== undefined) {
+            (articleData as Prisma.ArticleUpdateInput).category = categoryId
+                ? { connect: { id: categoryId } }
+                : { disconnect: true };
+        }
 
         // Check if content fields have changed
         const contentChanged =

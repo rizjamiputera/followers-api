@@ -225,6 +225,8 @@ model Article {
     publishedAt DateTime? // actual publish time
     author      User              @relation("author_articles", fields: [authorId], references: [id], onDelete: Restrict)
     authorId    String
+    category    Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+    categoryId  String?
     approvals   ContentApproval[]
     tags        ContentTag[]
     reactions   ContentReaction[]
@@ -239,6 +241,7 @@ model Article {
     @@index([status, publishedAt])
     @@index([authorId, status])
     @@index([deleted, status, publishedAt])
+    @@index([categoryId, status, publishedAt])
     @@map("article")
 }
 
@@ -271,6 +274,8 @@ model Event {
     publishedAt        DateTime? // actual publish time
     author             User                     @relation("author_events", fields: [authorId], references: [id], onDelete: Restrict)
     authorId           String
+    category           Category?                @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+    categoryId         String?
     approvals          ContentApproval[]
     tags               ContentTag[]
     reactions          ContentReaction[]
@@ -286,6 +291,7 @@ model Event {
     @@index([status, publishedAt])
     @@index([authorId, status])
     @@index([deleted, status, publishedAt])
+    @@index([categoryId, status, publishedAt])
     @@map("event")
 }
 
@@ -363,6 +369,25 @@ model ContentApproval {
 
     @@index([articleId])
     @@map("content_approval")
+}
+
+model Category {
+    id          String    @id @default(uuid())
+    name        String    @unique @db.VarChar(100)
+    slug        String    @unique @db.VarChar(100)
+    description String?   @db.VarChar(500)
+    sortOrder   Int       @default(0)
+    // When true, the home page renders a dedicated section for this
+    // category below "Artikel Terbaru". Admin-controlled.
+    showOnHome  Boolean   @default(false)
+    articles    Article[]
+    events      Event[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    @@index([sortOrder])
+    @@index([showOnHome, sortOrder])
+    @@map("category")
 }
 
 model Tag {

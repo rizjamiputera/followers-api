@@ -66,7 +66,7 @@ export class ArticleController {
     ) {
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
-        const { content, tags, image, image_md, ...articleDto } =
+        const { content, tags, image, image_md, categoryId, ...articleDto } =
             createArticleDto;
         const data: Prisma.ArticleCreateInput & { tags?: string[] } = {
             ...articleDto,
@@ -80,6 +80,7 @@ export class ArticleController {
             author: { connect: { id: req.user.id } },
             stats: { create: {} },
             ...(tags && { tags }),
+            ...(categoryId && { category: { connect: { id: categoryId } } }),
         };
 
         return this.articleService.create(data);

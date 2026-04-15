@@ -52,7 +52,4 @@ RUN node verify-chromium.js
 
 # Command to run your application
 
-# FOR DEVELOPMENT
-CMD pnpm exec prisma migrate reset --force && pnpm run migrate:deploy && pnpm run start
-# FOR PRODUCTION
-# CMD npx prisma generate && npm run migrate:deploy && npm run start
+CMD pnpm exec prisma generate && pnpm run migrate:deploy && pnpm run start
