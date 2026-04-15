@@ -16,9 +16,9 @@ STG_FILES_VOLUME="${STG_FILES_VOLUME:-stg_volume_api_followers}"
 DB_SCHEMA="${DB_SCHEMA:-followers}"
 BACKUP_DIR="${BACKUP_DIR:-$(pwd)/backups}"
 
-# ── Step 1 — create a fresh backup (prints timestamp on last line) ──
+# ── Step 1 — create a fresh backup (stdout = timestamp, stderr = progress) ──
 echo "==> Creating fresh prod backup before sync..."
-TIMESTAMP=$(BACKUP_DIR="$BACKUP_DIR" bash "$SCRIPT_DIR/backup-prod.sh" | tee /dev/stderr | tail -n 1)
+TIMESTAMP=$(BACKUP_DIR="$BACKUP_DIR" bash "$SCRIPT_DIR/backup-prod.sh")
 DATE_FOLDER="${TIMESTAMP%_*}"
 DB_DUMP="$BACKUP_DIR/$DATE_FOLDER/prod_db_${TIMESTAMP}.sql.gz"
 

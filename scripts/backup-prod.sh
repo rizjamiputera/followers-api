@@ -1,20 +1,36 @@
 #!/usr/bin/env bash
-# backup-prod.sh — full production DB dump + files volume tar.
+# backup-prod.sh — production DB dump + files volume tar.
+#
+# Modes:
+#   (default)       Full backup, emits the timestamp on the final stdout line
+#                   so sync-prod-to-staging.sh can chain into it.
+#   --backup-only   Backup mode for the nightly cron. No timestamp echo.
 #
 # Outputs:
 #   $BACKUP_DIR/YYYYMMDD/prod_db_<timestamp>.sql.gz
 #   $BACKUP_DIR/YYYYMMDD/prod_files_<timestamp>.tar.gz
 #
-# Retention: keeps last 10 of each; prunes empty date folders >1 day old.
+# Retention: keeps last 30 of each; prunes empty date folders >1 day old.
 #
-# Skips gracefully if the production stack is not running / not seeded.
-# Prints the timestamp on stdout (last line) for callers that chain into restore.
+# Offsite upload (optional): set OFFSITE_REMOTE in .env.production (e.g.
+# "r2:followers-backups") — rclone must be installed & configured on the
+# VPS. Failures never abort the backup; the local copy is always kept.
+#
+# Skips gracefully if prod stack is not running / not seeded.
 
 set -euo pipefail
 
 PROD_DB_CONTAINER="${PROD_DB_CONTAINER:-prod_followers_bicara_postgre}"
 PROD_FILES_VOLUME="${PROD_FILES_VOLUME:-prod_volume_api_followers}"
 BACKUP_DIR="${BACKUP_DIR:-$(pwd)/backups}"
+
+BACKUP_ONLY=false
+for arg in "$@"; do
+    case "$arg" in
+        --backup-only) BACKUP_ONLY=true ;;
+        *) echo "Unknown arg: $arg" >&2; exit 1 ;;
+    esac
+done
 
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 DATE_FOLDER="$(date +%Y%m%d)"
@@ -24,38 +40,64 @@ mkdir -p "$TARGET_DIR"
 DB_OUT="$TARGET_DIR/prod_db_${TIMESTAMP}.sql.gz"
 FILES_OUT="$TARGET_DIR/prod_files_${TIMESTAMP}.tar.gz"
 
-echo "==> Backup destination: $TARGET_DIR"
+log() { echo "$@" >&2; }
+
+# ── Helper: offsite upload (optional, failures non-fatal) ──
+offsite_upload() {
+    local file="$1"
+    [ -z "${OFFSITE_REMOTE:-}" ] && return 0
+    [ -f "$file" ] || return 0
+    if ! command -v rclone >/dev/null 2>&1; then
+        log "    WARN: OFFSITE_REMOTE set but rclone not installed — skipping upload"
+        return 0
+    fi
+    log "    Uploading $(basename "$file") → $OFFSITE_REMOTE/"
+    if rclone copy "$file" "$OFFSITE_REMOTE/" --quiet; then
+        log "    Offsite upload OK"
+    else
+        log "    WARN: offsite upload failed (local copy kept in $BACKUP_DIR)"
+    fi
+}
+
+log "==> Backup destination: $TARGET_DIR"
 
 # ── DB dump ────────────────────────────────────────────────
 if docker ps --format '{{.Names}}' | grep -q "^${PROD_DB_CONTAINER}$"; then
-    echo "==> Dumping production database..."
+    log "==> Dumping production database..."
     docker exec "$PROD_DB_CONTAINER" \
         sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
         | gzip > "$DB_OUT"
-    echo "    saved: $(basename "$DB_OUT") ($(du -h "$DB_OUT" | cut -f1))"
+    log "    saved: $(basename "$DB_OUT") ($(du -h "$DB_OUT" | cut -f1))"
+    offsite_upload "$DB_OUT"
 else
-    echo "==> $PROD_DB_CONTAINER not running — skipping DB backup."
+    log "==> $PROD_DB_CONTAINER not running — skipping DB backup."
 fi
 
 # ── Files volume tar ───────────────────────────────────────
 if docker volume inspect "$PROD_FILES_VOLUME" >/dev/null 2>&1; then
-    echo "==> Archiving production files volume..."
+    log "==> Archiving production files volume..."
     docker run --rm \
         -v "$PROD_FILES_VOLUME":/source:ro \
         -v "$TARGET_DIR":/backup \
         alpine tar czf "/backup/prod_files_${TIMESTAMP}.tar.gz" -C /source .
-    echo "    saved: $(basename "$FILES_OUT") ($(du -h "$FILES_OUT" | cut -f1))"
+    log "    saved: $(basename "$FILES_OUT") ($(du -h "$FILES_OUT" | cut -f1))"
+    offsite_upload "$FILES_OUT"
 else
-    echo "==> $PROD_FILES_VOLUME not found — skipping files backup."
+    log "==> $PROD_FILES_VOLUME not found — skipping files backup."
 fi
 
-# ── Retention: keep last 10 of each, across all date folders ───
-echo "==> Pruning old backups (keep last 10 of each)..."
+# ── Retention: keep last 30 of each ───────────────────────
+log "==> Pruning old backups (keep last 30 of each)..."
 find "$BACKUP_DIR" -name 'prod_db_*.sql.gz' -type f -printf '%T@ %p\n' 2>/dev/null \
-    | sort -rn | tail -n +11 | cut -d' ' -f2- | xargs -r rm -f
+    | sort -rn | tail -n +31 | cut -d' ' -f2- | xargs -r rm -f
 find "$BACKUP_DIR" -name 'prod_files_*.tar.gz' -type f -printf '%T@ %p\n' 2>/dev/null \
-    | sort -rn | tail -n +11 | cut -d' ' -f2- | xargs -r rm -f
+    | sort -rn | tail -n +31 | cut -d' ' -f2- | xargs -r rm -f
 find "$BACKUP_DIR" -type d -empty -mtime +1 -delete 2>/dev/null || true
 
-# Emit timestamp on the final stdout line for chained callers.
+if [ "$BACKUP_ONLY" = "true" ]; then
+    log "==> Backup-only mode complete."
+    exit 0
+fi
+
+# Emit timestamp on final stdout line for chained callers (sync script).
 echo "$TIMESTAMP"
