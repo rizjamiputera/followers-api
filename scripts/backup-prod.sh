@@ -20,6 +20,17 @@
 
 set -euo pipefail
 
+# Auto-source .env.production if it sits next to us (for cron + manual runs).
+# Deploy workflow already sources it — this is harmless there.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${SCRIPT_DIR%/scripts}/.env.production"
+if [ -f "$ENV_FILE" ]; then
+    set -a
+    # shellcheck disable=SC1090
+    . "$ENV_FILE"
+    set +a
+fi
+
 PROD_DB_CONTAINER="${PROD_DB_CONTAINER:-prod_followers_bicara_postgre}"
 PROD_FILES_VOLUME="${PROD_FILES_VOLUME:-prod_volume_api_followers}"
 BACKUP_DIR="${BACKUP_DIR:-$(pwd)/backups}"
