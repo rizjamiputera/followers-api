@@ -19,14 +19,22 @@ see [ROLLBACK.md](./ROLLBACK.md).
 
 ## Release commands
 
-```bash
-# Production
-git checkout main && git pull
-git tag v1.8.1 && git push origin v1.8.1
+Staging and production share the same commit — promote the tested staging
+build to prod without rebuilding.
 
-# Staging
-git checkout stg && git pull
-git tag stg-0.1.0 && git push origin stg-0.1.0
+```bash
+# 1. Cut a staging release (bumps package.json version + tags stg-x.y.z)
+pnpm release:stg          # patch
+pnpm release:stg:minor    # minor
+pnpm release:stg:major    # major
+git push origin main --follow-tags
+
+# 2. Watch staging deploy at
+#    https://github.com/rizjamiputera/followers-api/actions
+
+# 3. Once staging is verified green, promote the exact same commit to prod
+pnpm release:promote
+git push origin v<version>
 ```
 
 ## VPS bootstrap (one-time per environment)
