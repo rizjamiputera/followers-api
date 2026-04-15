@@ -25,6 +25,7 @@ import { ContentTagModule } from './content-tag/content-tag.module';
 import { CreatorModule } from './creator/creator.module';
 import { FollowModule } from './follow/follow.module';
 import { VisitStatsModule } from './visit-stats/visit-stats.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
     imports: [
@@ -53,6 +54,7 @@ import { VisitStatsModule } from './visit-stats/visit-stats.module';
         CreatorModule,
         FollowModule,
         VisitStatsModule,
+        SearchModule,
     ],
     controllers: [AppController],
     providers: [
