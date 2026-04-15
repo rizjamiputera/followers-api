@@ -78,6 +78,30 @@ jobs:
                       git fetch --tags --force origin
                       git checkout "$TAG"
 
+                      # ── Pre-flight: require .env.staging with mandatory keys ──
+                      echo "==> Pre-flight checks..."
+                      if [ ! -f .env.staging ]; then
+                          echo "ERROR: $PROJECT_DIR/.env.staging is missing."
+                          echo "Hint: copy .env.staging.example and fill in real values."
+                          exit 1
+                      fi
+                      for key in JWTSECRET DB_USER DB_PASSWORD DB_NAME DATABASE_URL EMAIL_USER EMAIL_PASSWORD; do
+                          if ! grep -qE "^${key}=.+" .env.staging; then
+                              echo "ERROR: .env.staging missing or empty: $key"
+                              exit 1
+                          fi
+                      done
+                      if diff -q .env.staging .env.production >/dev/null 2>&1; then
+                          echo "ERROR: .env.staging is identical to .env.production — JWT and DB creds must differ."
+                          exit 1
+                      fi
+                      echo "    pre-flight OK"
+
+                      # ── Load env for compose variable substitution ──
+                      set -a
+                      . ./.env.staging
+                      set +a
+
                       echo "==> Pulling API image ghcr.io/${{ github.repository }}:${TAG}..."
                       export STG_API_IMAGE_TAG="$TAG"
                       docker compose -f docker-compose-staging.yml pull stg-api-followers

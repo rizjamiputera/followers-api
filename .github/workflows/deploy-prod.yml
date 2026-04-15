@@ -78,6 +78,26 @@ jobs:
                       git fetch --tags --force origin
                       git checkout "$TAG"
 
+                      # ── Pre-flight: require .env.production with mandatory keys ──
+                      echo "==> Pre-flight checks..."
+                      if [ ! -f .env.production ]; then
+                          echo "ERROR: $PROJECT_DIR/.env.production is missing."
+                          echo "Hint: copy .env.production.example and fill in real values."
+                          exit 1
+                      fi
+                      for key in JWTSECRET DB_USER DB_PASSWORD DB_NAME DATABASE_URL EMAIL_USER EMAIL_PASSWORD; do
+                          if ! grep -qE "^${key}=.+" .env.production; then
+                              echo "ERROR: .env.production missing or empty: $key"
+                              exit 1
+                          fi
+                      done
+                      echo "    pre-flight OK"
+
+                      # ── Load env for compose variable substitution ──
+                      set -a
+                      . ./.env.production
+                      set +a
+
                       # ── Pre-deploy backup (DB + files) ──
                       echo "==> Running pre-deploy backup..."
                       BACKUP_DIR="$PROJECT_DIR/backups" bash scripts/backup-prod.sh | tail -n +1
@@ -85,7 +105,7 @@ jobs:
                       echo "==> Pulling API image ghcr.io/${{ github.repository }}:${TAG}..."
                       export API_IMAGE_TAG="$TAG"
                       docker compose -f docker-compose-production.yml pull prod-api-followers
-                      docker compose -f docker-compose-production.yml up -d prod-api-followers
+                      docker compose -f docker-compose-production.yml up -d
 
                       echo "==> Waiting for API health..."
                       for i in $(seq 1 45); do

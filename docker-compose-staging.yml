@@ -1,13 +1,17 @@
 # services / containers
+#
+# Secrets live in .env.staging on the VPS (gitignored).
+# See .env.staging.example for required keys.
 services:
     # postgre database
     stg_followers_bicara_postgre:
         container_name: stg_followers_bicara_postgre
         image: postgres:17.4
+        env_file: .env.staging
         environment:
-            POSTGRES_USER: followersBicaraDong
-            POSTGRES_PASSWORD: _amburaduL
-            POSTGRES_DB: postgres
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
         volumes:
             - stg_volume_postgre_followers:/var/lib/postgresql/data
         networks:
@@ -24,24 +28,10 @@ services:
         container_name: stg-api-followers
         pull_policy: always
         restart: always
+        env_file: .env.staging
         ports:
             - 5777:5000
             - 5888:5555
-        environment:
-            PORT: 5000
-            WEB_URI: https://stg.followersbicara.com
-            API_URI: https://stg-api.followersbicara.com
-            JWTSECRET: FOLLOWER_BICARA_FRUTTA_ID_2025_STAGING
-            NODE_ENV: production
-            JWT_EXPIRATION: 180
-            # for prisma
-            DATABASE_URL: postgresql://followersBicaraDong:_amburaduL@stg_followers_bicara_postgre:5432/postgres?schema=followers
-            # for export pdf
-            PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
-            # email
-            EMAIL_USER: udaputera.hostinger@gmail.com
-            EMAIL_PASSWORD: bjsu zxtb kwbx toyf
-            APP_NAME: Followers Bicara
         volumes:
             - stg_volume_api_followers:/app/public
         networks:
