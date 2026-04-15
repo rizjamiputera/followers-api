@@ -33,11 +33,14 @@ RUN apk add --no-cache \
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the container
-COPY package*.json ./
+# Enable pnpm via corepack
+RUN corepack enable
+
+# Copy package manifests to the container
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm ci --verbose
+RUN pnpm install --frozen-lockfile
 
 # Copy the rest of the application code
 COPY . .
@@ -50,6 +53,6 @@ RUN node verify-chromium.js
 # Command to run your application
 
 # FOR DEVELOPMENT
-# CMD npx prisma migrate reset --force && npm run migrate:deploy && npm run start
+# CMD pnpm exec prisma migrate reset --force && pnpm run migrate:deploy && pnpm run start
 # FOR PRODUCTION
-CMD npx prisma generate && npm run migrate:deploy && npm run start
+CMD pnpm exec prisma generate && pnpm run migrate:deploy && pnpm run start
