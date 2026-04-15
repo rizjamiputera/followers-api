@@ -86,6 +86,7 @@ export class EventController {
             image_md,
             image_portrait,
             image_portrait_md,
+            categoryId,
             ...eventDto
         } = createEventDto;
         const data: Prisma.EventCreateInput & { tags?: string[] } = {
@@ -106,6 +107,7 @@ export class EventController {
             author: { connect: { id: req.user.id } },
             stats: { create: {} },
             ...(tags && { tags }),
+            ...(categoryId && { category: { connect: { id: categoryId } } }),
         };
 
         return this.eventService.create(data);

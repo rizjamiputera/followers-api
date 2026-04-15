@@ -52,6 +52,7 @@ const VALID_INCLUDES = [
     'versions',
     'author',
     'stats',
+    'category',
     'registrationConfig',
     'registrations',
     'registrations.user',
@@ -178,6 +179,8 @@ export class EventService {
             published,
             start_from,
             past,
+            categoryId,
+            categorySlug,
         } = filter;
 
         // Check if registeredCount is requested in includes
@@ -212,6 +215,10 @@ export class EventService {
             whereConditions.push({
                 status: { notIn: exclude_statuses as ContentStatus[] },
             });
+        if (categoryId) whereConditions.push({ categoryId });
+        if (categorySlug) {
+            whereConditions.push({ category: { slug: categorySlug } });
+        }
         if (tags?.length > 0) {
             whereConditions.push({
                 tags: { some: { tag: { slug: { in: tags } } } },
@@ -471,6 +478,7 @@ export class EventService {
         data: Prisma.EventUpdateInput & {
             content?: any;
             tags?: string[];
+            categoryId?: string | null;
         },
     ): Promise<Event> {
         const current = (await this.findOne(id, ['content'])) as Event & {
@@ -485,8 +493,14 @@ export class EventService {
         //     );
         // }
 
-        // Separate content body and tags from event data
-        const { content, tags, ...eventData } = data;
+        // Separate content body, tags, and category from event data
+        const { content, tags, categoryId, ...eventData } = data;
+
+        if (categoryId !== undefined) {
+            (eventData as Prisma.EventUpdateInput).category = categoryId
+                ? { connect: { id: categoryId } }
+                : { disconnect: true };
+        }
 
         // Check if content fields have changed
         const contentChanged =

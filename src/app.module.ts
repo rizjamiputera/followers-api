@@ -20,6 +20,7 @@ import { HomePageModule } from './home-page/home-page.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MailModule } from './mail/mail.module';
 import { TagModule } from './tag/tag.module';
+import { CategoryModule } from './category/category.module';
 import { ContentTagModule } from './content-tag/content-tag.module';
 import { CreatorModule } from './creator/creator.module';
 import { FollowModule } from './follow/follow.module';
@@ -47,6 +48,7 @@ import { VisitStatsModule } from './visit-stats/visit-stats.module';
         DashboardModule,
         MailModule,
         TagModule,
+        CategoryModule,
         ContentTagModule,
         CreatorModule,
         FollowModule,

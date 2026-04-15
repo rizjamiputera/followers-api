@@ -71,4 +71,14 @@ export class FilterEventQueryDto {
     @Transform(({ value }) => value == 'true')
     @IsBoolean()
     past?: boolean;
+
+    @ApiPropertyOptional({ description: 'Filter by category id (UUID)' })
+    @IsOptional()
+    @IsString()
+    categoryId?: string;
+
+    @ApiPropertyOptional({ description: 'Filter by category slug' })
+    @IsOptional()
+    @IsString()
+    categorySlug?: string;
 }

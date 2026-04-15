@@ -76,4 +76,11 @@ export class CreateEventDto {
     @IsArray()
     @IsString({ each: true })
     tags?: string[];
+
+    @ApiPropertyOptional({
+        description: 'Category id (UUID). If omitted the event is uncategorized.',
+    })
+    @IsOptional()
+    @IsString()
+    categoryId?: string;
 }
