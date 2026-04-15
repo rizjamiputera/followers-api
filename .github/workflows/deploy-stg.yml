@@ -111,9 +111,19 @@ jobs:
                       echo "==> Syncing production data into staging..."
                       BACKUP_DIR="$PROJECT_DIR/backups" bash scripts/sync-prod-to-staging.sh
 
-                      echo "==> Waiting for staging API..."
-                      sleep 15
-                      docker ps --filter 'name=stg-api-followers' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+                      echo "==> Waiting for /health on port 5777..."
+                      for i in $(seq 1 60); do
+                          if curl -fsS "http://localhost:5777/health" >/dev/null 2>&1; then
+                              echo "    /health returned 200 — staging API is up"
+                              break
+                          fi
+                          sleep 2
+                          if [ "$i" = "60" ]; then
+                              echo "Health check timed out (120s)"
+                              docker compose -f docker-compose-staging.yml logs --tail=120 stg-api-followers
+                              exit 1
+                          fi
+                      done
 
                       docker image prune -f --filter "until=168h"
                       echo "==> Staging deploy $TAG complete!"

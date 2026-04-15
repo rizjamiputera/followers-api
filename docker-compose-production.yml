@@ -5,7 +5,7 @@
 services:
     # express app
     prod-api-followers:
-        image: ghcr.io/putera-/followers-api:${API_IMAGE_TAG:-latest}
+        image: ghcr.io/rizjamiputera/followers-api:${API_IMAGE_TAG:-latest}
         container_name: prod-api-followers
         pull_policy: always
         restart: always

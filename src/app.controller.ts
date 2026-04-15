@@ -21,12 +21,14 @@ import { PaginationIncludeQueryDto } from './app/dto/pagination-query.dto';
 import { SendEmailDto } from './app/dto/send-email.dto';
 import * as path from 'path';
 import { MailService } from './mail/mail.service';
+import { PrismaService } from './prisma.service';
 
 @Controller()
 export class AppController {
     constructor(
         private readonly appService: AppService,
         private readonly mailService: MailService,
+        private readonly prisma: PrismaService,
     ) {}
 
     @Public()
@@ -51,7 +53,7 @@ export class AppController {
     @Public()
     @Get('health')
     @ApiTags('System')
-    healthCheck() {
+    async healthCheck(@Res() res) {
         const packageJsonPath = path.join(process.cwd(), 'package.json');
         const packageJson = require(packageJsonPath);
 
@@ -60,16 +62,28 @@ export class AppController {
         const hours = Math.floor((uptimeSeconds % (24 * 60 * 60)) / (60 * 60));
         const minutes = Math.floor((uptimeSeconds % (60 * 60)) / 60);
         const seconds = Math.floor(uptimeSeconds % 60);
-
         const uptimeReadable = `${days}d ${hours}h ${minutes}m ${seconds}s`;
 
-        return {
-            status: 'ok',
+        let dbStatus: 'up' | 'down' = 'down';
+        let dbError: string | undefined;
+        try {
+            await this.prisma.$queryRaw`SELECT 1`;
+            dbStatus = 'up';
+        } catch (err) {
+            dbError = err instanceof Error ? err.message : String(err);
+        }
+
+        const overall = dbStatus === 'up' ? 'ok' : 'degraded';
+        res.status(dbStatus === 'up' ? 200 : 503).json({
+            status: overall,
             version: packageJson.version,
             uptime: uptimeReadable,
             uptimeSeconds: Math.floor(uptimeSeconds),
+            checks: {
+                database: { status: dbStatus, ...(dbError && { error: dbError }) },
+            },
             timestamp: new Date().toISOString(),
-        };
+        });
     }
 
     @Public()

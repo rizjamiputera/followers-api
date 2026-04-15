@@ -107,16 +107,16 @@ jobs:
                       docker compose -f docker-compose-production.yml pull prod-api-followers
                       docker compose -f docker-compose-production.yml up -d
 
-                      echo "==> Waiting for API health..."
-                      for i in $(seq 1 45); do
-                          if docker exec prod-api-followers sh -c 'curl -fsS http://localhost:5000/' >/dev/null 2>&1; then
-                              echo "    API container responsive"
+                      echo "==> Waiting for /health on port 5333..."
+                      for i in $(seq 1 60); do
+                          if curl -fsS "http://localhost:5333/health" >/dev/null 2>&1; then
+                              echo "    /health returned 200 — API is up"
                               break
                           fi
                           sleep 2
-                          if [ "$i" = "45" ]; then
-                              echo "Health check timed out"
-                              docker compose -f docker-compose-production.yml logs --tail=80 prod-api-followers
+                          if [ "$i" = "60" ]; then
+                              echo "Health check timed out (120s)"
+                              docker compose -f docker-compose-production.yml logs --tail=120 prod-api-followers
                               exit 1
                           fi
                       done

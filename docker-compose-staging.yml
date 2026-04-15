@@ -24,7 +24,7 @@ services:
 
     # express app
     stg-api-followers:
-        image: ghcr.io/putera-/followers-api:${STG_API_IMAGE_TAG:-stg-latest}
+        image: ghcr.io/rizjamiputera/followers-api:${STG_API_IMAGE_TAG:-stg-latest}
         container_name: stg-api-followers
         pull_policy: always
         restart: always
