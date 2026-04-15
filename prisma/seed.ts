@@ -11,9 +11,7 @@ async function main() {
     // Canonical taxonomy — idempotent, seed in every environment.
     await CategorySeed(prisma);
 
-    if (process.env.NODE_ENV === 'production') {
-        await UserProductionSeed(prisma);
-    } else {
+    if (process.env.NODE_ENV !== 'production') {
         await UserSeed(prisma);
         await ArticleSeed(prisma);
         await EventSeed(prisma);
