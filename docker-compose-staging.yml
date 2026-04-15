@@ -1,142 +1,54 @@
 # services / containers
+#
+# Secrets live in .env.staging on the VPS (gitignored).
+# See .env.staging.example for required keys.
 services:
-    # backup and volume copier - backs up then copies production volumes to staging
-    volume-copier:
-        image: alpine:latest
-        container_name: stg-volume-copier
-        volumes:
-            - prod_volume_api_followers:/source/files:ro
-            - stg_volume_api_followers:/target/files
-            - ./backups:/backups
-        command:
-            - sh
-            - -c
-            - |
-                echo '💾 Creating production backup before staging copy...'
-                DATE_FOLDER=$$(date +%Y%m%d)
-                TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
-                mkdir -p /backups/$$DATE_FOLDER
-
-                echo '📁 Backing up production files...'
-                tar czf /backups/$$DATE_FOLDER/prod_files_backup_$$TIMESTAMP.tar.gz -C /source/files . 2>/dev/null || echo 'No files to backup'
-
-                echo '📋 Files backup created in /backups/$$DATE_FOLDER/: prod_files_backup_$$TIMESTAMP.tar.gz'
-
-                echo '📁 Copying production files to staging...'
-                cp -r /source/files/* /target/files/ 2>/dev/null || echo 'No files to copy or target ready'
-
-                echo '🗄️ Database backup will be handled by db-restore service...'
-
-                echo '🧹 Cleaning old backups (keeping last 30 days)...'
-                find /backups -name 'prod_*_backup_*.tar.gz' -mtime +30 -delete 2>/dev/null || true
-                find /backups -type d -empty -mtime +1 -delete 2>/dev/null || true
-
-                echo '✅ Backup and copy completed successfully'
-        networks:
-            - stg_followers-bicara-network
-
     # postgre database
     stg_followers_bicara_postgre:
         container_name: stg_followers_bicara_postgre
         image: postgres:17.4
+        env_file: .env.staging
         environment:
-            POSTGRES_USER: followersBicaraDong
-            POSTGRES_PASSWORD: _amburaduL
-            POSTGRES_DB: postgres
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
         volumes:
             - stg_volume_postgre_followers:/var/lib/postgresql/data
         networks:
             - stg_followers-bicara-network
-        depends_on:
-            - volume-copier
-
-    # database restore service - restores production data to staging database
-    db-restore:
-        image: postgres:17.4
-        container_name: stg-db-restore
-        environment:
-            PGPASSWORD: _amburaduL
-        volumes:
-            - ./backups:/backups
-        command:
-            - sh
-            - -c
-            - |
-                echo '⏳ Waiting for staging database to be ready...'
-                until pg_isready -h stg_followers_bicara_postgre -U followersBicaraDong; do
-                  echo 'Waiting for database...'
-                  sleep 2
-                done
-
-                echo '🗄️ Creating database backup from production...'
-                DATE_FOLDER=$$(date +%Y%m%d)
-                TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
-                mkdir -p /backups/$$DATE_FOLDER
-
-                # Try to connect to production database and create backup
-                if pg_dump -h prod_followers_bicara_postgre -U followersBicaraDong -d postgres > /backups/$$DATE_FOLDER/prod_db_backup_$$TIMESTAMP.sql 2>/dev/null; then
-                  echo '📥 Restoring production data to staging database...'
-                  psql -h stg_followers_bicara_postgre -U followersBicaraDong -d postgres < /backups/$$DATE_FOLDER/prod_db_backup_$$TIMESTAMP.sql
-                  echo '✅ Database restore completed successfully'
-                else
-                  echo '⚠️ Could not connect to production database - staging will start with empty database'
-                fi
-        networks:
-            - stg_followers-bicara-network
-            - prod_followers-bicara-network
-        depends_on:
-            - stg_followers_bicara_postgre
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
     # express app
     stg-api-followers:
-        build:
-            context: .
-            dockerfile: Dockerfile-Production
+        image: ghcr.io/rizjamiputera/followers-api:${STG_API_IMAGE_TAG:-stg-latest}
         container_name: stg-api-followers
-        # image: stg-api-followers:1.2.0
-        image: stg-api-followers:latest
+        pull_policy: always
         restart: always
+        env_file: .env.staging
         ports:
             - 5777:5000
             - 5888:5555
-        environment:
-            PORT: 5000
-            WEB_URI: https://stg.followersbicara.com
-            API_URI: https://stg-api.followersbicara.com
-            JWTSECRET: FOLLOWER_BICARA_FRUTTA_ID_2025_STAGING
-            NODE_ENV: production
-            JWT_EXPIRATION: 180
-            # for prisma
-            DATABASE_URL: postgresql://followersBicaraDong:_amburaduL@stg_followers_bicara_postgre:5432/postgres?schema=followers
-            # for export pdf
-            PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
-            # email
-            EMAIL_USER: udaputera.hostinger@gmail.com
-            EMAIL_PASSWORD: bjsu zxtb kwbx toyf
-            APP_NAME: Followers Bicara
         volumes:
             - stg_volume_api_followers:/app/public
         networks:
             - stg_followers-bicara-network
         depends_on:
-            - db-restore
+            stg_followers_bicara_postgre:
+                condition: service_healthy
+
 # volumes
 volumes:
-    # staging volumes
     stg_volume_api_followers:
         name: stg_volume_api_followers
     stg_volume_postgre_followers:
         name: stg_volume_postgre_followers
-    # production volumes (external, read-only access)
-    prod_volume_api_followers:
-        external: true
-        name: prod_volume_api_followers
 
 # networks
 networks:
     stg_followers-bicara-network:
         name: stg_followers-bicara-network
         driver: bridge
-    prod_followers-bicara-network:
-        external: true
-        name: prod_followers-bicara-network

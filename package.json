@@ -1,6 +1,6 @@
 {
     "name": "followers-bicara-api",
-    "version": "1.8.0",
+    "version": "1.8.3",
     "description": "Follower Bicara - Backend",
     "author": "Uda Putera <rizjamiputera@gmail.com>",
     "private": true,
@@ -22,7 +22,11 @@
         "migrate:dev": "npx prisma migrate dev",
         "migrate:deploy": "npx prisma migrate deploy",
         "migrate:migrate-test": "npx prisma migrate reset --force --skip-seed && ts-node script/migrate.ts test",
-        "migrate:migrate": "ts-node script/migrate.ts"
+        "migrate:migrate": "ts-node script/migrate.ts",
+        "release:stg": "pnpm version patch --tag-version-prefix='stg-' -m 'release: stg-%s'",
+        "release:stg:minor": "pnpm version minor --tag-version-prefix='stg-' -m 'release: stg-%s'",
+        "release:stg:major": "pnpm version major --tag-version-prefix='stg-' -m 'release: stg-%s'",
+        "release:promote": "node scripts/release-promote.js"
     },
     "dependencies": {
         "@nestjs/common": "^11.1.6",

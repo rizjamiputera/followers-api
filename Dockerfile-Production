@@ -1,55 +1,47 @@
-# Use a base image with Node.js installed
-FROM node:23.11.1-alpine3.22
+# syntax=docker/dockerfile:1.6
 
-ENV PORT=5000
-ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mydb?schema=my_db"
-ENV JWTSECRET="SECRET"
-ENV WEB_URI="http://localhost:3000"
-ENV API_URI="http://localhost:5111"
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
-# Install Chromium and required dependencies for Puppeteer
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    ttf-dejavu \
-    ttf-droid \
-    ttf-liberation \
-    font-noto \
-    font-noto-cjk \
-    font-noto-emoji \
-    udev \
-    xvfb \
-    xvfb-run
-
-# PRISMA
-# ENV DATABASE_URL="mysql://root:my-secret-pw@db-ecourse-rehab-hati:3306/ecourse"
-
-# Set the working directory inside the container
+# ─── Builder ───────────────────────────────────────────────
+FROM node:23.11.1-alpine3.22 AS builder
+RUN apk add --no-cache python3 make g++ openssl
+RUN corepack enable
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the container
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
+COPY prisma/ ./prisma/
+RUN pnpm install --frozen-lockfile
+RUN pnpm exec prisma generate
 
-# Install dependencies
-RUN npm ci --verbose
-
-# Copy the rest of the application code
 COPY . .
+RUN pnpm run build
 
-# Verify Chromium installation
+# ─── Runtime ───────────────────────────────────────────────
+FROM node:23.11.1-alpine3.22 AS runtime
+RUN apk add --no-cache \
+    openssl tini curl \
+    chromium nss freetype freetype-dev harfbuzz ca-certificates \
+    ttf-freefont ttf-dejavu ttf-droid ttf-liberation \
+    font-noto font-noto-cjk font-noto-emoji \
+    udev xvfb xvfb-run
+RUN corepack enable
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    PORT=5000 \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/verify-chromium.js ./
+
 RUN node verify-chromium.js
 
-# EXPOSE ${PORT}
+EXPOSE 5000
 
-# Command to run your application
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -fsS "http://localhost:${PORT:-5000}/health" || exit 1
 
-# FOR DEVELOPMENT
-# CMD npx prisma migrate reset --force && npm run migrate:deploy && npm run start
-# FOR PRODUCTION
-CMD npx prisma generate && npm run migrate:deploy && npm run start
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/src/main.js"]
