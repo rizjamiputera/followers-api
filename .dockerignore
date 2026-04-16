@@ -1,0 +1,28 @@
+# Dependencies (re-installed inside the container)
+node_modules
+
+# Build output (rebuilt inside the container)
+dist
+
+# Git
+.git
+.gitignore
+
+# Environment files — secrets must come from env_file / orchestrator
+.env*
+
+# Backups
+backups
+
+# IDE / editor
+.vscode
+.idea
+
+# Documentation (not needed at runtime)
+*.md
+!README.md
+
+# Docker configs (not needed inside the image)
+docker-compose*.yml
+Dockerfile*
+.dockerignore

@@ -79,6 +79,11 @@ if docker ps --format '{{.Names}}' | grep -q "^${PROD_DB_CONTAINER}$"; then
         sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
         | gzip > "$DB_OUT"
     log "    saved: $(basename "$DB_OUT") ($(du -h "$DB_OUT" | cut -f1))"
+    if gzip -t "$DB_OUT" 2>/dev/null; then
+        log "    integrity check: OK"
+    else
+        log "    ERROR: DB dump is corrupt — $(basename "$DB_OUT")"
+    fi
     offsite_upload "$DB_OUT"
 else
     log "==> $PROD_DB_CONTAINER not running — skipping DB backup."
@@ -93,6 +98,11 @@ if docker volume inspect "$PROD_FILES_VOLUME" >/dev/null 2>&1; then
         -v "$TARGET_DIR":/backup \
         alpine tar czf "/backup/prod_files_${TIMESTAMP}.tar.gz" -C /source .
     log "    saved: $(basename "$FILES_OUT") ($(du -h "$FILES_OUT" | cut -f1))"
+    if gzip -t "$FILES_OUT" 2>/dev/null; then
+        log "    integrity check: OK"
+    else
+        log "    ERROR: files archive is corrupt — $(basename "$FILES_OUT")"
+    fi
     offsite_upload "$FILES_OUT"
 else
     log "==> $PROD_FILES_VOLUME not found — skipping files backup."
