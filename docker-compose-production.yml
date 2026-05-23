@@ -25,6 +25,7 @@ services:
     prod_followers_bicara_postgre:
         container_name: prod_followers_bicara_postgre
         image: postgres:17.4
+        restart: always
         env_file: .env.production
         environment:
             POSTGRES_USER: ${DB_USER}
