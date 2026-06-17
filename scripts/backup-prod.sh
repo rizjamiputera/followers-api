@@ -35,6 +35,15 @@ PROD_DB_CONTAINER="${PROD_DB_CONTAINER:-prod_followers_bicara_postgre}"
 PROD_FILES_VOLUME="${PROD_FILES_VOLUME:-prod_volume_api_followers}"
 BACKUP_DIR="${BACKUP_DIR:-$(pwd)/backups}"
 
+# DB credentials come from .env.production (sourced above). We pass them to
+# pg_dump from the host instead of relying on $POSTGRES_USER inside the
+# container — the running prod container may predate the compose
+# `environment:` block and not carry those vars, which makes pg_dump fall
+# back to the OS user "root" and fail with `role "root" does not exist`.
+DB_USER="${DB_USER:-followersBicaraDong}"
+DB_NAME="${DB_NAME:-postgres}"
+DB_PASSWORD="${DB_PASSWORD:-}"
+
 BACKUP_ONLY=false
 for arg in "$@"; do
     case "$arg" in
@@ -75,8 +84,8 @@ log "==> Backup destination: $TARGET_DIR"
 # ── DB dump ────────────────────────────────────────────────
 if docker ps --format '{{.Names}}' | grep -q "^${PROD_DB_CONTAINER}$"; then
     log "==> Dumping production database..."
-    docker exec "$PROD_DB_CONTAINER" \
-        sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+    docker exec -e PGPASSWORD="$DB_PASSWORD" "$PROD_DB_CONTAINER" \
+        pg_dump -U "$DB_USER" -d "$DB_NAME" \
         | gzip > "$DB_OUT"
     log "    saved: $(basename "$DB_OUT") ($(du -h "$DB_OUT" | cut -f1))"
     if gzip -t "$DB_OUT" 2>/dev/null; then
