@@ -1,9 +1,15 @@
+# pnpm v11 reads project settings from this file (no longer the "pnpm"
+# field in package.json). `allowBuilds` lists dependencies permitted to run
+# their install/build scripts — native builds (bcrypt, sharp, unrs-resolver),
+# binary fetches (esbuild, puppeteer), and Prisma engine setup — which pnpm
+# blocks by default, otherwise failing the install with ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
   '@nestjs/core': true
   '@prisma/client': true
   '@prisma/engines': true
   '@scarf/scarf': true
   bcrypt: true
+  esbuild: true
   prisma: true
   puppeteer: true
   sharp: true
