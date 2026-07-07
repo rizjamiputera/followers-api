@@ -26,6 +26,7 @@ import { CreatorModule } from './creator/creator.module';
 import { FollowModule } from './follow/follow.module';
 import { VisitStatsModule } from './visit-stats/visit-stats.module';
 import { SearchModule } from './search/search.module';
+import { SpeakerModule } from './speaker/speaker.module';
 
 @Module({
     imports: [
@@ -55,6 +56,7 @@ import { SearchModule } from './search/search.module';
         FollowModule,
         VisitStatsModule,
         SearchModule,
+        SpeakerModule,
     ],
     controllers: [AppController],
     providers: [

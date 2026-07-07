@@ -66,6 +66,7 @@ model User {
     following          Follow[]            @relation("UserFollowing")
     articleBookmarks   ArticleBookmark[]
     eventRegistrations EventRegistration[]
+    speakerProfile     Speaker?
 
     @@index([email, username])
     @@map("user")
@@ -230,6 +231,7 @@ model Article {
     approvals   ContentApproval[]
     tags        ContentTag[]
     reactions   ContentReaction[]
+    speakers    ContentSpeaker[]
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
     deleted     Boolean           @default(false)
@@ -279,6 +281,7 @@ model Event {
     approvals          ContentApproval[]
     tags               ContentTag[]
     reactions          ContentReaction[]
+    speakers           ContentSpeaker[]
     createdAt          DateTime                 @default(now())
     updatedAt          DateTime                 @updatedAt
     deleted            Boolean                  @default(false)
@@ -412,6 +415,49 @@ model ContentTag {
 
     @@unique([articleId, tagId])
     @@map("content_tag")
+}
+
+// PEMATERI (speaker/presenter of a kajian). Standalone entity so external
+// ustadz without an account can be referenced, filtered, and given their own
+// page. Optionally linked to a platform User when the speaker is also a user.
+model Speaker {
+    id          String           @id @default(uuid())
+    slug        String           @unique @db.VarChar(255)
+    name        String           @db.VarChar(150) // "Fadhil Amir"
+    honorific   String?          @db.VarChar(50) // "Ustadz", "Dr.", "Syaikh"
+    credentials String?          @db.VarChar(100) // "B.A., M.Pd."
+    suffix      String?          @db.VarChar(50) // "حفظه الله"
+    bio         String?          @db.Text
+    avatar      String?          @db.VarChar(255)
+    avatar_md   String?          @db.VarChar(255)
+    // Opsional: kalau pemateri ini juga user platform
+    user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+    userId      String?          @unique
+    verified    Boolean          @default(false) // admin verifies identity
+    contents    ContentSpeaker[]
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+    deleted     Boolean          @default(false)
+
+    @@index([deleted])
+    @@map("speaker")
+}
+
+model ContentSpeaker {
+    id        String   @id @default(uuid())
+    article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId String?
+    event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventId   String?
+    speaker   Speaker  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+    speakerId String
+    role      String?  @db.VarChar(50) // "pemateri utama", "moderator" (opsional)
+    sortOrder Int      @default(0)
+
+    @@unique([articleId, speakerId])
+    @@unique([eventId, speakerId])
+    @@index([speakerId])
+    @@map("content_speaker")
 }
 
 model ContentReaction {
