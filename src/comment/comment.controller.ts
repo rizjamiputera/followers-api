@@ -98,25 +98,22 @@ export class CommentController {
 
         const currentData = await this.commentService.findOne(id);
 
-        const currentUserComment: boolean =
-            role == Role.USER && currentData.userId != userId;
+        const isOwnComment = currentData.userId === userId;
 
-        if (!currentUserComment) {
-            // superadmin & admin can delete
-            if (![Role.SUPERADMIN, Role.ADMIN].includes(role)) {
-                // if operator then check permission
-                if (role == Role.OPERATOR) {
-                    const hasPermission = await this.userService.hasPermission(
-                        userId,
-                        Module.COMMENT,
-                        Permission.DELETE,
-                    );
-                    if (!hasPermission) throw new ForbiddenException();
-                } else {
-                    throw new ForbiddenException(
-                        'Only the author can update his comment',
-                    );
-                }
+        // The author can always delete their own comment. Otherwise only
+        // admins/superadmins, or operators with COMMENT.DELETE, may delete.
+        if (!isOwnComment && ![Role.SUPERADMIN, Role.ADMIN].includes(role)) {
+            if (role === Role.OPERATOR) {
+                const hasPermission = await this.userService.hasPermission(
+                    userId,
+                    Module.COMMENT,
+                    Permission.DELETE,
+                );
+                if (!hasPermission) throw new ForbiddenException();
+            } else {
+                throw new ForbiddenException(
+                    'Only the author can delete his comment',
+                );
             }
         }
 

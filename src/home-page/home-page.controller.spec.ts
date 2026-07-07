@@ -8,7 +8,9 @@ describe('HomePageController', () => {
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             controllers: [HomePageController],
-            providers: [HomePageService],
+            providers: [
+                { provide: HomePageService, useValue: {} },
+            ],
         }).compile();
 
         controller = module.get<HomePageController>(HomePageController);
