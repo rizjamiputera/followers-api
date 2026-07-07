@@ -39,7 +39,7 @@ export class CommentService {
         });
 
         const commentCount = await this.prisma.comment.count({
-            where: { contentId },
+            where: { contentId, deleted: false },
         });
 
         await this.prisma.contentStats.update({
@@ -156,14 +156,46 @@ export class CommentService {
     }
 
     async remove(id: string): Promise<void> {
-        await this.findOne(id);
+        const current = await this.findOne(id);
 
-        await this.prisma.comment.update({
-            where: { id },
+        // Soft-delete the comment and, if it's a top-level comment, its replies
+        // too (replies are 1-level, so no deeper recursion needed).
+        await this.prisma.comment.updateMany({
+            where: { OR: [{ id }, { parentId: id }] },
             data: { deleted: true },
         });
 
+        await this.syncCommentCount(current.contentId);
+
         return;
+    }
+
+    // Recompute the content's comment count from the non-deleted comments and
+    // sync it onto the related article/event stats.
+    private async syncCommentCount(contentId: string): Promise<void> {
+        const commentCount = await this.prisma.comment.count({
+            where: { contentId, deleted: false },
+        });
+
+        const article = await this.prisma.article.findUnique({
+            where: { contentId },
+            select: { statsId: true },
+        });
+        const statsId =
+            article?.statsId ??
+            (
+                await this.prisma.event.findUnique({
+                    where: { contentId },
+                    select: { statsId: true },
+                })
+            )?.statsId;
+
+        if (statsId) {
+            await this.prisma.contentStats.update({
+                where: { id: statsId },
+                data: { commentCount },
+            });
+        }
     }
 
     async react(
