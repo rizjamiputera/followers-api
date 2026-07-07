@@ -18,6 +18,7 @@ import {
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { ContentSpeakerInputDto } from 'src/speaker/dto/content-speaker-input.dto';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import {
     ApprovalStatus,
@@ -66,9 +67,19 @@ export class ArticleController {
     ) {
         const apiUri = process.env.API_URI || 'http://localhost:5111';
 
-        const { content, tags, image, image_md, categoryId, ...articleDto } =
-            createArticleDto;
-        const data: Prisma.ArticleCreateInput & { tags?: string[] } = {
+        const {
+            content,
+            tags,
+            speakers,
+            image,
+            image_md,
+            categoryId,
+            ...articleDto
+        } = createArticleDto;
+        const data: Prisma.ArticleCreateInput & {
+            tags?: string[];
+            speakers?: ContentSpeakerInputDto[];
+        } = {
             ...articleDto,
             ...(image && {
                 image: image.replace(apiUri, ''),
@@ -80,6 +91,7 @@ export class ArticleController {
             author: { connect: { id: req.user.id } },
             stats: { create: {} },
             ...(tags && { tags }),
+            ...(speakers && { speakers }),
             ...(categoryId && { category: { connect: { id: categoryId } } }),
         };
 

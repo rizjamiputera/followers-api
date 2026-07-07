@@ -3,8 +3,10 @@ import { ArticleService } from './article.service';
 import { ArticleController } from './article.controller';
 import { PrismaService } from 'src/prisma.service';
 import { AppService } from 'src/app.service';
+import { SpeakerModule } from 'src/speaker/speaker.module';
 
 @Module({
+    imports: [SpeakerModule],
     controllers: [ArticleController],
     providers: [ArticleService, PrismaService, AppService],
     exports: [ArticleService],

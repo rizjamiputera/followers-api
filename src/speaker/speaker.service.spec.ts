@@ -109,6 +109,72 @@ describe('SpeakerService', () => {
         });
     });
 
+    describe('resolveContentSpeakers', () => {
+        it('resolves an existing speaker id after verifying it exists', async () => {
+            prisma.speaker.findFirst.mockResolvedValue({ id: 'sp1' });
+
+            const result = await service.resolveContentSpeakers([
+                { speakerId: 'sp1', role: 'pemateri utama' },
+            ]);
+
+            expect(result).toEqual([
+                { speakerId: 'sp1', role: 'pemateri utama', sortOrder: 0 },
+            ]);
+            expect(prisma.speaker.create).not.toHaveBeenCalled();
+        });
+
+        it('throws NotFound when a referenced speaker is missing', async () => {
+            prisma.speaker.findFirst.mockResolvedValue(null);
+
+            await expect(
+                service.resolveContentSpeakers([{ speakerId: 'ghost' }]),
+            ).rejects.toThrow(NotFoundException);
+        });
+
+        it('creates a new speaker on the fly from a name', async () => {
+            prisma.speaker.findFirst.mockResolvedValue(null); // slug is free
+            prisma.speaker.create.mockResolvedValue({ id: 'new1' });
+
+            const result = await service.resolveContentSpeakers([
+                { name: 'Fadhil Amir', honorific: 'Ustadz' },
+            ]);
+
+            expect(prisma.speaker.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        name: 'Fadhil Amir',
+                        honorific: 'Ustadz',
+                        slug: 'fadhil-amir',
+                    }),
+                }),
+            );
+            expect(result).toEqual([
+                { speakerId: 'new1', role: null, sortOrder: 0 },
+            ]);
+        });
+
+        it('throws BadRequest when an item has neither speakerId nor name', async () => {
+            await expect(
+                service.resolveContentSpeakers([{ role: 'moderator' }]),
+            ).rejects.toThrow(BadRequestException);
+        });
+
+        it('deduplicates repeated speaker ids and preserves order', async () => {
+            prisma.speaker.findFirst.mockResolvedValue({ id: 'x' }); // all exist
+
+            const result = await service.resolveContentSpeakers([
+                { speakerId: 'a' },
+                { speakerId: 'b' },
+                { speakerId: 'a' }, // duplicate, dropped
+            ]);
+
+            expect(result).toEqual([
+                { speakerId: 'a', role: null, sortOrder: 0 },
+                { speakerId: 'b', role: null, sortOrder: 1 },
+            ]);
+        });
+    });
+
     describe('findAll', () => {
         it('returns a paginated envelope filtering out deleted speakers', async () => {
             prisma.speaker.count.mockResolvedValue(1);

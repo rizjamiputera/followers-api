@@ -11,6 +11,13 @@ import { PaginationQueryDto } from '../app/dto/pagination-query.dto';
 import { CreateSpeakerDto } from './dto/create-speaker.dto';
 import { UpdateSpeakerDto } from './dto/update-speaker.dto';
 import { FilterSpeakerDto } from './dto/filter-speaker.dto';
+import { ContentSpeakerInputDto } from './dto/content-speaker-input.dto';
+
+export interface ResolvedContentSpeaker {
+    speakerId: string;
+    role: string | null;
+    sortOrder: number;
+}
 
 const transformImages = ['avatar', 'avatar_md'];
 
@@ -88,6 +95,63 @@ export class SpeakerService {
         });
 
         return this.app.transformImageUrls(speaker, ...transformImages);
+    }
+
+    /**
+     * Resolve a list of pemateri inputs (from the article/event editor) into
+     * concrete speaker ids, creating new speakers on the fly when only a name
+     * is provided. Deduplicates by speakerId (the ContentSpeaker join is unique
+     * per content+speaker) and preserves input order via sortOrder.
+     */
+    async resolveContentSpeakers(
+        inputs: ContentSpeakerInputDto[],
+    ): Promise<ResolvedContentSpeaker[]> {
+        const resolved: ResolvedContentSpeaker[] = [];
+        const seen = new Set<string>();
+
+        for (const input of inputs) {
+            let speakerId = input.speakerId;
+
+            if (speakerId) {
+                const existing = await this.prisma.speaker.findFirst({
+                    where: { id: speakerId, deleted: false },
+                    select: { id: true },
+                });
+                if (!existing) {
+                    throw new NotFoundException(
+                        `Pemateri ${speakerId} tidak ditemukan`,
+                    );
+                }
+            } else if (input.name?.trim()) {
+                const slug = await this.uniqueSlug(input.name);
+                const created = await this.prisma.speaker.create({
+                    data: {
+                        slug,
+                        name: input.name.trim(),
+                        honorific: input.honorific,
+                        credentials: input.credentials,
+                        suffix: input.suffix,
+                    },
+                    select: { id: true },
+                });
+                speakerId = created.id;
+            } else {
+                throw new BadRequestException(
+                    'Setiap pemateri butuh speakerId atau name',
+                );
+            }
+
+            if (seen.has(speakerId)) continue;
+            seen.add(speakerId);
+
+            resolved.push({
+                speakerId,
+                role: input.role ?? null,
+                sortOrder: resolved.length,
+            });
+        }
+
+        return resolved;
     }
 
     async findAll(pagination: PaginationQueryDto, filter: FilterSpeakerDto) {

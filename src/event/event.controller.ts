@@ -35,6 +35,7 @@ import { IncludesQueryDto } from 'src/app/dto/include-query.dto';
 import { ReactionQueryDto } from 'src/app/dto/reaction-query.dto';
 import { EventService } from './event.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { ContentSpeakerInputDto } from 'src/speaker/dto/content-speaker-input.dto';
 import { FilterEventQueryDto } from './dto/filter-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { PublishEventDto } from './dto/publish-event.dto';
@@ -82,6 +83,7 @@ export class EventController {
         const {
             content,
             tags,
+            speakers,
             image,
             image_md,
             image_portrait,
@@ -89,7 +91,10 @@ export class EventController {
             categoryId,
             ...eventDto
         } = createEventDto;
-        const data: Prisma.EventCreateInput & { tags?: string[] } = {
+        const data: Prisma.EventCreateInput & {
+            tags?: string[];
+            speakers?: ContentSpeakerInputDto[];
+        } = {
             ...eventDto,
             ...(image && {
                 image: image.replace(apiUri, ''),
@@ -107,6 +112,7 @@ export class EventController {
             author: { connect: { id: req.user.id } },
             stats: { create: {} },
             ...(tags && { tags }),
+            ...(speakers && { speakers }),
             ...(categoryId && { category: { connect: { id: categoryId } } }),
         };
 

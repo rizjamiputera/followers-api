@@ -7,6 +7,8 @@ import {
     Article,
     ContentStatus,
     ContentTag,
+    ContentSpeaker,
+    Speaker,
     Content,
     Prisma,
     Tag,
@@ -20,10 +22,13 @@ import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { PrismaService } from 'src/prisma.service';
 import { FilterArticleQueryDto } from './dto/filter-article.dto';
 import { ArticleWithAuthReaction } from './article-interfaces';
+import { SpeakerService } from 'src/speaker/speaker.service';
+import { ContentSpeakerInputDto } from 'src/speaker/dto/content-speaker-input.dto';
 
 const VALID_INCLUDES = [
     'content',
     'tags.tag',
+    'speakers.speaker',
     'comments',
     'comments.replies',
     'comments.reactions',
@@ -38,6 +43,8 @@ const transformImages = [
     'image_md',
     'author.avatar',
     'author.avatar_md',
+    'speakers.avatar',
+    'speakers.avatar_md',
 ];
 
 @Injectable()
@@ -45,21 +52,29 @@ export class ArticleService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
+        private speaker: SpeakerService,
     ) { }
 
     private transformData(
         data: Article & {
             tags?: (ContentTag & { tag: Tag })[];
+            speakers?: (ContentSpeaker & { speaker: Speaker })[];
             content?: Content;
         },
     ): Article {
         const tags = data.tags;
         delete data.tags;
 
+        const speakers = data.speakers;
+        delete data.speakers;
+
         const article = {
             ...data,
             ...(tags && {
                 tags: tags.map((t) => t.tag),
+            }),
+            ...(speakers && {
+                speakers: speakers.map((s) => ({ ...s.speaker, role: s.role })),
             }),
         };
 
@@ -98,9 +113,12 @@ export class ArticleService {
     }
 
     async create(
-        data: Prisma.ArticleCreateInput & { tags?: string[] },
+        data: Prisma.ArticleCreateInput & {
+            tags?: string[];
+            speakers?: ContentSpeakerInputDto[];
+        },
     ): Promise<Article> {
-        const { tags, ...articleData } = data;
+        const { tags, speakers, ...articleData } = data;
 
         // Handle tags if provided
         let tagConnections:
@@ -117,10 +135,29 @@ export class ArticleService {
             };
         }
 
+        // Handle pemateri if provided (reference existing or create on the fly)
+        let speakerConnections:
+            | Prisma.ContentSpeakerCreateNestedManyWithoutArticleInput
+            | undefined;
+
+        if (speakers && speakers.length > 0) {
+            const resolved =
+                await this.speaker.resolveContentSpeakers(speakers);
+
+            speakerConnections = {
+                create: resolved.map((r) => ({
+                    speaker: { connect: { id: r.speakerId } },
+                    role: r.role,
+                    sortOrder: r.sortOrder,
+                })),
+            };
+        }
+
         const create = await this.prisma.article.create({
             data: {
                 ...articleData,
                 ...(tagConnections && { tags: tagConnections }),
+                ...(speakerConnections && { speakers: speakerConnections }),
                 stats: {
                     create: {},
                 },
@@ -311,6 +348,7 @@ export class ArticleService {
         data: Prisma.ArticleUpdateInput & {
             content?: any;
             tags?: string[];
+            speakers?: ContentSpeakerInputDto[];
             categoryId?: string | null;
         },
     ): Promise<Article> {
@@ -326,8 +364,8 @@ export class ArticleService {
         //     );
         // }
 
-        // Separate content body, tags, and category from article data
-        const { content, tags, categoryId, ...articleData } = data;
+        // Separate content body, tags, speakers, and category from article data
+        const { content, tags, speakers, categoryId, ...articleData } = data;
 
         // Translate categoryId → relation set/disconnect (only if caller
         // included the key; undefined means "don't touch").
@@ -446,11 +484,35 @@ export class ArticleService {
             }
         }
 
+        // Handle pemateri update if provided (full replace, like tags)
+        let speakerUpdate:
+            | Prisma.ContentSpeakerUpdateManyWithoutArticleNestedInput
+            | undefined;
+
+        if (speakers !== undefined) {
+            if (speakers.length === 0) {
+                speakerUpdate = { deleteMany: {} };
+            } else {
+                const resolved =
+                    await this.speaker.resolveContentSpeakers(speakers);
+
+                speakerUpdate = {
+                    deleteMany: {},
+                    create: resolved.map((r) => ({
+                        speaker: { connect: { id: r.speakerId } },
+                        role: r.role,
+                        sortOrder: r.sortOrder,
+                    })),
+                };
+            }
+        }
+
         const update = await this.prisma.article.update({
             where: { id },
             data: {
                 ...articleData,
                 ...(tagUpdate && { tags: tagUpdate }),
+                ...(speakerUpdate && { speakers: speakerUpdate }),
             },
         });
 

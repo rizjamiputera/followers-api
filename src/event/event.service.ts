@@ -11,6 +11,8 @@ import {
     ContentReaction,
     ContentStatus,
     ContentTag,
+    ContentSpeaker,
+    Speaker,
     Event,
     EventRegistrationConfig,
     EventRegistration,
@@ -19,6 +21,8 @@ import {
     RegistrationStatus,
     Tag,
 } from '@prisma/client';
+import { SpeakerService } from 'src/speaker/speaker.service';
+import { ContentSpeakerInputDto } from 'src/speaker/dto/content-speaker-input.dto';
 import { PaginationDeletedIncludeQueryDto } from 'src/app/dto/pagination-query.dto';
 import { Paginate, VisitPayload } from 'src/app/interface/app.interface';
 import { nestedOrderBy } from 'src/app/decorator/nestedOrderBy';
@@ -45,6 +49,7 @@ import * as XLSX from 'xlsx';
 const VALID_INCLUDES = [
     'content',
     'tags.tag',
+    'speakers.speaker',
     'comments',
     'comments.replies',
     'comments.reactions',
@@ -64,6 +69,8 @@ const transformImages = [
     'image_portrait_md',
     'author.avatar',
     'author.avatar_md',
+    'speakers.avatar',
+    'speakers.avatar_md',
 ];
 
 @Injectable()
@@ -71,21 +78,29 @@ export class EventService {
     constructor(
         private prisma: PrismaService,
         private app: AppService,
+        private speaker: SpeakerService,
     ) {}
 
     private transformData(
         data: Event & {
             tags?: (ContentTag & { tag: Tag })[];
+            speakers?: (ContentSpeaker & { speaker: Speaker })[];
             content?: Content;
         },
     ): Event {
         const tags = data.tags;
         delete data.tags;
 
+        const speakers = data.speakers;
+        delete data.speakers;
+
         const event = {
             ...data,
             ...(tags && {
                 tags: tags.map((t) => t.tag),
+            }),
+            ...(speakers && {
+                speakers: speakers.map((s) => ({ ...s.speaker, role: s.role })),
             }),
         };
 
@@ -124,9 +139,12 @@ export class EventService {
     }
 
     async create(
-        data: Prisma.EventCreateInput & { tags?: string[] },
+        data: Prisma.EventCreateInput & {
+            tags?: string[];
+            speakers?: ContentSpeakerInputDto[];
+        },
     ): Promise<Event> {
-        const { tags, ...eventData } = data;
+        const { tags, speakers, ...eventData } = data;
 
         // Handle tags if provided
         let tagConnections:
@@ -143,10 +161,29 @@ export class EventService {
             };
         }
 
+        // Handle pemateri if provided (reference existing or create on the fly)
+        let speakerConnections:
+            | Prisma.ContentSpeakerCreateNestedManyWithoutEventInput
+            | undefined;
+
+        if (speakers && speakers.length > 0) {
+            const resolved =
+                await this.speaker.resolveContentSpeakers(speakers);
+
+            speakerConnections = {
+                create: resolved.map((r) => ({
+                    speaker: { connect: { id: r.speakerId } },
+                    role: r.role,
+                    sortOrder: r.sortOrder,
+                })),
+            };
+        }
+
         const create = await this.prisma.event.create({
             data: {
                 ...eventData,
                 ...(tagConnections && { tags: tagConnections }),
+                ...(speakerConnections && { speakers: speakerConnections }),
                 stats: {
                     create: {},
                 },
@@ -478,6 +515,7 @@ export class EventService {
         data: Prisma.EventUpdateInput & {
             content?: any;
             tags?: string[];
+            speakers?: ContentSpeakerInputDto[];
             categoryId?: string | null;
         },
     ): Promise<Event> {
@@ -493,8 +531,8 @@ export class EventService {
         //     );
         // }
 
-        // Separate content body, tags, and category from event data
-        const { content, tags, categoryId, ...eventData } = data;
+        // Separate content body, tags, speakers, and category from event data
+        const { content, tags, speakers, categoryId, ...eventData } = data;
 
         if (categoryId !== undefined) {
             (eventData as Prisma.EventUpdateInput).category = categoryId
@@ -629,11 +667,35 @@ export class EventService {
             }
         }
 
+        // Handle pemateri update if provided (full replace, like tags)
+        let speakerUpdate:
+            | Prisma.ContentSpeakerUpdateManyWithoutEventNestedInput
+            | undefined;
+
+        if (speakers !== undefined) {
+            if (speakers.length === 0) {
+                speakerUpdate = { deleteMany: {} };
+            } else {
+                const resolved =
+                    await this.speaker.resolveContentSpeakers(speakers);
+
+                speakerUpdate = {
+                    deleteMany: {},
+                    create: resolved.map((r) => ({
+                        speaker: { connect: { id: r.speakerId } },
+                        role: r.role,
+                        sortOrder: r.sortOrder,
+                    })),
+                };
+            }
+        }
+
         const update = await this.prisma.event.update({
             where: { id },
             data: {
                 ...eventData,
                 ...(tagUpdate && { tags: tagUpdate }),
+                ...(speakerUpdate && { speakers: speakerUpdate }),
             },
         });
 

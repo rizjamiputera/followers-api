@@ -1,11 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
     IsArray,
     IsBoolean,
     IsNotEmpty,
     IsOptional,
     IsString,
+    ValidateNested,
 } from 'class-validator';
+import { ContentSpeakerInputDto } from 'src/speaker/dto/content-speaker-input.dto';
 
 export class CreateEventDto {
     @ApiProperty({ description: 'Event title' })
@@ -76,6 +79,17 @@ export class CreateEventDto {
     @IsArray()
     @IsString({ each: true })
     tags?: string[];
+
+    @ApiPropertyOptional({
+        description:
+            'Pemateri (speakers) for this event. Each item references an existing speakerId or provides a name to create one.',
+        type: [ContentSpeakerInputDto],
+    })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => ContentSpeakerInputDto)
+    speakers?: ContentSpeakerInputDto[];
 
     @ApiPropertyOptional({
         description: 'Category id (UUID). If omitted the event is uncategorized.',
