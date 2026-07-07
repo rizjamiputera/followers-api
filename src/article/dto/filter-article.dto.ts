@@ -65,4 +65,9 @@ export class FilterArticleQueryDto {
     @IsOptional()
     @IsString()
     categorySlug?: string;
+
+    @ApiPropertyOptional({ description: 'Filter by pemateri (speaker) slug' })
+    @IsOptional()
+    @IsString()
+    speakerSlug?: string;
 }

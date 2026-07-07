@@ -218,6 +218,7 @@ export class EventService {
             past,
             categoryId,
             categorySlug,
+            speakerSlug,
         } = filter;
 
         // Check if registeredCount is requested in includes
@@ -259,6 +260,11 @@ export class EventService {
         if (tags?.length > 0) {
             whereConditions.push({
                 tags: { some: { tag: { slug: { in: tags } } } },
+            });
+        }
+        if (speakerSlug) {
+            whereConditions.push({
+                speakers: { some: { speaker: { slug: speakerSlug } } },
             });
         }
         if (published) {
