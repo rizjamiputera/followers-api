@@ -12,6 +12,7 @@ import {
     ParseFilePipe,
     MaxFileSizeValidator,
     FileTypeValidator,
+    ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -54,8 +55,10 @@ export class SpeakerController {
     @Public()
     @ApiOperation({ summary: 'List speakers with published content counts' })
     findAll(
-        @Query() pagination: PaginationQueryDto,
-        @Query() filter: FilterSpeakerDto,
+        @Query(new ValidationPipe({ transform: true }))
+        pagination: PaginationQueryDto,
+        @Query(new ValidationPipe({ transform: true }))
+        filter: FilterSpeakerDto,
     ) {
         return this.speakerService.findAll(pagination, filter);
     }
