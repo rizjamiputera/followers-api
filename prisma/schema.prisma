@@ -647,3 +647,19 @@ model EventRegistration {
     @@index([userId, status])
     @@map("event_registration")
 }
+
+// Singleton row (id = 1) holding admin-editable site-wide settings:
+// SEO title/description/tagline, social share image, social links, contact.
+model SiteSetting {
+    id              Int      @id @default(1)
+    siteTitle       String   @default("Followers Bicara")
+    metaDescription String   @default("") @db.Text
+    tagline         String   @default("")
+    ogImage         String   @default("") // relative path, prefixed with API_URI on read
+    social          Json     @default("{}") @db.JsonB
+    contact         Json     @default("{}") @db.JsonB
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+
+    @@map("site_setting")
+}

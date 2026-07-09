@@ -27,6 +27,7 @@ import { FollowModule } from './follow/follow.module';
 import { VisitStatsModule } from './visit-stats/visit-stats.module';
 import { SearchModule } from './search/search.module';
 import { SpeakerModule } from './speaker/speaker.module';
+import { SiteSettingModule } from './site-setting/site-setting.module';
 
 @Module({
     imports: [
@@ -57,6 +58,7 @@ import { SpeakerModule } from './speaker/speaker.module';
         VisitStatsModule,
         SearchModule,
         SpeakerModule,
+        SiteSettingModule,
     ],
     controllers: [AppController],
     providers: [
