@@ -156,11 +156,21 @@ export class SpeakerService {
 
     async findAll(pagination: PaginationQueryDto, filter: FilterSpeakerDto) {
         const { search, page = 1, limit = 10 } = pagination;
-        const { verified } = filter;
+        const { verified, hasPublished } = filter;
+
+        // "belum punya kajian yg publish" -> speakers with no ContentSpeaker row
+        // pointing at published, non-deleted content.
+        const publishedContentClause =
+            hasPublished === undefined
+                ? {}
+                : hasPublished
+                  ? { contents: { some: publishedContentFilter } }
+                  : { contents: { none: publishedContentFilter } };
 
         const where: Prisma.SpeakerWhereInput = {
             deleted: false,
             ...(verified !== undefined ? { verified } : {}),
+            ...publishedContentClause,
             ...(search
                 ? {
                       OR: [
@@ -360,24 +370,20 @@ export class SpeakerService {
     async remove(id: string) {
         const speaker = await this.prisma.speaker.findFirst({
             where: { id, deleted: false },
-            include: {
-                _count: { select: { contents: true } },
-            },
+            select: { id: true },
         });
         if (!speaker) throw new NotFoundException('Pemateri tidak ditemukan');
 
-        // Soft-delete so existing article/event links are preserved. Block if
-        // still attached to content to avoid silently orphaning references.
-        if (speaker._count.contents > 0) {
-            throw new BadRequestException(
-                'Pemateri masih tertaut ke konten. Lepas tautannya terlebih dahulu.',
-            );
-        }
-
-        await this.prisma.speaker.update({
-            where: { id },
-            data: { deleted: true },
-        });
+        // Soft-delete the speaker, but unlink it from any article/event first
+        // so no content keeps referencing a deleted speaker. The join rows only
+        // carry the association (role/sortOrder), so removing them is safe.
+        await this.prisma.$transaction([
+            this.prisma.contentSpeaker.deleteMany({ where: { speakerId: id } }),
+            this.prisma.speaker.update({
+                where: { id },
+                data: { deleted: true },
+            }),
+        ]);
         return { message: 'Pemateri berhasil dihapus' };
     }
 }
